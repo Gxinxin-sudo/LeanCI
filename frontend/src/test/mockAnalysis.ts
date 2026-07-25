@@ -19,6 +19,7 @@ export const mockAnalysis: AnalysisResult = {
   verification_commands: ['npm run typecheck'],
   risks: ['Deployments must define the variable.'],
   missing_information: ['Deployment variables were not supplied.'],
+  analysis_time_ms: 1_324,
   compression_stats: {
     available: true,
     paritok_connected: true,
@@ -42,7 +43,7 @@ export const mockAnalysis: AnalysisResult = {
     cost_estimate: {
       estimated_input_cost_saved_usd: 0.00084,
       input_cache_miss_usd_per_m_tokens: 0.14,
-      pricing_snapshot_date: '2026-07-25',
+      pricing_snapshot_date: '2026-07-26',
       disclaimer: "Estimate from LeanCI's configured DeepSeek price; not an actual bill.",
     },
     message:

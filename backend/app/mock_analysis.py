@@ -84,4 +84,5 @@ def build_mock_analysis() -> AnalysisResult:
             "No report service unit test was included with this demo log.",
         ],
         compression_stats=UnavailableCompressionStats(),
+        analysis_time_ms=0,
     )

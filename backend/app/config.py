@@ -9,6 +9,8 @@ from typing import Literal
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.models import MAX_LOG_CHARACTERS
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DEEPSEEK_MODEL = "deepseek-v4-flash"
 ApplicationProviderName = Literal["mock", "paritok"]
@@ -37,7 +39,11 @@ class Settings(BaseSettings):
 
     app_name: str = "LeanCI API"
     environment: str = "development"
-    max_log_characters: int = Field(default=120_000, ge=1, le=120_000)
+    max_log_characters: int = Field(
+        default=MAX_LOG_CHARACTERS,
+        ge=1,
+        le=MAX_LOG_CHARACTERS,
+    )
     llm_provider: ApplicationProviderName = "paritok"
     deepseek_api_key: SecretStr | None = None
     deepseek_base_url: Literal["https://api.deepseek.com"] = DEEPSEEK_BASE_URL
@@ -68,7 +74,7 @@ class Settings(BaseSettings):
         ge=0,
     )
     deepseek_output_usd_per_m: Decimal = Field(default=Decimal("0.28"), ge=0)
-    pricing_snapshot_date: date = date(2026, 7, 25)
+    pricing_snapshot_date: date = date(2026, 7, 26)
 
     @staticmethod
     def _secret_is_present(secret: SecretStr | None) -> bool:

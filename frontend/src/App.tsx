@@ -1,12 +1,23 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { ResultsPanel } from './components/ResultsPanel'
 import { TokenPanel } from './components/TokenPanel'
-import { SAMPLE_LOG } from './data/sample'
-import { analyzeLog } from './lib/api'
-import type { AnalysisResult } from './types/api'
+import { analyzeLog, getHealth, getSample, getSampleCapture } from './lib/api'
+import {
+  FILE_ACCEPT,
+  MAX_FILE_BYTES,
+  MAX_LOG_BYTES,
+  MAX_LOG_CHARACTERS,
+  MAX_TOTAL_FILE_BYTES,
+  MAX_UPLOAD_FILES,
+  formatBytes,
+  readTextFiles,
+  utf8Bytes,
+  validateSubmission,
+} from './lib/input'
+import type { AnalysisResult, HealthResponse, UploadedTextFile } from './types/api'
 
-export const MAX_LOG_CHARACTERS = 120_000
+export { MAX_LOG_CHARACTERS }
 
 type AnalysisState =
   | { status: 'idle' }
@@ -14,51 +25,293 @@ type AnalysisState =
   | { status: 'success'; data: AnalysisResult }
   | { status: 'error'; message: string }
 
-function SignalTrack() {
-  const stages = ['Ingest', 'Triage', 'Evidence']
+type HealthState =
+  | { status: 'checking' }
+  | { status: 'ready'; data: HealthResponse }
+  | { status: 'unreachable'; message: string }
 
-  return (
-    <div className="signal-track" aria-label="Analysis stages">
-      {stages.map((stage, index) => (
-        <div className="signal-stage" key={stage}>
-          <span className={`signal-node ${index === 0 ? 'signal-node-active' : ''}`} aria-hidden="true" />
-          <span className="font-mono text-[0.62rem] uppercase tracking-[0.2em] text-muted">
-            {stage}
-          </span>
-        </div>
-      ))}
-    </div>
-  )
-}
+const SAMPLE_CARDS = [
+  {
+    id: 'python-pytest',
+    kicker: 'pytest',
+    title: 'Python pytest failure',
+    description: '823 tests pass before one retry-cap assertion exposes a precedence bug.',
+  },
+  {
+    id: 'typescript-build',
+    kicker: 'tsc --strict',
+    title: 'TypeScript build failure',
+    description: 'A required deployment region receives string | undefined.',
+  },
+  {
+    id: 'docker-build',
+    kicker: 'buildkit',
+    title: 'Docker build failure',
+    description: 'An ignore rule silently removes package manifests from the build context.',
+  },
+] as const
 
 function BrandMark() {
   return (
-    <div className="grid h-9 w-9 place-items-center border border-line-bright bg-panel" aria-hidden="true">
-      <svg className="h-5 w-5 text-signal" viewBox="0 0 24 24" fill="none">
-        <path d="M5 5v14h14" stroke="currentColor" strokeWidth="1.5" />
-        <path d="m8 15 3-4 3 2 4-6" stroke="currentColor" strokeWidth="1.5" />
-      </svg>
+    <span className="brand-mark" aria-hidden="true">
+      <i />
+      <i />
+      <i />
+    </span>
+  )
+}
+
+function HealthStrip({
+  health,
+  onRefresh,
+}: {
+  health: HealthState
+  onRefresh: () => void
+}) {
+  const ready = health.status === 'ready'
+  const healthy = ready && health.data.status === 'ok'
+  const message =
+    health.status === 'checking'
+      ? 'Checking FastAPI → Paritok → hosted GPU'
+      : health.status === 'unreachable'
+        ? health.message
+        : health.data.message
+
+  return (
+    <section className="route-strip" aria-label="Formal analysis route status">
+      <div className="route-strip-main">
+        <span className={`status-light ${healthy ? 'status-light-ok' : ''}`} aria-hidden="true" />
+        <div>
+          <p className="eyebrow">Formal route status</p>
+          <p className="route-message">{message}</p>
+        </div>
+      </div>
+      <dl>
+        <div>
+          <dt>FastAPI</dt>
+          <dd>{ready ? 'Online' : health.status === 'checking' ? 'Checking' : 'Offline'}</dd>
+        </div>
+        <div>
+          <dt>Paritok</dt>
+          <dd>{ready && health.data.paritok_connected ? 'Connected' : 'Unavailable'}</dd>
+        </div>
+        <div>
+          <dt>Hosted GPU</dt>
+          <dd>{ready && health.data.hosted_gpu_available ? 'Ready' : 'Unavailable'}</dd>
+        </div>
+        <div>
+          <dt>Model</dt>
+          <dd>{ready ? health.data.model : 'deepseek-v4-flash'}</dd>
+        </div>
+      </dl>
+      <button type="button" className="text-action" onClick={onRefresh}>Refresh</button>
+    </section>
+  )
+}
+
+function SampleRail({
+  activeId,
+  loadingId,
+  onLoad,
+}: {
+  activeId: string | null
+  loadingId: string | null
+  onLoad: (sampleId: string) => void
+}) {
+  return (
+    <section className="sample-rail" aria-labelledby="sample-title">
+      <div className="sample-intro">
+        <p className="eyebrow">Start with a known answer</p>
+        <h2 id="sample-title">One-click samples</h2>
+        <p>Bundled locally. No repository clone and no code execution.</p>
+      </div>
+      <div className="sample-cards">
+        {SAMPLE_CARDS.map((sample) => {
+          const active = sample.id === activeId
+          const loading = sample.id === loadingId
+          return (
+            <button
+              className={`sample-card ${active ? 'sample-card-active' : ''}`}
+              type="button"
+              key={sample.id}
+              disabled={loadingId !== null}
+              onClick={() => onLoad(sample.id)}
+            >
+              <span>{sample.kicker}</span>
+              <strong>{loading ? 'Loading sample…' : sample.title}</strong>
+              <small>{sample.description}</small>
+              <b>{active ? 'Loaded ✓' : 'Load sample →'}</b>
+            </button>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+function UploadedFiles({
+  files,
+  onRemove,
+}: {
+  files: UploadedTextFile[]
+  onRemove: (index: number) => void
+}) {
+  const total = files.reduce((sum, file) => sum + utf8Bytes(file.content), 0)
+  return (
+    <div className="upload-area">
+      <div className="upload-heading">
+        <div>
+          <p className="eyebrow">Related files · optional</p>
+          <h3>Text context</h3>
+        </div>
+        <span>{files.length}/{MAX_UPLOAD_FILES} files · {formatBytes(total)}/{formatBytes(MAX_TOTAL_FILE_BYTES)}</span>
+      </div>
+      {files.length > 0 ? (
+        <ul className="upload-list">
+          {files.map((file, index) => (
+            <li key={`${file.name}-${index}`}>
+              <span>
+                <strong>{file.name}</strong>
+                <small>{formatBytes(utf8Bytes(file.content))} · UTF-8 text</small>
+              </span>
+              <button type="button" onClick={() => onRemove(index)} aria-label={`Remove ${file.name}`}>
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="upload-empty">Add up to five source, config, log, or documentation files.</p>
+      )}
     </div>
   )
 }
 
 export function App() {
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [logText, setLogText] = useState('')
+  const [files, setFiles] = useState<UploadedTextFile[]>([])
+  const [activeSampleId, setActiveSampleId] = useState<string | null>(null)
+  const [sampleLoadingId, setSampleLoadingId] = useState<string | null>(null)
   const [analysisState, setAnalysisState] = useState<AnalysisState>({ status: 'idle' })
+  const [healthState, setHealthState] = useState<HealthState>({ status: 'checking' })
+  const [inputMessage, setInputMessage] = useState('')
+  const workbenchRef = useRef<HTMLElement>(null)
 
-  const handleAnalyze = async () => {
-    if (!logText.trim()) {
+  const refreshHealth = async () => {
+    setHealthState({ status: 'checking' })
+    try {
+      setHealthState({ status: 'ready', data: await getHealth() })
+    } catch (error) {
+      setHealthState({
+        status: 'unreachable',
+        message: error instanceof Error ? error.message : 'LeanCI API is unreachable.',
+      })
+    }
+  }
+
+  useEffect(() => {
+    let active = true
+    void getHealth()
+      .then((data) => {
+        if (active) setHealthState({ status: 'ready', data })
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setHealthState({
+            status: 'unreachable',
+            message: error instanceof Error ? error.message : 'LeanCI API is unreachable.',
+          })
+        }
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    const captureId = new URLSearchParams(window.location.search).get('capture')
+    if (!captureId || !SAMPLE_CARDS.some((sample) => sample.id === captureId)) return
+
+    let active = true
+    void Promise.all([getSample(captureId), getSampleCapture(captureId)])
+      .then(([sample, capture]) => {
+        if (!active) return
+        setLogText(sample.log_text)
+        setFiles(sample.files)
+        setActiveSampleId(sample.id)
+        setAnalysisState({ status: 'success', data: capture.analysis_result })
+        setInputMessage(
+          `Saved real run captured ${new Date(capture.captured_at).toLocaleString()}. Re-run Analyze failure for fresh stats.`,
+        )
+        window.requestAnimationFrame(() => {
+          if (active) workbenchRef.current?.scrollIntoView({ block: 'start' })
+        })
+      })
+      .catch((error: unknown) => {
+        if (!active) return
+        setAnalysisState({
+          status: 'error',
+          message: error instanceof Error ? error.message : 'The saved capture could not be loaded.',
+        })
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const handleLoadSample = async (sampleId: string) => {
+    setSampleLoadingId(sampleId)
+    setInputMessage('')
+    try {
+      const sample = await getSample(sampleId)
+      setLogText(sample.log_text)
+      setFiles(sample.files)
+      setActiveSampleId(sample.id)
+      setAnalysisState({ status: 'idle' })
+      setInputMessage(
+        `${sample.title} loaded: ${formatBytes(sample.log_bytes)} log + ${sample.file_count} related files.`,
+      )
+    } catch (error) {
       setAnalysisState({
         status: 'error',
-        message: 'Paste a CI log or load the sample before starting analysis.',
+        message: error instanceof Error ? error.message : 'The sample could not be loaded.',
+      })
+    } finally {
+      setSampleLoadingId(null)
+    }
+  }
+
+  const handleFileSelection = async (selected: FileList | null) => {
+    if (!selected?.length) return
+    try {
+      setFiles(await readTextFiles(selected, files))
+      setInputMessage(`${selected.length} text file${selected.length === 1 ? '' : 's'} added.`)
+      setActiveSampleId(null)
+      if (analysisState.status !== 'loading') setAnalysisState({ status: 'idle' })
+    } catch (error) {
+      setInputMessage(error instanceof Error ? error.message : 'The files could not be added.')
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  const handleAnalyze = async () => {
+    try {
+      validateSubmission(logText, files)
+    } catch (error) {
+      setAnalysisState({
+        status: 'error',
+        message: error instanceof Error ? error.message : 'The input is invalid.',
       })
       return
     }
 
     setAnalysisState({ status: 'loading' })
     try {
-      const result = await analyzeLog(logText)
+      const result = await analyzeLog(logText, files)
       setAnalysisState({ status: 'success', data: result })
+      void refreshHealth()
     } catch (error) {
       setAnalysisState({
         status: 'error',
@@ -67,167 +320,166 @@ export function App() {
     }
   }
 
-  const activeStats =
-    analysisState.status === 'success' ? analysisState.data.compression_stats : undefined
+  const clearInput = () => {
+    setLogText('')
+    setFiles([])
+    setActiveSampleId(null)
+    setInputMessage('')
+    setAnalysisState({ status: 'idle' })
+  }
+
+  const logBytes = utf8Bytes(logText)
+  const activeResult = analysisState.status === 'success' ? analysisState.data : undefined
 
   return (
-    <div className="min-h-screen bg-ink text-fog">
-      <header className="border-b border-line bg-ink/95">
-        <div className="mx-auto flex max-w-[96rem] items-center justify-between px-5 py-4 lg:px-8">
-          <div className="flex items-center gap-3">
-            <BrandMark />
-            <div>
-              <p className="font-display text-lg font-semibold tracking-tight text-white">LeanCI</p>
-              <p className="font-mono text-[0.58rem] uppercase tracking-[0.2em] text-muted">
-                Failure workbench
-              </p>
-            </div>
-          </div>
-          <div className="hidden items-center gap-3 sm:flex">
-            <span
-              className={`status-dot ${
-                activeStats?.available === true ? 'status-dot-online' : 'status-dot-offline'
-              }`}
-              aria-hidden="true"
-            />
-            <span className="font-mono text-[0.62rem] uppercase tracking-[0.18em] text-muted">
-              {activeStats?.available === true
-                ? `Paritok verified / ${activeStats.model}`
-                : 'Phase 03 / Paritok'}
-            </span>
-          </div>
-        </div>
+    <div className="app-shell">
+      <header className="topbar">
+        <a className="brand" href="#top" aria-label="LeanCI home">
+          <BrandMark />
+          <span><strong>LeanCI</strong><small>Failure workbench</small></span>
+        </a>
+        <p>Token-efficient CI diagnosis</p>
+        <span className="security-note">No code execution · No API keys shown</span>
       </header>
 
-      <div className="border-b border-fault/30 bg-fault/8">
-        <div className="mx-auto flex max-w-[96rem] items-center gap-3 px-5 py-3 lg:px-8">
-          <span className="h-2 w-2 shrink-0 bg-fault" aria-hidden="true" />
-          <p className="font-mono text-[0.68rem] uppercase tracking-[0.12em] text-fault-soft">
-            Production analysis is fail-closed through Paritok
-          </p>
-        </div>
-      </div>
-
-      <main className="mx-auto max-w-[96rem] px-5 py-8 lg:px-8 lg:py-10">
-        <section className="grid gap-8 border-b border-line pb-8 lg:grid-cols-[minmax(0,1fr)_minmax(28rem,0.72fr)] lg:items-end">
-          <div>
-            <p className="font-mono text-[0.65rem] uppercase tracking-[0.24em] text-signal">
-              CI failure / structured triage
-            </p>
-            <h1 className="mt-4 max-w-4xl font-display text-4xl font-semibold leading-[1.04] tracking-[-0.03em] text-white sm:text-5xl lg:text-6xl">
-              Find the line that broke the build.
-              <span className="block text-muted">Keep every claim inspectable.</span>
+      <main id="top">
+        <section className="hero">
+          <div className="hero-copy">
+            <p className="eyebrow">Long CI logs, reduced before analysis</p>
+            <h1>
+              Keep the failure.
+              <span>Cut the noise.</span>
             </h1>
-            <p className="mt-5 max-w-2xl text-sm leading-7 text-muted sm:text-base">
-              Paste a failure log to run the fixed FastAPI → Paritok hosted GPU → DeepSeek path.
-              Every successful response includes a verified per-request stats delta.
+            <p className="hero-lede">
+              LeanCI compresses massive CI context through Paritok, asks DeepSeek for a
+              strict diagnosis, and proves every Token number with this request’s real
+              stats delta.
             </p>
+            <div className="hero-promises">
+              <span>01 · Fixed production route</span>
+              <span>02 · Inspectable evidence</span>
+              <span>03 · Review-only patches</span>
+            </div>
           </div>
-          <SignalTrack />
+          <div className="hero-instrument" aria-label="LeanCI analysis path">
+            <div className="instrument-readout">
+              <span>INPUT</span>
+              <strong>5k+ tokens</strong>
+              <small>safe, repeatable samples</small>
+            </div>
+            <div className="instrument-path">
+              <span>FastAPI</span><i>→</i><span>Paritok GPU</span><i>→</i><span>DeepSeek</span>
+            </div>
+            <div className="instrument-rule">
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
+            </div>
+            <p>Token metrics appear only after /stats proof.</p>
+          </div>
         </section>
 
-        <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(22rem,0.72fr)_minmax(0,1.28fr)]">
-          <aside className="space-y-4 xl:sticky xl:top-6 xl:self-start">
-            <section className="border border-line bg-panel" aria-labelledby="log-input-title">
-              <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
+        <HealthStrip health={healthState} onRefresh={() => void refreshHealth()} />
+        <SampleRail
+          activeId={activeSampleId}
+          loadingId={sampleLoadingId}
+          onLoad={(sampleId) => void handleLoadSample(sampleId)}
+        />
+
+        <section ref={workbenchRef} className="workbench" aria-label="LeanCI analysis workbench">
+          <aside className="input-column">
+            <div className="input-panel">
+              <div className="panel-heading">
                 <div>
-                  <p className="font-mono text-[0.62rem] uppercase tracking-[0.2em] text-muted">
-                    Input / untrusted text
-                  </p>
-                  <h2 id="log-input-title" className="mt-1 font-display text-lg font-semibold text-white">
-                    CI failure log
-                  </h2>
+                  <p className="eyebrow">Untrusted input · text only</p>
+                  <h2>CI failure log</h2>
                 </div>
-                <button
-                  className="border border-line-bright px-3 py-2 font-mono text-[0.62rem] uppercase tracking-[0.14em] text-fog transition-colors hover:border-signal hover:text-signal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
-                  type="button"
-                  onClick={() => {
-                    setLogText(SAMPLE_LOG)
-                    setAnalysisState({ status: 'idle' })
-                  }}
-                >
-                  Load sample
-                </button>
-              </div>
-
-              <div className="p-5">
-                <label className="sr-only" htmlFor="ci-log">
-                  Paste CI failure log
-                </label>
-                <textarea
-                  id="ci-log"
-                  className="min-h-80 w-full resize-y border border-line bg-terminal p-4 font-mono text-xs leading-6 text-fog caret-signal outline-none transition-colors placeholder:text-muted/60 focus:border-signal"
-                  maxLength={MAX_LOG_CHARACTERS}
-                  placeholder="$ paste failing CI output here…"
-                  spellCheck={false}
-                  value={logText}
-                  onChange={(event) => {
-                    setLogText(event.target.value)
-                    if (analysisState.status !== 'loading') {
-                      setAnalysisState({ status: 'idle' })
-                    }
-                  }}
-                />
-                <div className="mt-3 flex items-center justify-between gap-4">
-                  <p className="text-[0.68rem] leading-5 text-muted">
-                    Text only. Commands are displayed, never executed.
-                  </p>
-                  <p className="shrink-0 font-mono text-[0.65rem] text-muted">
-                    {logText.length.toLocaleString('en-US')} /{' '}
-                    {MAX_LOG_CHARACTERS.toLocaleString('en-US')}
-                  </p>
-                </div>
-
-                <div className="mt-5 flex gap-3">
-                  <button
-                    className="flex flex-1 items-center justify-center gap-2 border border-signal bg-signal px-4 py-3 font-mono text-xs font-bold uppercase tracking-[0.12em] text-ink transition-colors hover:bg-signal-bright disabled:cursor-wait disabled:border-muted disabled:bg-muted focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-signal"
-                    type="button"
-                    disabled={analysisState.status === 'loading'}
-                    onClick={() => void handleAnalyze()}
-                  >
-                    {analysisState.status === 'loading' ? (
-                      <>
-                        <span className="loading-mark loading-mark-dark" aria-hidden="true" />
-                        Analyzing failure…
-                      </>
-                    ) : (
-                      <>
-                        Analyze failure
-                        <span aria-hidden="true">→</span>
-                      </>
-                    )}
+                {(logText || files.length > 0) && (
+                  <button type="button" className="text-action text-action-danger" onClick={clearInput}>
+                    Clear all
                   </button>
-                  {logText.length > 0 && (
-                    <button
-                      className="border border-line-bright px-4 py-3 font-mono text-[0.65rem] uppercase tracking-[0.12em] text-muted hover:border-fault hover:text-fault focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fault"
-                      type="button"
-                      onClick={() => {
-                        setLogText('')
-                        setAnalysisState({ status: 'idle' })
-                      }}
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
+                )}
               </div>
-            </section>
+              <label className="sr-only" htmlFor="ci-log">Paste CI failure log</label>
+              <textarea
+                id="ci-log"
+                maxLength={MAX_LOG_CHARACTERS}
+                placeholder="$ Paste the complete failing CI log, or load a sample above…"
+                spellCheck={false}
+                value={logText}
+                onChange={(event) => {
+                  setLogText(event.target.value)
+                  setActiveSampleId(null)
+                  setInputMessage('')
+                  if (analysisState.status !== 'loading') setAnalysisState({ status: 'idle' })
+                }}
+              />
+              <div className="input-meter">
+                <span className={logBytes > MAX_LOG_BYTES ? 'limit-exceeded' : ''}>
+                  {formatBytes(logBytes)} / {formatBytes(MAX_LOG_BYTES)}
+                </span>
+                <span>{logText.length.toLocaleString('en-US')} characters</span>
+              </div>
+
+              <UploadedFiles
+                files={files}
+                onRemove={(index) => {
+                  setFiles((current) => current.filter((_, itemIndex) => itemIndex !== index))
+                  setActiveSampleId(null)
+                }}
+              />
+
+              <div className="file-controls">
+                <label className="secondary-action" htmlFor="related-files">Add text files</label>
+                <input
+                  ref={fileInputRef}
+                  id="related-files"
+                  type="file"
+                  accept={FILE_ACCEPT}
+                  multiple
+                  onChange={(event) => void handleFileSelection(event.target.files)}
+                />
+                <p>
+                  {MAX_UPLOAD_FILES} files max · {formatBytes(MAX_FILE_BYTES)} each ·{' '}
+                  {formatBytes(MAX_TOTAL_FILE_BYTES)} total · archives and executables blocked
+                </p>
+              </div>
+
+              <p className="input-message" aria-live="polite">{inputMessage}</p>
+              <button
+                className="primary-action"
+                type="button"
+                disabled={analysisState.status === 'loading'}
+                onClick={() => void handleAnalyze()}
+              >
+                {analysisState.status === 'loading' ? (
+                  <><span className="loading-mark loading-mark-dark" aria-hidden="true" />Analyzing through Paritok…</>
+                ) : (
+                  <>Analyze failure <span aria-hidden="true">↗</span></>
+                )}
+              </button>
+              <p className="form-footnote">
+                Suggestions, patches, and commands are returned as inert text. LeanCI never
+                runs them.
+              </p>
+            </div>
 
             <TokenPanel
-              stats={activeStats}
+              stats={activeResult?.compression_stats}
+              analysisTimeMs={activeResult?.analysis_time_ms}
               loading={analysisState.status === 'loading'}
             />
           </aside>
 
-          <ResultsPanel state={analysisState} />
-        </div>
+          <ResultsPanel state={analysisState} onRetry={() => void handleAnalyze()} />
+        </section>
       </main>
 
-      <footer className="mx-auto flex max-w-[96rem] flex-col gap-2 border-t border-line px-5 py-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between lg:px-8">
-        <p>LeanCI formal Paritok integration</p>
-        <p className="font-mono text-[0.62rem] uppercase tracking-[0.16em]">
-          Paritok required · Fail closed · No command execution
-        </p>
+      <footer>
+        <span>LeanCI · Phase 04 real MVP</span>
+        <span>FastAPI → local Paritok Proxy → hosted GPU → DeepSeek</span>
       </footer>
     </div>
   )

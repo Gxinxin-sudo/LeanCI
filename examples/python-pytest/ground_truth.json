@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "sample_id": "python-pytest",
+  "root_cause": "Operator precedence subtracts one after exponentiation, so attempt 4 returns 15 instead of the configured 16-second cap.",
+  "expected_relevant_files": [
+    "retry.py",
+    "test_retry.py"
+  ],
+  "expected_fix_direction": [
+    "Make the intended backoff formula explicit with parentheses.",
+    "Keep the cap test and add boundary cases around the maximum delay."
+  ],
+  "expected_patch_contains": [
+    "min(self.base_delay * (2**attempt), self.max_delay)"
+  ],
+  "minimum_original_tokens": 5000
+}

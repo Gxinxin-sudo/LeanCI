@@ -33,6 +33,8 @@ Invoke-RestMethod "http://127.0.0.1:8000/api/health"
 - `stats` 中的累计 Token 计数
 
 它不调用 DeepSeek，不打印密钥，也不输出 Paritok 的美元估算字段。
+Windows 启动脚本会在监听 8080 前执行同一认证预检；失败时直接退出，不允许代理以
+未压缩 passthrough 模式继续服务。
 
 ## 执行超过 5,000 Token 的真实验证
 
@@ -68,7 +70,7 @@ Invoke-RestMethod "http://127.0.0.1:8000/api/health"
   "cost_estimate": {
     "estimated_input_cost_saved_usd": 0.00035014,
     "input_cache_miss_usd_per_m_tokens": 0.14,
-    "pricing_snapshot_date": "2026-07-25",
+    "pricing_snapshot_date": "2026-07-26",
     "disclaimer": "Estimate from LeanCI's configured DeepSeek price; not an actual bill."
   }
 }
@@ -85,6 +87,30 @@ Invoke-RestMethod "http://127.0.0.1:8000/api/health"
 - `cumulative.total_requests` 随请求增加
 - UI 同时显示本次指标、累计统计、模型与费用估算免责声明
 
+## 顺序运行三个固定演示案例
+
+确认健康检查全部通过且 DeepSeek 余额可用后：
+
+```powershell
+.\backend\.venv\Scripts\python.exe scripts\run_demo_samples.py --confirm-cost --sample python-pytest
+.\backend\.venv\Scripts\python.exe scripts\run_demo_samples.py --confirm-cost --sample typescript-build
+.\backend\.venv\Scripts\python.exe scripts\run_demo_samples.py --confirm-cost --sample docker-build
+```
+
+脚本只读取 `python-pytest`、`typescript-build` 和 `docker-build` 三个固定 ID，并为每个
+案例执行。每条命令只发出一次分析，单次最长等待约 110 秒：
+
+1. 从 FastAPI Sample API 读取固定日志和相关文件；
+2. 读取 Paritok `/stats` before；
+3. 调用正式 `/api/analyze`；
+4. 读取 `/stats` after；
+5. 校验外层 delta 与 API 内层 delta 完全一致；
+6. 要求 `original_tokens > 5000`、固定模型和至少一个 ground-truth 相关文件；
+7. 保存不含 Key、请求头和 Paritok 美元字段的 `examples/<id>/demo_result.json`。
+
+不带 `--confirm-cost` 时不会发送模型请求。任何案例失败都会返回非零状态；不得手动补写
+Token 或用 Mock 替代。
+
 ## 费用口径
 
 Paritok `/stats` 可能包含 `estimated_cost_saved_usd`，并可能对未知模型采用默认价格。
@@ -97,7 +123,7 @@ estimated_input_cost_saved_usd =
   本次 saved_tokens × DEEPSEEK_INPUT_CACHE_MISS_USD_PER_M / 1,000,000
 ```
 
-价格快照为 2026-07-25：cache miss 输入 `$0.14/M`、cache hit 输入 `$0.0028/M`、输出
+价格快照为 2026-07-26：cache miss 输入 `$0.14/M`、cache hit 输入 `$0.0028/M`、输出
 `$0.28/M`。金额明确标注为估算值，不是账单。
 
 ## 自动化测试

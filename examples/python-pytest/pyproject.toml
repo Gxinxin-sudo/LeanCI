@@ -1,0 +1,4 @@
+
+[tool.pytest.ini_options]
+addopts = "-vv --maxfail=1"
+testpaths = ["tests"]

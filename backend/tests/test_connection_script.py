@@ -8,6 +8,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT_PATH = PROJECT_ROOT / "scripts" / "test_deepseek_connection.py"
 PARITOK_SCRIPT_PATH = PROJECT_ROOT / "scripts" / "test_paritok_connection.py"
 LONG_REQUEST_SCRIPT_PATH = PROJECT_ROOT / "scripts" / "verify_paritok_long_request.py"
+PARITOK_START_SCRIPT_PATH = PROJECT_ROOT / "scripts" / "start_paritok.ps1"
 
 
 def run_script_with_environment(**overrides: str) -> subprocess.CompletedProcess[str]:
@@ -98,6 +99,16 @@ def test_paritok_connection_script_hides_invalid_configuration_details() -> None
         "hosted_gpu": None,
         "stats": None,
     }
+
+
+def test_paritok_start_script_fails_closed_before_launching_proxy() -> None:
+    script = PARITOK_START_SCRIPT_PATH.read_text(encoding="utf-8")
+
+    preflight = script.index("Invoke-RestMethod")
+    proxy_launch = script.index("& $ParitokExecutable proxy")
+    assert preflight < proxy_launch
+    assert "$GpuStatus.gpu_available -ne $true" in script
+    assert "The local Proxy was not started." in script
 
 
 def test_long_request_script_requires_explicit_cost_confirmation() -> None:

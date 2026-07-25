@@ -34,6 +34,15 @@ LeanCI（Token-Efficient AI Debugging for Massive CI Logs）帮助开发者诊�
 - Paritok 当前 YAML schema、Proxy CLI、health/stats 与 hosted GPU 失败透传行为已对照官方源码和本机安装包核验；
 - 无费用后端单元/条件集成测试已通过；真实 hosted GPU + DeepSeek 验证保留为 `[MANUAL]`。
 
+阶段四实现更新（2026-07-26）：
+
+- 安全输入已扩展为 4 MiB 请求体、2 MiB 日志、最多 5 个 UTF-8 文本文件；
+- 三个固定长日志案例及 `ground_truth.json` 已内置，前端可一键加载；
+- 深色开发者工作台已覆盖健康、忙碌、失败、重试、完整诊断、复制和下载报告；
+- Token 主指标仍只显示真实 `/stats` 差值；hosted GPU 不可用时 UI 明确降级且不发送分析；
+- 阶段四无费用质量门为后端 `91 passed, 2 skipped`、前端 `19 passed`，lint、
+  strict typecheck 和生产构建通过。
+
 ## 3. MVP 范围
 
 必须完成：
@@ -83,7 +92,7 @@ LeanCI（Token-Efficient AI Debugging for Massive CI Logs）帮助开发者诊�
 - Paritok 上游：`https://api.deepseek.com/chat/completions`。
 - 单实例只允许一个压缩分析进入 stats 快照区间；Uvicorn 固定一个 worker。
 - Baseline 代码隔离在 benchmark 服务，正式 `/api/analyze` 没有模式、模型或 URL 开关。
-- 当前价格快照：2026-07-25；Token 是主指标，美元估算是辅助指标。
+- 当前价格快照：2026-07-26；Token 是主指标，美元估算是辅助指标。
 
 详细数据流、接口、安全控制和故障策略见 `docs/ARCHITECTURE.md`。
 
@@ -156,4 +165,4 @@ LeanCI（Token-Efficient AI Debugging for Massive CI Logs）帮助开发者诊�
 - [DeepSeek JSON Output](https://api-docs.deepseek.com/guides/json_mode/)。
 - [DeepSeek Thinking Mode](https://api-docs.deepseek.com/guides/thinking_mode/)。
 
-文档快照日期为 2026-07-25。实现与发布前必须重新检查官方变更。
+文档与价格最近核验日期为 2026-07-26。实现与发布前必须重新检查官方变更。

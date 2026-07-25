@@ -39,6 +39,19 @@ if (-not (Test-Path -LiteralPath $ConfigFile -PathType Leaf)) {
     throw "paritok.yaml is missing."
 }
 
+$GpuStatusUrl = "https://www.paritok.com/api/test"
+try {
+    $GpuStatus = Invoke-RestMethod `
+        -Uri $GpuStatusUrl `
+        -Headers @{ Authorization = "Bearer $env:PARITOK_API_KEY" } `
+        -TimeoutSec 10
+} catch {
+    throw "Paritok hosted GPU preflight failed. The local Proxy was not started."
+}
+if ($GpuStatus.gpu_available -ne $true) {
+    throw "Paritok hosted GPU is unavailable. The local Proxy was not started."
+}
+
 & $ParitokExecutable proxy `
     --host 127.0.0.1 `
     --port 8080 `

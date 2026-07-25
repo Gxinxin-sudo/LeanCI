@@ -63,7 +63,9 @@ class MockProvider(LLMProvider):
     async def analyze(self, untrusted_context: str) -> ProviderResult:
         del untrusted_context
         mock = build_mock_analysis()
-        analysis = DiagnosticAnalysis.model_validate(mock.model_dump(exclude={"compression_stats"}))
+        analysis = DiagnosticAnalysis.model_validate(
+            mock.model_dump(exclude={"compression_stats", "analysis_time_ms"})
+        )
         return ProviderResult(
             provider="mock",
             model="mock",

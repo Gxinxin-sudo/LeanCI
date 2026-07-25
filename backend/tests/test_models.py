@@ -18,6 +18,7 @@ def test_analysis_result_rejects_unknown_fields() -> None:
                 "verification_commands": [],
                 "risks": [],
                 "missing_information": [],
+                "analysis_time_ms": 0,
                 "compression_stats": {
                     "available": False,
                     "paritok_connected": False,

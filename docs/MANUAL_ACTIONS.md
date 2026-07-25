@@ -115,6 +115,7 @@ PARITOK_API_KEY=<在本机填写，不要发送给 Codex>
 
 - [ ] 不要把 Key 写入 `paritok.yaml`。该文件只配置 `use_gpu_server: true`，运行时从环境变量读取 Key。
 - [ ] 保留 `LLM_PROVIDER=paritok` 和固定 URL，不要改成 Direct 或 Mock。
+- [ ] 将非敏感 `PRICING_SNAPSHOT_DATE` 更新为 `2026-07-26`；不要改动或输出 Key。
 - [ ] 在终端 1 启动 Paritok Proxy，并保持该终端一直打开：
 
 ```powershell
@@ -149,9 +150,41 @@ Invoke-RestMethod "http://127.0.0.1:8000/api/health"
 `estimated_cost_saved_usd` 当作 DeepSeek 账单；只使用 LeanCI 返回的带价格快照和免责声明的
 估算值。完整步骤见 `docs/PARITOK_VERIFICATION.md`。
 
+### 6. 阶段四真实三案例与录屏
+
+- [ ] 2026-07-26 自动验收时，FastAPI 的 hosted 预检成功，但既有 8080 进程的运行日志显示
+  Windows 阻止它连接 Paritok hosted 压缩端点；首个真实请求因此安全返回 502，且请求前后
+  `/stats` 仍为全 0。没有生成 `demo_result.json`，也不得把这次失败记录成 Token 成果。
+- [ ] 重新录制前，在明确允许停止既有 8080 进程后，从主机网络环境重启 Paritok Proxy；
+  重启后必须同时验证本地 `/health`、hosted GPU 预检与 `/stats`，不能只看本地 health。
+- [ ] 先确认页面 Formal route status 的 FastAPI、Paritok、Hosted GPU 均健康。若 hosted GPU
+  显示 unavailable，停止操作并稍后重试；不要把本地 Proxy health 当成正式成功。
+- [ ] 确认 DeepSeek 余额可承担三次分析后，从仓库根目录分别显式执行；每条命令只运行
+  一个案例，最长等待约 110 秒：
+
+```powershell
+.\backend\.venv\Scripts\python.exe scripts\run_demo_samples.py --confirm-cost --sample python-pytest
+.\backend\.venv\Scripts\python.exe scripts\run_demo_samples.py --confirm-cost --sample typescript-build
+.\backend\.venv\Scripts\python.exe scripts\run_demo_samples.py --confirm-cost --sample docker-build
+```
+
+- [ ] 检查三行结果都是 `status=success`，且每个 `original_tokens > 5000`。
+- [ ] 不接受 Mock、字符估算或 Paritok 的 `estimated_cost_saved_usd` 作为结果。
+- [ ] 打开以下保存的真实运行状态并准备截图：
+
+```text
+http://127.0.0.1:5173/?capture=python-pytest
+http://127.0.0.1:5173/?capture=typescript-build
+http://127.0.0.1:5173/?capture=docker-build
+```
+
+- [ ] 录制时先展示首页价值和健康状态，再点一个 Sample、点 `Analyze failure`，首先停留在
+  `Tokens Saved`，然后滚动展示 Root Cause、Evidence、Patch 和 Download Report。
+- [ ] 截图和视频中不得出现 `.env`、终端环境变量、API Key、请求头或平台密钥页面。
+
 ## 发布阶段需要
 
-### 6. 创建公开 GitHub 仓库
+### 7. 创建公开 GitHub 仓库
 
 - [ ] 登录 [GitHub](https://github.com/new)。
 - [ ] Repository name 填写 `LeanCI`。
@@ -167,7 +200,7 @@ git push -u origin main
 
 - [ ] 刷新 GitHub 页面，确认 `README.md`、`LICENSE` 和源代码可公开访问，且没有 `.env` 或密钥。
 
-### 7. 选择并配置 Docker 托管平台
+### 8. 选择并配置 Docker 托管平台
 
 - [ ] 在 Docker MVP 通过后选择支持单容器、平台 `PORT` 和环境变量的托管平台。
 - [ ] 在平台网页中添加 `DEEPSEEK_API_KEY`、`PARITOK_API_KEY` 和 README 列出的非敏感配置。
@@ -178,7 +211,7 @@ git push -u origin main
 
 具体平台与点击步骤将在选择平台后补充，本阶段不假定某一家服务。
 
-### 8. 准备并提交 Devpost 材料
+### 9. 准备并提交 Devpost 材料
 
 - [ ] 创建清晰的项目一句话说明和完整描述。
 - [ ] 录制日志输入、结构化诊断、Diff、Token 面板和 benchmark 的演示。

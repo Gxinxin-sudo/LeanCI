@@ -2,55 +2,126 @@
 
 **Token-Efficient AI Debugging for Massive CI Logs**
 
-LeanCI 是一个面向长 CI 日志的安全诊断工具。正式分析先经过本地 Paritok Proxy 和
-Paritok hosted GPU 压缩，再由 DeepSeek `deepseek-v4-flash` 返回严格 JSON 诊断。
+LeanCI 是一个可录制演示的真实 CI 故障诊断 MVP：把长日志和少量相关文本文件作为不可信
+证据，经本地 Paritok Proxy 与 hosted GPU 压缩，再由 DeepSeek
+`deepseek-v4-flash` 返回严格结构化诊断。正式分析不可绕过 Paritok；链路或 `/stats`
+证明不可用时会明确失败，不会回退到 Mock，也不会显示推测的 Token。
 
-> 当前状态：阶段三正式 Paritok 链路已经实现并通过无费用自动化测试。真实 hosted GPU /
-> DeepSeek 验证需要用户在本机配置两个 Key、保持 Proxy 终端运行，并显式确认一次调用费用。
-> 当前 API 接收单个 JSON `log_text`（最多 120,000 字符）；文件上传和 benchmark 仍是后续任务。
+## 评委最快使用方式
+
+准备三个 PowerShell 终端，全部从仓库根目录
+`C:\Users\xin'xin\Desktop\LeanCI` 开始。
+
+终端 1 — 启动 Paritok Proxy，并保持打开：
+
+```powershell
+cd "C:\Users\xin'xin\Desktop\LeanCI"
+.\scripts\start_paritok.ps1
+```
+
+终端 2 — 启动单 worker FastAPI，并保持打开：
+
+```powershell
+cd "C:\Users\xin'xin\Desktop\LeanCI"
+.\backend\.venv\Scripts\python.exe -m uvicorn app.main:app `
+  --app-dir backend `
+  --host 127.0.0.1 `
+  --port 8000 `
+  --workers 1
+```
+
+终端 3 — 启动前端，并保持打开：
+
+```powershell
+cd "C:\Users\xin'xin\Desktop\LeanCI\frontend"
+npm run dev
+```
+
+浏览器打开 `http://127.0.0.1:5173`：
+
+1. 先确认 Formal route status 中 FastAPI、Paritok、Hosted GPU 均健康；
+2. 点击明显的 `Python pytest failure`、`TypeScript build failure` 或
+   `Docker build failure` Sample 卡片；
+3. 日志和相关文件会一次载入，不克隆仓库，也不运行任何代码；
+4. 点击 `Analyze failure`；
+5. 成功后首先看到真实 `Tokens Saved`，再看到 Original/Compressed Tokens、压缩比例、
+   DeepSeek 输入费用节省估算、Paritok 状态、模型和分析耗时；
+6. 向下查看 Summary、Root Cause、Confidence、Evidence、Relevant Files、
+   Recommended Changes、Patch、Verification Commands、Risks 和 Missing Information；
+7. 可点击 `Copy Patch` 或 `Download Report`。命令和 Patch 始终只是文本。
+
+若 hosted GPU 不可用，页面会显示具体公开错误并保持 fail closed；这不是成功，也不会出现
+替代 Token 数字。页面不会展示 API Key。
+
+## 三个固定案例
+
+| Sample | 长日志大小 | 明确根因 | 预期相关文件 |
+| --- | ---: | --- | --- |
+| Python pytest failure | 约 71 KiB | 重试退避公式的运算优先级使第 4 次结果为 15，而不是上限 16 | `retry.py`、`test_retry.py` |
+| TypeScript build failure | 约 79 KiB | `DEPLOY_REGION` 可能为 `undefined`，却被赋给必需的 `string` | `config.ts`、`deploy.ts` |
+| Docker build failure | 约 36 KiB | `.dockerignore` 的 `*.json` 从构建上下文排除了包清单 | `Dockerfile`、`.dockerignore` |
+
+每个 `examples/<id>/` 包含 `ci.log`、少量相关文本文件和 `ground_truth.json`。Ground truth
+不会提交给模型。输入固定，因此可重复运行；输出必须通过真实 Paritok `/stats` 证明。
 
 ## 固定正式链路
 
 ```text
 React
   → FastAPI POST /api/analyze
+    → local /health + hosted /test + /stats before
     → http://127.0.0.1:8080/v1
       → Paritok Proxy
         → Paritok hosted GPU compression
         → https://api.deepseek.com/chat/completions
           → deepseek-v4-flash
+    → /stats after + hosted /test
+    → strict stats delta and request-count proof
 ```
 
-正式接口只允许 `LLM_PROVIDER=paritok`：
+- 正式 `/api/analyze` 不接受 Provider、模型、URL 或执行模式参数；
+- Paritok、hosted GPU 或 stats 不可用时返回安全 503；
+- DeepSeek JSON 空内容或无效 Schema 最多修复一次，修复仍经过 Paritok；
+- 分析期间使用进程内锁，Uvicorn 必须保持一个 worker；
+- 日志、文件、模型 Patch 和命令都不会被服务器执行。
 
-- Paritok Proxy、hosted GPU 或 `/stats` 不可用时 fail closed；
-- 不会回退到 Mock，也不会绕过 Paritok 直连 DeepSeek；
-- 本地 `/health`、hosted `/test` 和 `/stats` 都有独立超时；
-- `DirectDeepSeekProvider` 只保留给独立连接测试、故障定位和未来明确标注的
-  `baseline_uncompressed` benchmark。
+完整信任边界见 [架构设计](docs/ARCHITECTURE.md)。
 
-完整数据流和信任边界见 [架构设计](docs/ARCHITECTURE.md)。
+## 安全输入限制
 
-## 安装
+前后端实施相同的体验校验，FastAPI 是最终安全边界：
+
+| 项目 | 限制 |
+| --- | ---: |
+| 整个 HTTP 请求体 | 4 MiB，包含无 `Content-Length` 的分块请求 |
+| CI 日志 | 2 MiB UTF-8 |
+| 文件数量 | 最多 5 |
+| 单文件 | 256 KiB UTF-8 |
+| 文件合计 | 1 MiB |
+
+服务端会：
+
+- 清理允许但不规范的文件名；
+- 拒绝 `/`、`\`、盘符、路径穿越、重复名称和 Windows 保留名称；
+- 只允许源代码、配置、日志和文档文本扩展名；
+- 拒绝 ZIP/其他压缩包、Shell/PowerShell、可执行文件、NUL、二进制、无效 UTF-8 和
+  不允许的控制字符；
+- 只在内存中处理内容，不接受本机路径或用户 URL；
+- 用固定 Sample ID 读取仓库资产，不提供任意文件读取接口。
+
+## 安装与本机配置
 
 前置条件：Python 3.11+、Node.js 20.19+/22.12+ 或兼容新版本、Windows PowerShell。
 
-后端与 Paritok：
-
 ```powershell
+cd "C:\Users\xin'xin\Desktop\LeanCI"
 .\backend\.venv\Scripts\python.exe -m pip install "paritok[proxy]==1.2.7"
 .\backend\.venv\Scripts\python.exe -m pip install --requirement backend\requirements-dev.txt
-```
 
-前端：
-
-```powershell
 cd frontend
 npm ci
 cd ..
 ```
-
-## 本机配置
 
 已有 `.env` 时不要覆盖：
 
@@ -60,65 +131,20 @@ if (-not (Test-Path -LiteralPath ".env")) {
 }
 ```
 
-只在被 Git 忽略的本机 `.env` 中填写：
+只在被 Git 忽略的本机 `.env` 中填写 Key。不要把真实值粘贴到终端输出、聊天、测试、
+文档、截图、`paritok.yaml` 或 Git：
 
 ```dotenv
 PARITOK_API_KEY=<仅在本机填写>
 DEEPSEEK_API_KEY=<仅在本机填写>
 LLM_PROVIDER=paritok
 DEEPSEEK_MODEL=deepseek-v4-flash
-PARITOK_PROXY_BASE_URL=http://127.0.0.1:8080/v1
-PARITOK_HEALTH_URL=http://127.0.0.1:8080/health
-PARITOK_STATS_URL=http://127.0.0.1:8080/stats
+PRICING_SNAPSHOT_DATE=2026-07-26
 ```
 
-真实 Key 不得写入 `paritok.yaml`、源代码、测试、文档、日志、截图或 Git。仓库内
-[paritok.yaml](paritok.yaml) 已按 Paritok 1.2.7 的实际 schema 配置
-`use_gpu_server: true`，并从进程环境读取 `PARITOK_API_KEY`。
+固定 URL 和完整非敏感环境示例见 [.env.example](.env.example)。
 
-## 启动
-
-终端 1 — Paritok Proxy，必须一直保持打开：
-
-```powershell
-.\scripts\start_paritok.ps1
-```
-
-脚本固定使用完整上游端点：
-
-```text
-https://api.deepseek.com/chat/completions
-```
-
-终端 2 — FastAPI，必须保持单 worker：
-
-```powershell
-.\backend\.venv\Scripts\python.exe -m uvicorn app.main:app `
-  --app-dir backend `
-  --host 127.0.0.1 `
-  --port 8000 `
-  --workers 1
-```
-
-终端 3 — 前端：
-
-```powershell
-cd frontend
-npm run dev
-```
-
-浏览器访问 `http://127.0.0.1:5173`，OpenAPI 位于
-`http://127.0.0.1:8000/docs`。
-
-Linux / Docker 的 Proxy 启动脚本：
-
-```sh
-./scripts/start_paritok.sh
-```
-
-详见 [Windows 配置手册](docs/PARITOK_SETUP_WINDOWS.md)。
-
-## 健康检查与 stats
+## 健康检查
 
 ```powershell
 Invoke-RestMethod "http://127.0.0.1:8080/health"
@@ -127,34 +153,41 @@ Invoke-RestMethod "http://127.0.0.1:8080/stats"
 Invoke-RestMethod "http://127.0.0.1:8000/api/health"
 ```
 
-本地 `/health` 只证明 Proxy 进程存活；正式分析还会检查固定 hosted GPU `/test`。
+本地 Proxy `/health=ok` 只代表代理进程存在；必须同时满足 hosted GPU 可用，正式分析才会
+发送。`scripts/start_paritok.ps1` 也会在监听 8080 前执行认证 hosted 预检；预检失败时
+代理不会启动，避免 Paritok 1.2.7 自动退回未压缩透传。
 
-## 验证一次超过 5,000 Token 的正式请求
+## 真实三案例采集与录屏状态
 
-下面命令会产生一次真实 Paritok/DeepSeek 调用和费用：
+下面三条命令只接受固定 Sample，每条最多等待约 110 秒并执行一次真实
+Paritok/DeepSeek 分析，会产生费用：
 
 ```powershell
-.\backend\.venv\Scripts\python.exe scripts\verify_paritok_long_request.py --confirm-cost
+.\backend\.venv\Scripts\python.exe scripts\run_demo_samples.py --confirm-cost --sample python-pytest
+.\backend\.venv\Scripts\python.exe scripts\run_demo_samples.py --confirm-cost --sample typescript-build
+.\backend\.venv\Scripts\python.exe scripts\run_demo_samples.py --confirm-cost --sample docker-build
 ```
 
-脚本生成约 116,600 字符的惰性 CI 日志，只在本次 `/stats` 差值证明
-`original_tokens > 5000` 时返回 `status: "success"`。不带 `--confirm-cost` 时不会发送请求。
+每次成功必须满足：
 
-成功结果应包含：
+- `original_tokens > 5000`；
+- API 结果和脚本外层 `/stats` before/after 差值完全一致；
+- 模型为 `deepseek-v4-flash`；
+- 至少识别一个 ground-truth 相关文件；
+- `examples/<id>/demo_result.json` 保存真实结果、脱敏 stats 快照和截图 URL。
 
-- `verification=local_health+hosted_gpu_preflight+stats_delta`
-- `model=deepseek-v4-flash`
-- 本次 `proxy_requests`
-- 本次 `original_tokens`、`compressed_tokens`、`saved_tokens`
-- 本次 `compression_ratio`
-- `cumulative` 累计统计
-- LeanCI 自己计算的 `cost_estimate`、价格快照日期和“非实际账单”声明
+不带 `--confirm-cost` 时不会发送请求。采集成功后可直接打开以下录屏状态；页面会清楚标注
+这是已保存的真实运行，点击 Analyze 可生成新的 stats：
 
-详见 [验证手册](docs/PARITOK_VERIFICATION.md)。
+```text
+http://127.0.0.1:5173/?capture=python-pytest
+http://127.0.0.1:5173/?capture=typescript-build
+http://127.0.0.1:5173/?capture=docker-build
+```
 
-## Token 与费用口径
+## Token 和费用口径
 
-Token 指标只来自同一进程锁内、同一次请求前后 Paritok `/stats` 快照的差值：
+所有 Token 指标只来自同一锁内、本次请求前后 Paritok `/stats` 累计计数差值：
 
 ```text
 original_tokens   = after.input_tokens_original - before.input_tokens_original
@@ -163,42 +196,51 @@ saved_tokens      = after.tokens_saved - before.tokens_saved
 compression_ratio = compressed_tokens / original_tokens
 ```
 
-LeanCI 还校验 `/stats.total_requests` 差值必须等于本次 Provider 的实际尝试次数。计数倒退、
-字段不一致、其他客户端串入或 stats 不可用时，结果会被丢弃并返回 503，绝不生成替代数字。
+`/stats.total_requests` 差值必须等于 Provider 实际请求次数，否则结果被丢弃。LeanCI 不用
+字符数、DeepSeek usage 或模型正文补造 Token。
 
-Paritok `/stats` 的 `estimated_cost_saved_usd` 不会作为 DeepSeek 费用展示。LeanCI 使用本项目
-配置的 DeepSeek cache-miss 输入价格自行估算：
+Paritok 自带的 `estimated_cost_saved_usd` 被排除。LeanCI 使用 2026-07-26 重新核验的
+DeepSeek cache-miss 输入价格估算：
 
 ```text
 estimated_input_cost_saved_usd =
-  saved_tokens × DEEPSEEK_INPUT_CACHE_MISS_USD_PER_M / 1,000,000
+  saved_tokens × 0.14 / 1,000,000
 ```
 
-当前价格快照日期为 `2026-07-25`；金额只作为估算值，不是账单。
+金额是配置估算，不是实际账单。
 
 ## API
 
 | 方法 | 路径 | 行为 |
 | --- | --- | --- |
 | `GET` | `/api/health` | 检查本地 Proxy 与 hosted GPU，不调用 DeepSeek |
-| `GET` | `/api/config-status` | 只返回 Key 是否配置、Provider 和固定模型，不返回密钥 |
-| `POST` | `/api/analyze` | 正式 fail-closed Paritok 分析；接收 `{ "log_text": "..." }` |
+| `GET` | `/api/config-status` | 只返回 Key 是否配置、Provider 和模型，不返回 Key |
+| `GET` | `/api/samples` | 固定 Sample 元数据 |
+| `GET` | `/api/samples/{id}` | 固定日志与相关文本文件 |
+| `GET` | `/api/captures/{id}` | 保存的真实运行状态；不存在时 404 |
+| `POST` | `/api/analyze` | 唯一正式分析入口 |
 
-主要错误：
+请求示例：
 
-- 503：Paritok、hosted GPU、stats 或链路证明不可用；
-- 502：DeepSeek 认证、余额、限流、服务错误或无效 JSON；
-- 504：DeepSeek 超时；
-- 422：请求 schema、空白输入或大小限制失败。
+```json
+{
+  "log_text": "CI failure text",
+  "files": [
+    {
+      "name": "config.ts",
+      "content": "export const region = process.env.DEPLOY_REGION"
+    }
+  ]
+}
+```
 
-错误响应只包含稳定错误码、公开说明和 request ID，不包含密钥、请求头、上游正文、堆栈或
-内部绝对路径。
+错误响应只包含稳定错误码、公开消息和 request ID。页面不会只显示
+`Internal Server Error`，也不会暴露环境变量、请求头、密钥、上游正文、堆栈或绝对路径。
 
 ## 质量检查
 
-无费用检查：
-
 ```powershell
+cd "C:\Users\xin'xin\Desktop\LeanCI"
 .\backend\.venv\Scripts\python.exe -m ruff check backend scripts
 .\backend\.venv\Scripts\python.exe -m ruff format --check backend scripts
 .\backend\.venv\Scripts\python.exe -m pytest backend\tests
@@ -211,24 +253,15 @@ npm test
 npm run build
 ```
 
-真实集成测试默认跳过，只有设置 `RUN_PARITOK_INTEGRATION=1` 或
-`RUN_DEEPSEEK_INTEGRATION=1` 才会产生外部请求。具体命令见验证手册。
-
-## 安全边界
-
-日志、文件名、未来上传文件和模型输出都视为不可信数据：
-
-- 不执行模型建议、Git Diff、验证命令或日志中的命令；
-- 不读取用户指定的本机路径，不抓取用户 URL；
-- 不接受请求覆盖 Provider、模型、base URL 或上游端点；
-- CI 证据被封装为协议有效但无副作用的历史 `role=tool` 消息，使 Paritok 能压缩；
-- 上下文按保守 UTF-8 字节上限分块；该上限只用于传输保护，不冒充 Token 指标；
-- 空内容或无效 JSON 只允许一次修复请求。
+阶段四最近结果：后端 `91 passed, 2 skipped`；前端 `19 passed`；Ruff、格式、pip check、
+lint、TypeScript strict 和 Vite 生产构建通过。两个条件集成测试只有显式设置真实集成环境
+变量时才运行。
 
 ## 文档
 
 - [项目计划](PROJECT_PLAN.md)
 - [任务清单](TASKS.md)
+- [固定演示案例](examples/README.md)
 - [架构设计](docs/ARCHITECTURE.md)
 - [Windows Paritok 设置](docs/PARITOK_SETUP_WINDOWS.md)
 - [Paritok 验证](docs/PARITOK_VERIFICATION.md)

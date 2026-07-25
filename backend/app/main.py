@@ -7,15 +7,27 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.analysis import AnalysisService
+from app.body_limit import RequestBodyLimitMiddleware
 from app.config import Settings, get_settings
 from app.errors import AppError, attach_request_id, error_responses, register_error_handlers
 from app.models import (
+    MAX_REQUEST_BYTES,
     AnalysisResult,
     AnalyzeRequest,
+    CapturedSampleResult,
     ConfigStatusResponse,
     HealthResponse,
+    SamplePayload,
+    SampleSummary,
 )
 from app.paritok import ParitokClient
+from app.samples import (
+    SampleCaptureNotFoundError,
+    SampleNotFoundError,
+    list_samples,
+    load_sample,
+    load_sample_capture,
+)
 
 
 def create_app(
@@ -48,6 +60,10 @@ def create_app(
     )
     application.middleware("http")(attach_request_id)
     application.add_middleware(
+        RequestBodyLimitMiddleware,
+        max_body_bytes=MAX_REQUEST_BYTES,
+    )
+    application.add_middleware(
         CORSMiddleware,
         allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],
         allow_credentials=False,
@@ -69,6 +85,35 @@ def create_app(
             model=active_settings.deepseek_model,
         )
 
+    @application.get("/api/samples", response_model=list[SampleSummary])
+    async def samples() -> list[SampleSummary]:
+        return list_samples()
+
+    @application.get("/api/samples/{sample_id}", response_model=SamplePayload)
+    async def sample(sample_id: str) -> SamplePayload:
+        try:
+            return load_sample(sample_id)
+        except SampleNotFoundError as exc:
+            raise AppError(
+                status_code=404,
+                code="SAMPLE_NOT_FOUND",
+                message="The requested bundled sample does not exist.",
+            ) from exc
+
+    @application.get(
+        "/api/captures/{sample_id}",
+        response_model=CapturedSampleResult,
+    )
+    async def capture(sample_id: str) -> CapturedSampleResult:
+        try:
+            return load_sample_capture(sample_id)
+        except (SampleNotFoundError, SampleCaptureNotFoundError) as exc:
+            raise AppError(
+                status_code=404,
+                code="CAPTURE_NOT_FOUND",
+                message="No saved real-run capture exists for this sample.",
+            ) from exc
+
     @application.post(
         "/api/analyze",
         response_model=AnalysisResult,
@@ -87,7 +132,7 @@ def create_app(
                 code="LOG_TOO_LARGE",
                 message="The CI log exceeds the configured character limit.",
             )
-        return await analysis_service.analyze(payload.log_text)
+        return await analysis_service.analyze(payload.to_untrusted_context())
 
     return application
 

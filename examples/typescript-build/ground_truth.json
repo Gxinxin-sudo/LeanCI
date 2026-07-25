@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "sample_id": "typescript-build",
+  "root_cause": "DEPLOY_REGION is string | undefined, but loadConfig promises AppConfig with a required string region.",
+  "expected_relevant_files": [
+    "config.ts",
+    "deploy.ts",
+    "tsconfig.json"
+  ],
+  "expected_fix_direction": [
+    "Validate DEPLOY_REGION once at configuration startup.",
+    "Throw a clear configuration error or provide an intentional default."
+  ],
+  "expected_patch_contains": [
+    "const region = process.env.DEPLOY_REGION"
+  ],
+  "minimum_original_tokens": 5000
+}

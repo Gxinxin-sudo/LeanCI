@@ -2,95 +2,111 @@ import type { CompressionStats } from '../types/api'
 
 interface TokenPanelProps {
   stats?: CompressionStats
+  analysisTimeMs?: number
   loading: boolean
 }
 
-const tokenMetrics = [
-  { label: 'Original', key: 'original_tokens' },
-  { label: 'Compressed', key: 'compressed_tokens' },
-  { label: 'Saved', key: 'saved_tokens' },
-] as const
+function valueOrDash(value: number | null | undefined): string {
+  return value === null || value === undefined ? '—' : value.toLocaleString('en-US')
+}
 
-export function TokenPanel({ stats, loading }: TokenPanelProps) {
+export function TokenPanel({ stats, analysisTimeMs, loading }: TokenPanelProps) {
   const verified = stats?.available === true
-  const ratio = verified ? `${(stats.compression_ratio * 100).toFixed(1)}%` : '—'
+  const compressedPercent = verified ? stats.compression_ratio * 100 : 0
+  const savedPercent = verified ? Math.max(0, 100 - compressedPercent) : 0
 
   return (
-    <section className="border border-line bg-panel" aria-labelledby="token-panel-title">
-      <div className="flex items-center justify-between border-b border-line px-5 py-4">
+    <section className="telemetry-panel" aria-labelledby="token-panel-title">
+      <div className="telemetry-heading">
         <div>
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-muted">
-            {verified ? 'Telemetry / verified' : 'Telemetry / awaiting request'}
-          </p>
-          <h2 id="token-panel-title" className="mt-1 font-display text-lg font-semibold text-white">
-            Token panel
-          </h2>
+          <p className="eyebrow">{verified ? 'Verified request delta' : 'Awaiting real stats'}</p>
+          <h2 id="token-panel-title">Token savings</h2>
         </div>
-        <span
-          className={`status-dot ${verified ? 'status-dot-online' : 'status-dot-offline'}`}
-          aria-hidden="true"
-        />
+        <span className={`route-badge ${verified ? 'route-badge-ok' : ''}`}>
+          {verified ? 'Paritok verified' : 'No result'}
+        </span>
       </div>
 
-      <div className="grid grid-cols-3 divide-x divide-line">
-        {tokenMetrics.map((metric) => (
-          <div className="px-4 py-5" key={metric.key}>
-            <p className="font-mono text-[0.65rem] uppercase tracking-[0.16em] text-muted">
-              {metric.label}
-            </p>
-            <p className="mt-3 font-mono text-2xl text-fog" aria-label={`${metric.label} tokens`}>
-              {loading ? '···' : (stats?.[metric.key] ?? '—')}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-2 border-t border-line">
-        <div className="border-r border-line px-4 py-4">
-          <p className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">
-            Compressed / original
-          </p>
-          <p className="mt-2 font-mono text-lg text-signal">{loading ? '···' : ratio}</p>
-        </div>
-        <div className="px-4 py-4">
-          <p className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-muted">
-            Proxy requests
-          </p>
-          <p className="mt-2 font-mono text-lg text-fog">
-            {loading ? '···' : verified ? stats.proxy_requests : '—'}
+      <div className="saved-readout">
+        <div>
+          <p className="metric-label">Tokens Saved</p>
+          <p className="saved-number">
+            {loading ? '···' : valueOrDash(stats?.saved_tokens)}
           </p>
         </div>
+        <p className="saved-percent">{verified ? `${savedPercent.toFixed(1)}% less input` : '—'}</p>
       </div>
 
-      <div
-        className={`border-t px-5 py-4 ${
-          verified ? 'border-signal/30 bg-signal/8' : 'border-fault/30 bg-fault/8'
-        }`}
-      >
-        <p className={`flex items-start gap-3 text-xs leading-5 ${verified ? 'text-fog' : 'text-fault-soft'}`}>
+      <div className="compression-lane" aria-label="Original to compressed token flow">
+        <div className="compression-lane-labels">
+          <span>Original Tokens</span>
+          <span>Compressed Tokens</span>
+        </div>
+        <div className="compression-lane-track">
+          <span className="compression-lane-original" />
           <span
-            className={`mt-1 h-1.5 w-1.5 shrink-0 ${verified ? 'bg-signal' : 'bg-fault'}`}
-            aria-hidden="true"
+            className="compression-lane-compressed"
+            style={{ width: verified ? `${Math.max(compressedPercent, 2)}%` : '0%' }}
           />
-          {stats?.message ?? 'Run an analysis to read a verified Paritok stats delta.'}
-        </p>
-        {verified ? (
-          <>
-            <p className="mt-2 pl-4 text-xs leading-5 text-muted">
-              Cumulative: {stats.cumulative.total_requests.toLocaleString('en-US')} requests ·{' '}
-              {stats.cumulative.tokens_saved.toLocaleString('en-US')} tokens saved.
+        </div>
+        <div className="compression-lane-values">
+          <strong>{loading ? '···' : valueOrDash(stats?.original_tokens)}</strong>
+          <strong>{loading ? '···' : valueOrDash(stats?.compressed_tokens)}</strong>
+        </div>
+      </div>
+
+      <dl className="telemetry-grid">
+        <div>
+          <dt>Compression Ratio</dt>
+          <dd>{loading ? '···' : verified ? `${compressedPercent.toFixed(1)}%` : '—'}</dd>
+        </div>
+        <div>
+          <dt>Estimated DeepSeek Input Cost Saved</dt>
+          <dd>
+            {loading
+              ? '···'
+              : verified
+                ? `$${stats.cost_estimate.estimated_input_cost_saved_usd.toFixed(8)}`
+                : '—'}
+          </dd>
+        </div>
+        <div>
+          <dt>Paritok Status</dt>
+          <dd className={verified ? 'text-ok' : undefined}>
+            {verified ? `Verified · ${stats.proxy_requests} request` : 'Not verified'}
+          </dd>
+        </div>
+        <div>
+          <dt>DeepSeek Model</dt>
+          <dd>{verified ? stats.model : 'deepseek-v4-flash'}</dd>
+        </div>
+        <div>
+          <dt>Analysis Time</dt>
+          <dd>
+            {loading
+              ? '···'
+              : analysisTimeMs === undefined
+                ? '—'
+                : `${(analysisTimeMs / 1000).toFixed(2)} s`}
+          </dd>
+        </div>
+        <div>
+          <dt>Stats proof</dt>
+          <dd>{verified ? stats.verification.replaceAll('_', ' ') : '—'}</dd>
+        </div>
+      </dl>
+
+      <div className={`telemetry-note ${verified ? 'telemetry-note-ok' : ''}`}>
+        <span aria-hidden="true" />
+        <div>
+          <p>{stats?.message ?? 'Run an analysis to read a real Paritok /stats delta.'}</p>
+          {verified && (
+            <p className="telemetry-disclaimer">
+              Price snapshot {stats.cost_estimate.pricing_snapshot_date}. Estimate only,
+              not an actual bill. Cumulative proxy total: {stats.cumulative.total_requests.toLocaleString('en-US')} requests.
             </p>
-            <p className="mt-2 pl-4 text-xs leading-5 text-muted">
-              LeanCI estimate: ${stats.cost_estimate.estimated_input_cost_saved_usd.toFixed(8)}
-              {' · '}DeepSeek cache-miss price snapshot {stats.cost_estimate.pricing_snapshot_date}.
-              Not an actual bill.
-            </p>
-          </>
-        ) : (
-          <p className="mt-2 pl-4 text-xs leading-5 text-muted">
-            Token values are never inferred when stats are unavailable.
-          </p>
-        )}
+          )}
+        </div>
       </div>
     </section>
   )

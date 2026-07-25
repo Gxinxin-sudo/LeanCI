@@ -1,3 +1,8 @@
+export interface UploadedTextFile {
+  name: string
+  content: string
+}
+
 export interface EvidenceItem {
   source: string
   line_start: number | null
@@ -61,6 +66,41 @@ export interface AnalysisResult {
   risks: string[]
   missing_information: string[]
   compression_stats: CompressionStats
+  analysis_time_ms: number
+}
+
+export interface HealthResponse {
+  status: 'ok' | 'degraded'
+  service: 'leanci-api'
+  mode: 'paritok'
+  paritok_connected: boolean
+  hosted_gpu_available: boolean
+  proxy_version: string | null
+  model: 'deepseek-v4-flash'
+  deepseek_called: false
+  message: string
+}
+
+export interface SampleSummary {
+  id: string
+  title: string
+  category: 'Python' | 'TypeScript' | 'Docker'
+  description: string
+  log_bytes: number
+  file_count: number
+}
+
+export interface SamplePayload extends SampleSummary {
+  log_text: string
+  files: UploadedTextFile[]
+}
+
+export interface CapturedSampleResult {
+  schema_version: 1
+  sample_id: string
+  captured_at: string
+  capture_kind: 'real_paritok_stats_delta'
+  analysis_result: AnalysisResult
 }
 
 export interface ApiErrorEnvelope {

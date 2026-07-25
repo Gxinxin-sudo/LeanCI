@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "sample_id": "docker-build",
+  "root_cause": "The *.json rule in .dockerignore removes package.json and package-lock.json from the build context before COPY runs.",
+  "expected_relevant_files": [
+    "Dockerfile",
+    ".dockerignore"
+  ],
+  "expected_fix_direction": [
+    "Replace the broad *.json ignore rule with targeted generated-file rules.",
+    "Alternatively add explicit !package.json and !package-lock.json exceptions."
+  ],
+  "expected_patch_contains": [
+    "!package.json",
+    "!package-lock.json"
+  ],
+  "minimum_original_tokens": 5000
+}

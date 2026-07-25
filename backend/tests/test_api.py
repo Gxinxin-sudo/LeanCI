@@ -7,6 +7,7 @@ from app.errors import AppError
 from app.main import create_app
 from app.models import (
     MAX_LOG_CHARACTERS,
+    MAX_REQUEST_BYTES,
     AnalysisResult,
     CumulativeParitokStats,
     DeepSeekCostEstimate,
@@ -36,6 +37,7 @@ def build_result() -> AnalysisResult:
         verification_commands=["npm run typecheck"],
         risks=["Deployment configuration may be incomplete."],
         missing_information=["The deployment environment was not supplied."],
+        analysis_time_ms=1324,
         compression_stats=VerifiedCompressionStats(
             proxy_version="1.0.0",
             model="deepseek-v4-flash",
@@ -55,7 +57,7 @@ def build_result() -> AnalysisResult:
             cost_estimate=DeepSeekCostEstimate(
                 estimated_input_cost_saved_usd=0.00084,
                 input_cache_miss_usd_per_m_tokens=0.14,
-                pricing_snapshot_date="2026-07-25",
+                pricing_snapshot_date="2026-07-26",
             ),
         ),
     )
@@ -145,7 +147,9 @@ def test_formal_analysis_returns_verified_request_and_cumulative_stats() -> None
 
     assert response.status_code == 200
     result = response.json()
-    assert service.inputs == ["src/services/report.ts:42: type error"]
+    assert len(service.inputs) == 1
+    assert '<CI_LOG source="ci.log">' in service.inputs[0]
+    assert "src/services/report.ts:42: type error" in service.inputs[0]
     assert result["compression_stats"]["available"] is True
     assert result["compression_stats"]["verification"] == (
         "local_health+hosted_gpu_preflight+stats_delta"
@@ -155,7 +159,8 @@ def test_formal_analysis_returns_verified_request_and_cumulative_stats() -> None
     assert result["compression_stats"]["saved_tokens"] == 6000
     assert result["compression_stats"]["cumulative"]["total_requests"] == 12
     assert "estimated_cost_saved_usd" not in result["compression_stats"]["cumulative"]
-    assert result["compression_stats"]["cost_estimate"]["pricing_snapshot_date"] == "2026-07-25"
+    assert result["compression_stats"]["cost_estimate"]["pricing_snapshot_date"] == "2026-07-26"
+    assert result["analysis_time_ms"] == 1324
 
 
 def test_whitespace_log_uses_unified_error_response() -> None:
@@ -182,6 +187,51 @@ def test_configured_log_limit_is_enforced_server_side() -> None:
 
     assert response.status_code == 413
     assert response.json()["error"]["code"] == "LOG_TOO_LARGE"
+
+
+def test_request_body_hard_limit_is_enforced_before_json_parsing() -> None:
+    response = make_client().post(
+        "/api/analyze",
+        content=b"x" * (MAX_REQUEST_BYTES + 1),
+        headers={"Content-Type": "application/json"},
+    )
+
+    assert response.status_code == 413
+    assert response.json()["error"]["code"] == "REQUEST_TOO_LARGE"
+    assert response.json()["error"]["message"] == "The request body exceeds the 4 MiB limit."
+
+
+def test_uploaded_files_are_wrapped_as_untrusted_context() -> None:
+    service = FakeAnalysisService()
+    response = make_client(service=service).post(
+        "/api/analyze",
+        json={
+            "log_text": "pytest failed",
+            "files": [{"name": " retry config.py ", "content": "MAX_RETRIES = 3\n"}],
+        },
+    )
+
+    assert response.status_code == 200
+    assert 'name="retry_config.py"' in service.inputs[0]
+    assert "MAX_RETRIES = 3" in service.inputs[0]
+
+
+def test_bundled_sample_api_uses_fixed_ids() -> None:
+    client = make_client()
+    listing = client.get("/api/samples")
+    sample = client.get("/api/samples/python-pytest")
+    traversal = client.get("/api/samples/..%2F.env")
+
+    assert listing.status_code == 200
+    assert [item["id"] for item in listing.json()] == [
+        "python-pytest",
+        "typescript-build",
+        "docker-build",
+    ]
+    assert sample.status_code == 200
+    assert sample.json()["log_bytes"] > 30_000
+    assert len(sample.json()["files"]) == 3
+    assert traversal.status_code in {404, 422}
 
 
 def test_paritok_failure_is_returned_as_503_without_internal_details() -> None:

@@ -1,7 +1,7 @@
 # LeanCI 架构设计
 
 状态：阶段三正式 Paritok hosted GPU → DeepSeek 链路已实现
-快照日期：2026-07-25
+快照日期：2026-07-26
 
 ## 1. 正式请求路径
 
@@ -35,15 +35,21 @@ flowchart LR
 
 ### React
 
-- 提交当前 JSON `log_text` 请求；
-- 展示结构化诊断、本次 Token 指标、累计统计、模型与状态；
+- 本地预检 2 MiB 日志和最多 5 个 UTF-8 文本文件；
+- 通过固定 ID 一次载入三个仓库内 Sample，不接受文件路径；
+- 提交 JSON `log_text` 与内存中的 `files[{name, content}]`；
+- 展示结构化诊断、本次 Token 指标、累计统计、模型、耗时与路由健康状态；
 - 展示由 LeanCI 配置价格计算的估算值和免责声明；
+- 复制 Evidence/Patch/命令并下载脱敏 Markdown 报告；
 - 不执行建议命令、Diff 或模型文本。
 
 客户端校验只用于体验，安全限制由 FastAPI 重复执行。
 
 ### FastAPI
 
+- 在 JSON 解析前实施 4 MiB 请求体限制，包括无 `Content-Length` 的分块请求；
+- 重复验证 2 MiB 日志、5 文件、单文件 256 KiB、文件合计 1 MiB；
+- 清理文件名，并拒绝路径、压缩包、可执行文件、非白名单扩展名、无效文本与控制字符；
 - 使用严格 Pydantic 请求、结果和上游 stats schema；
 - 将 CI 证据视为不可信数据；
 - 管理本地 health、hosted GPU、stats 前后快照、单实例锁和链路证明；
@@ -61,8 +67,9 @@ flowchart LR
 - 提供 `/health` 与累计 `/stats`。
 
 Paritok 的 hosted GPU 策略在网络、认证或 GPU 失败时可能 passthrough 原文，因此本地
-`/health=ok` 不能单独证明压缩。LeanCI 额外执行 hosted `/test`、前后 stats 与请求数校验，
-把 silent passthrough 变成正式接口的 fail-closed 失败。
+`/health=ok` 不能单独证明压缩。Windows 启动脚本在监听 8080 前先执行带认证 hosted
+`/test`，失败时拒绝启动；LeanCI 分析服务还会执行请求前后 hosted `/test`、stats 与
+请求数校验，把 silent passthrough 变成正式接口的 fail-closed 失败。
 
 ### DeepSeek
 
@@ -175,7 +182,7 @@ estimated_input_cost_saved_usd =
 | 输入 cache miss | 0.14 |
 | 输出 | 0.28 |
 
-快照日期 `2026-07-25`。正式压缩节省估算采用 cache-miss 输入价格，并明确标注为估算值、
+快照日期 `2026-07-26`。正式压缩节省估算采用 cache-miss 输入价格，并明确标注为估算值、
 不是实际账单。
 
 ## 7. 错误与超时
@@ -213,16 +220,31 @@ DeepSeek 连接、429 和 5xx 采用有界重试；401/402 不重试。空内容
 
 ### `POST /api/analyze`
 
-当前请求：
+当前请求只接受日志和内存文本文件：
 
 ```json
 {
-  "log_text": "CI failure text"
+  "log_text": "CI failure text",
+  "files": [
+    {
+      "name": "config.ts",
+      "content": "export const region = process.env.DEPLOY_REGION"
+    }
+  ]
 }
 ```
 
-`log_text` 必须非空且不超过 120,000 字符。响应为严格诊断字段加
-`compression_stats`。后续阶段才会加入 multipart 文件上传和更大的字节级限制。
+响应为严格诊断字段、`analysis_time_ms` 和 `compression_stats`。
+
+### 固定 Sample 与录屏状态
+
+- `GET /api/samples`：只返回三个固定 Sample 的元数据；
+- `GET /api/samples/{id}`：从映射好的仓库目录读取日志和相关文件；
+- `GET /api/captures/{id}`：读取真实三跑成功后保存的 `demo_result.json`；
+- 未知 ID 返回统一 404，调用者不能提供文件系统路径。
+
+`ground_truth.json` 只供测试和显式演示采集脚本验证，不通过 Sample API 返回，也不会进入
+模型上下文。
 
 ## 9. 隔离的 Direct 与未来 benchmark
 
@@ -248,6 +270,8 @@ Provider 工厂不提供 Direct 正式模式。未来 benchmark 必须：
 | SSRF/上游覆盖 | URL 为代码常量和严格 Literal，不接受请求覆盖 |
 | 绕过 Paritok | 正式 Provider 工厂只返回 Paritok；失败不回退 |
 | 提示注入 | 不可信 tool 结果、固定系统提示、严格结果 schema |
+| 恶意上传 | 双端预检；服务端字节限制、白名单、UTF-8、控制字符和文件名/路径校验 |
+| 任意文件读取 | Sample ID 到固定目录的常量映射；API 不接受路径 |
 | 模型建议被执行 | 只返回文本；API 没有执行端点 |
 | stats 伪造/串扰 | 单 worker、异步锁、严格快照 delta、请求数匹配 |
 | 错误信息泄漏 | 稳定错误码；不返回上游正文、请求头、堆栈或内部路径 |

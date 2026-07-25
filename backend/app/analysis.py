@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from decimal import ROUND_HALF_UP, Decimal
+from time import perf_counter
 
 from app.config import Settings
 from app.errors import AppError
@@ -145,6 +146,7 @@ class AnalysisService:
     async def analyze(self, untrusted_context: str) -> AnalysisResult:
         """Run one serialized, stats-verified production analysis."""
 
+        started_at = perf_counter()
         if self.settings.llm_provider != "paritok":
             raise _provider_error_to_app_error(
                 LLMProviderError(
@@ -191,6 +193,7 @@ class AnalysisService:
 
             return AnalysisResult(
                 **provider_result.analysis.model_dump(),
+                analysis_time_ms=round((perf_counter() - started_at) * 1000),
                 compression_stats=VerifiedCompressionStats(
                     proxy_version=health.version,
                     model=self.settings.deepseek_model,
