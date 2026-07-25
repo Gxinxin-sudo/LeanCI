@@ -26,14 +26,17 @@
 ## 阶段 1：工程脚手架
 
 - [ ] `[MANUAL]` 安装 Python 3.11.x 并确认 PATH
-- [ ] 建立 FastAPI 包结构、依赖锁定和开发命令
-- [ ] 建立 React + TypeScript strict + Vite + Tailwind 前端
-- [ ] 建立 `examples/`、`benchmarks/`、`scripts/` 和 `tests/`
-- [ ] 定义分析结果、Token 指标、错误响应和公开配置 Schema
-- [ ] 配置 pytest、ruff、前端类型检查、测试和构建
-- [ ] 添加基础 GitHub Actions 工作流
-- [ ] 运行后端导入测试、lint、前端类型检查和生产构建
-- [ ] 更新 README、架构和任务状态
+- [x] 建立 FastAPI 包结构、依赖锁定和开发命令
+- [x] 建立 React + TypeScript strict + Vite + Tailwind 前端
+- [x] 建立 `examples/`、`benchmarks/`、`scripts/` 和 `tests/`
+- [x] 定义分析结果、Token 指标、错误响应和公开配置 Schema
+- [x] 创建 Demo-only `GET /api/health`、`GET /api/config-status` 和 Mock `POST /api/analyze`
+- [x] 创建日志输入、Load Sample、Analyze Failure、完整结果和 Token 占位界面
+- [x] 覆盖 loading、empty、success、error 状态与前端错误边界
+- [x] 配置 pytest、ruff、前端 lint、类型检查、测试和构建
+- [x] 添加基础 GitHub Actions 工作流
+- [x] 运行后端测试/lint、前端 lint/类型检查/测试和生产构建
+- [x] 更新 README、架构、人工操作和任务状态
 
 ## 阶段 2：安全输入与 Paritok
 

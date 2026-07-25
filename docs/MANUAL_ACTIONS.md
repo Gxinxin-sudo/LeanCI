@@ -6,6 +6,10 @@
 
 ### 1. 安装 Python 3.11.x（Windows）
 
+阶段一后端已经使用 Codex 隔离的 Python 3.12 环境验证通过，但当前系统 PATH 中没有
+`python` 或 `py`。仓库根目录还存在一个指向已移除解释器的旧 `.venv`，它没有被修改，
+开发脚本也不使用它。为了让普通 PowerShell 和后续阶段稳定可复现，仍需完成以下人工操作。
+
 - [ ] 打开 [Python 官方 Windows 下载页](https://www.python.org/downloads/windows/)。
 - [ ] 在 Python 3.11 系列中下载最新的 **Windows installer (64-bit)**。
 - [ ] 启动安装器，勾选 **Add python.exe to PATH**。
@@ -20,6 +24,19 @@ python -m pip --version
 ```
 
 预期至少有一种 Python 命令显示 `Python 3.11.x`，且 pip 可用。若 `python` 打开 Microsoft Store，请在 Windows“管理应用执行别名”中关闭 Store 的 `python.exe`/`python3.exe` 别名，再重开终端。
+
+- [ ] 如需清理根目录中损坏的 `.venv`，请在确认路径为本项目后手动删除该单个目录；不要使用批量删除命令。
+- [ ] 用已安装的 Python 为后端创建可复现环境并安装锁定依赖：
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --requirement requirements-dev.txt
+.\.venv\Scripts\python.exe -m pytest
+```
+
+若 `backend/.venv` 已存在且仍指向 Codex 运行时，请在确认路径后由你手动删除该目录，再用
+系统 Python 重新创建。不要提交任何 `.venv` 内容。
 
 ## 开发后续需要
 

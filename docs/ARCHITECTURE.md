@@ -1,6 +1,6 @@
 # LeanCI 架构设计
 
-状态：规划基线
+状态：阶段一 Mock 工程骨架
 快照日期：2026-07-25
 
 ## 1. 系统边界
@@ -28,6 +28,23 @@ POST /api/benchmark（内置示例 + confirm_cost=true）
 ```
 
 正式 `/api/analyze` 不提供 baseline、模型名或上游 URL 参数。
+
+### 阶段一临时运行边界
+
+当前可运行版本只包含：
+
+```text
+浏览器
+  → FastAPI /api/analyze
+    → 进程内确定性 Mock
+  ← 严格 Pydantic 分析结果 + 不可用的 compression_stats
+```
+
+- 不导入、不配置、也不调用 Paritok 或 DeepSeek 客户端；
+- `compression_stats` 的所有 Token 数字均为 `null`；
+- 页面和 API 都明确标记 `Demo data — Paritok not connected`；
+- Mock `POST /api/analyze` 暂时接收 JSON `log_text`，文件上传与 multipart 契约在阶段二实现；
+- 日志和 Mock 返回中的命令、Diff 仅展示，不会被服务器或浏览器执行。
 
 ## 2. 运行组件
 
@@ -61,16 +78,27 @@ POST /api/benchmark（内置示例 + confirm_cost=true）
 
 ### `GET /api/health`
 
-返回经过脱敏的聚合状态：
+阶段一返回经过脱敏的本地 Demo 状态：
 
 - FastAPI 是否可用；
-- 本地 Paritok `/health` 是否可用；
-- hosted GPU 是否通过固定 `/test` 检查；
-- 价格快照日期和模型名。
+- 固定的 `mode=demo`；
+- `paritok_connected=false`；
+- `deepseek_called=false`。
+
+阶段二接入 Paritok 后，再加入本地 `/health` 和 hosted GPU 的固定检查。
 
 不得返回上游响应正文、密钥、环境变量、内部异常堆栈或绝对路径。
 
-### `GET /api/examples`
+### `GET /api/config-status`
+
+只返回以下布尔值：
+
+- `deepseek_api_key_configured`；
+- `paritok_api_key_configured`。
+
+不得返回 Key 值、长度、前后缀、环境变量内容或 `.env` 路径。
+
+### 计划中的 `GET /api/examples`
 
 返回三个有界的内置示例元数据与前端可载入内容：
 
@@ -82,13 +110,36 @@ POST /api/benchmark（内置示例 + confirm_cost=true）
 
 ### `POST /api/analyze`
 
-使用 `multipart/form-data`：
+阶段一使用 JSON：
+
+```json
+{
+  "log_text": "CI failure text"
+}
+```
+
+字符上限为 `120000`，由浏览器 `maxLength` 和严格 Pydantic 请求模型同时执行。空白日志
+返回统一错误格式。响应顶层包含：
+
+- `summary`
+- `root_cause`
+- `confidence`
+- `evidence`
+- `relevant_files`
+- `recommended_changes`
+- `patch`
+- `verification_commands`
+- `risks`
+- `missing_information`
+- `compression_stats`
+
+阶段二扩展为 `multipart/form-data`：
 
 - `log_text`：必填非空文本，UTF-8 编码后不超过 2 MiB；
 - `files`：可选，最多 5 个；
 - 不接受 `mode`、`model`、`base_url`、URL 或命令字段。
 
-成功响应分为：
+正式成功响应将进一步分为：
 
 - `analysis`：模型生成并通过 Pydantic 严格验证的诊断；
 - `savings`：后端根据 stats 差值计算的 Token 与费用字段；
@@ -188,14 +239,14 @@ extra_body = {"thinking": {"type": "disabled"}}
 
 严格分析结构：
 
-- `problem_summary: str`
+- `summary: str`
 - `root_cause: str`
 - `confidence: float`，范围 0 到 1
-- `evidence: list[{source, line_start?, line_end?, quote, explanation}]`
-- `related_files: list[str]`
-- `suggested_changes: list[str]`
-- `git_diff: str`
-- `validation_commands: list[str]`
+- `evidence: list[{source, line_start?, line_end?, excerpt, explanation}]`
+- `relevant_files: list[str]`
+- `recommended_changes: list[str]`
+- `patch: str`
+- `verification_commands: list[str]`
 - `risks: list[str]`
 - `missing_information: list[str]`
 

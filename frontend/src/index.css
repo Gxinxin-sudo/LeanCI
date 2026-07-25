@@ -1,0 +1,196 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #071015;
+  --color-terminal: #060c10;
+  --color-panel: #0c171d;
+  --color-line: #1b2c33;
+  --color-line-bright: #2a424a;
+  --color-fog: #c9d8da;
+  --color-muted: #71878e;
+  --color-signal: #57d8d0;
+  --color-signal-bright: #81eee7;
+  --color-fault: #ff7a66;
+  --color-fault-soft: #ffafa2;
+  --font-display: "Bahnschrift", "Arial Narrow", "Aptos Display", sans-serif;
+  --font-sans: "Aptos", "Segoe UI", sans-serif;
+  --font-mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+  --shadow-workbench: 0 24px 80px rgb(0 0 0 / 0.28);
+}
+
+:root {
+  color-scheme: dark;
+  font-family: var(--font-sans);
+  background: var(--color-ink);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: var(--color-ink);
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background-color: var(--color-ink);
+  background-image:
+    linear-gradient(rgb(87 216 208 / 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(87 216 208 / 0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+::selection {
+  color: var(--color-ink);
+  background: var(--color-signal);
+}
+
+.signal-track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid var(--color-line);
+  background: var(--color-panel);
+}
+
+.signal-track::before {
+  position: absolute;
+  top: 1.15rem;
+  right: 16.666%;
+  left: 16.666%;
+  height: 1px;
+  content: "";
+  background: var(--color-line-bright);
+}
+
+.signal-stage {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 0.65rem;
+  padding: 0.9rem 0.6rem;
+}
+
+.signal-node {
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 1px solid var(--color-line-bright);
+  background: var(--color-ink);
+}
+
+.signal-node-active {
+  border-color: var(--color-signal);
+  background: var(--color-signal);
+  box-shadow: 0 0 0 4px rgb(87 216 208 / 0.1);
+  animation: signal-pulse 2.4s ease-in-out infinite;
+}
+
+.status-dot {
+  display: block;
+  width: 0.45rem;
+  height: 0.45rem;
+}
+
+.status-dot-offline {
+  background: var(--color-fault);
+  box-shadow: 0 0 0 4px rgb(255 122 102 / 0.08);
+}
+
+.empty-grid {
+  background-image:
+    linear-gradient(rgb(87 216 208 / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(87 216 208 / 0.035) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.loading-mark {
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 1px solid var(--color-line-bright);
+  border-top-color: var(--color-signal);
+  animation: spin 0.8s linear infinite;
+}
+
+.loading-mark-dark {
+  border-color: rgb(7 16 21 / 0.25);
+  border-top-color: var(--color-ink);
+}
+
+.skeleton-line,
+.skeleton-block {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-line);
+}
+
+.skeleton-line {
+  height: 0.75rem;
+}
+
+.skeleton-block {
+  height: 9rem;
+}
+
+.skeleton-line::after,
+.skeleton-block::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(87 216 208 / 0.09),
+    transparent
+  );
+  transform: translateX(-100%);
+  animation: scan 1.8s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes scan {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes signal-pulse {
+  50% {
+    box-shadow: 0 0 0 7px rgb(87 216 208 / 0.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

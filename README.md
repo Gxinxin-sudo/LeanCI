@@ -4,7 +4,7 @@
 
 LeanCI 是一个面向长 CI 日志的安全诊断工具。它计划支持 GitHub Actions、pytest、TypeScript Build 和 Docker Build 等日志，以及最多 5 个相关文本文件。正式分析会先通过 Paritok hosted GPU 压缩上下文，再由 DeepSeek 返回严格结构化的根因分析与修复建议。
 
-> 当前状态：项目规划与仓库初始化阶段。应用代码、在线 Demo 和 benchmark 结果尚未实现。
+> 当前状态：阶段一 Mock 工程骨架已完成。React 界面与 FastAPI 接口可在本地运行，但不会调用 Paritok 或 DeepSeek；页面明确显示 `Demo data — Paritok not connected`，Token 指标保持为空。
 
 ## 为什么做 LeanCI
 
@@ -28,6 +28,14 @@ CI 失败日志常常包含大量重复安装输出、进度信息和无关上�
 
 ## 固定调用链
 
+阶段一仅运行本地 Mock 链：
+
+```text
+React → FastAPI → deterministic mock response
+```
+
+正式集成完成后必须使用以下固定链：
+
 ```text
 React
   → FastAPI
@@ -40,26 +48,94 @@ React
 
 ## 技术栈
 
-- 前端：React、TypeScript、Vite、Tailwind CSS；
-- 后端：Python 3.11+、FastAPI、Pydantic、OpenAI Python SDK、httpx、pytest；
+- 前端：React 19、TypeScript strict、Vite 8、Tailwind CSS 4、Vitest；
+- 后端：Python 3.11+、FastAPI、Pydantic、pydantic-settings、pytest、ruff；
 - AI：Paritok hosted GPU、DeepSeek `deepseek-v4-flash`；
 - 部署：Docker 单容器，FastAPI 同时提供 API 和编译后的静态前端。
 
 ## 快速开始
 
-应用脚手架尚未创建，当前不能运行 LeanCI。请先完成：
+### 前置条件
 
-1. 阅读 [人工操作清单](docs/MANUAL_ACTIONS.md) 并安装 Python 3.11.x；
-2. 不要创建或提交真实 `.env`；
-3. 进入下一阶段后按照届时更新的命令安装后端和前端依赖。
+- Node.js `20.19+`、`22.12+` 或更高兼容版本；
+- Python `3.11+`；
+- PowerShell。
 
-未来本地配置会从示例开始：
+当前机器的系统 PATH 还没有可用 Python。阶段一验证使用了 Codex 隔离的 Python 3.12
+环境；要获得可复现的普通本地环境，请先完成
+[人工操作清单](docs/MANUAL_ACTIONS.md) 中的 Python 安装步骤。
+
+### 安装后端
 
 ```powershell
-Copy-Item ".env.example" ".env"
+cd backend
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --requirement requirements-dev.txt
+cd ..
 ```
 
-真实 Key 只写入本机 `.env`，不得发送给 Codex 或提交 Git。
+### 安装前端
+
+```powershell
+cd frontend
+npm ci
+cd ..
+```
+
+### 启动后端
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+后端地址：
+
+- API：`http://127.0.0.1:8000`
+- OpenAPI：`http://127.0.0.1:8000/docs`
+
+### 启动前端
+
+另开一个 PowerShell：
+
+```powershell
+cd frontend
+npm run dev
+```
+
+浏览器访问 `http://127.0.0.1:5173`。Vite 会把 `/api` 请求代理到本地 FastAPI。
+
+依赖安装完成后，也可以在项目根目录运行 `.\scripts\dev.ps1`，分别打开前后端开发终端。
+
+### 运行质量检查
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m ruff check .
+.\.venv\Scripts\python.exe -m pytest
+
+cd ..\frontend
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+阶段一不需要 `.env` 或任何 API Key。进入外部服务集成阶段后，才从 `.env.example`
+复制本地 `.env`；真实 Key 只能写入被 Git 忽略的本机 `.env`。
+
+## 阶段一 API
+
+| 方法 | 路径 | 当前行为 |
+| --- | --- | --- |
+| `GET` | `/api/health` | 返回 FastAPI 的 Demo 健康状态，不探测外部服务 |
+| `GET` | `/api/config-status` | 只返回 DeepSeek/Paritok 配置是否存在的布尔值 |
+| `POST` | `/api/analyze` | 接收 `{ "log_text": "..." }` 并返回确定性 Mock 结果 |
+
+Mock 分析结果包含 `summary`、`root_cause`、`confidence`、`evidence`、
+`relevant_files`、`recommended_changes`、`patch`、`verification_commands`、`risks`、
+`missing_information` 和 `compression_stats`。`compression_stats` 中的 Token 数字全部为
+`null`，不会伪造 Paritok 数据。
 
 ## 配置原则
 
@@ -74,6 +150,7 @@ Copy-Item ".env.example" ".env"
 
 ## Token 与费用口径
 
+- 阶段一没有 Paritok 数据，Token 面板只显示占位符；
 - Token 数据来自每次分析前后 Paritok `/stats` 的差值；
 - 原始和压缩 Token 指 Paritok 实际介入的上下文范围，不冒充整个供应商账单；
 - 美元金额按配置的 DeepSeek 价格估算；
