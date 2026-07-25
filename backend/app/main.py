@@ -1,31 +1,50 @@
-"""FastAPI application entry point; application analysis remains mock-only."""
+"""FastAPI application entry point with a fail-closed Paritok analysis path."""
+
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.analysis import AnalysisService
 from app.config import Settings, get_settings
 from app.errors import AppError, attach_request_id, error_responses, register_error_handlers
-from app.mock_analysis import build_mock_analysis
 from app.models import (
-    DEMO_NOTICE,
     AnalysisResult,
     AnalyzeRequest,
     ConfigStatusResponse,
     HealthResponse,
 )
+from app.paritok import ParitokClient
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None,
+    *,
+    analysis_service: AnalysisService | None = None,
+) -> FastAPI:
     """Create an application instance with injectable validated settings."""
 
     active_settings = settings or get_settings()
+    managed_paritok_client: ParitokClient | None = None
+    if analysis_service is None:
+        managed_paritok_client = ParitokClient(active_settings)
+        analysis_service = AnalysisService(active_settings, managed_paritok_client)
+
+    @asynccontextmanager
+    async def lifespan(_application: FastAPI) -> AsyncIterator[None]:
+        yield
+        if managed_paritok_client is not None:
+            await managed_paritok_client.aclose()
+
     application = FastAPI(
         title=active_settings.app_name,
         version="0.1.0",
         description=(
-            "LeanCI mock application API. DeepSeek is available only through the "
-            "separate connection-test script."
+            "LeanCI formal analysis API. Requests fail closed unless the local "
+            "Paritok Proxy and hosted GPU are verified."
         ),
+        lifespan=lifespan,
     )
     application.middleware("http")(attach_request_id)
     application.add_middleware(
@@ -39,20 +58,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @application.get("/api/health", response_model=HealthResponse)
     async def health() -> HealthResponse:
-        return HealthResponse(
-            status="ok",
-            service="leanci-api",
-            mode="demo",
-            paritok_connected=False,
-            deepseek_called=False,
-            message=DEMO_NOTICE,
-        )
+        return await analysis_service.health()
 
     @application.get("/api/config-status", response_model=ConfigStatusResponse)
     async def config_status() -> ConfigStatusResponse:
         return ConfigStatusResponse(
             deepseek_api_key_configured=active_settings.deepseek_api_key_configured,
             paritok_api_key_configured=active_settings.paritok_api_key_configured,
+            llm_provider=active_settings.llm_provider,
+            model=active_settings.deepseek_model,
         )
 
     @application.post(
@@ -73,7 +87,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 code="LOG_TOO_LARGE",
                 message="The CI log exceeds the configured character limit.",
             )
-        return build_mock_analysis()
+        return await analysis_service.analyze(payload.log_text)
 
     return application
 

@@ -119,5 +119,8 @@ def error_responses() -> dict[int | str, dict[str, Any]]:
 
     return {
         422: {"model": ErrorResponse},
+        502: {"model": ErrorResponse},
+        503: {"model": ErrorResponse},
+        504: {"model": ErrorResponse},
         500: {"model": ErrorResponse},
     }

@@ -10,7 +10,12 @@ from openai import APIConnectionError, APIStatusError, APITimeoutError, AsyncOpe
 from pydantic import SecretStr, ValidationError
 
 from app.config import DEFAULT_DEEPSEEK_MODEL, Settings
-from app.llm.prompts import PromptMessage, build_analysis_messages, build_repair_messages
+from app.llm.prompts import (
+    PromptMessage,
+    build_analysis_messages,
+    build_paritok_analysis_messages,
+    build_repair_messages,
+)
 from app.mock_analysis import build_mock_analysis
 from app.models import DiagnosticAnalysis, ProviderResult, ProviderUsage
 
@@ -64,12 +69,17 @@ class MockProvider(LLMProvider):
             model="mock",
             analysis=analysis,
             usage=None,
+            request_attempts=0,
         )
 
 
 class _OpenAICompatibleDeepSeekProvider(LLMProvider):
     provider_name: Literal["direct_deepseek", "paritok_deepseek"]
     expose_upstream_usage = False
+    connection_error_code = "DEEPSEEK_CONNECTION_FAILED"
+    connection_error_message = (
+        "Could not connect to DeepSeek. Check the base URL, DNS, and firewall."
+    )
 
     def __init__(
         self,
@@ -81,6 +91,7 @@ class _OpenAICompatibleDeepSeekProvider(LLMProvider):
         timeout_seconds: float = 60.0,
         max_network_retries: int = 2,
         retry_base_delay_seconds: float = 0.25,
+        chunk_target_tokens: int = 40_000,
         client: CompletionClient | None = None,
         sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
     ) -> None:
@@ -99,6 +110,7 @@ class _OpenAICompatibleDeepSeekProvider(LLMProvider):
         self.max_tokens = max_tokens
         self.max_network_retries = max_network_retries
         self.retry_base_delay_seconds = retry_base_delay_seconds
+        self.chunk_target_tokens = chunk_target_tokens
         self._sleep = sleep
         self._client = client or cast(
             CompletionClient,
@@ -111,14 +123,19 @@ class _OpenAICompatibleDeepSeekProvider(LLMProvider):
         )
 
     async def analyze(self, untrusted_context: str) -> ProviderResult:
-        first_completion = await self._request(build_analysis_messages(untrusted_context))
+        first_completion, request_attempts = await self._request(
+            self._build_analysis_messages(untrusted_context)
+        )
         first_content = self._extract_content(first_completion)
         repair_completion: Any | None = None
 
         try:
             analysis = self._validate_analysis(first_completion, first_content)
         except ValueError:
-            repair_completion = await self._request(build_repair_messages(first_content))
+            repair_completion, repair_attempts = await self._request(
+                build_repair_messages(first_content)
+            )
+            request_attempts += repair_attempts
             repair_content = self._extract_content(repair_completion)
             try:
                 analysis = self._validate_analysis(repair_completion, repair_content)
@@ -139,20 +156,27 @@ class _OpenAICompatibleDeepSeekProvider(LLMProvider):
             model=self.model,
             analysis=analysis,
             usage=usage,
+            request_attempts=request_attempts,
         )
 
-    async def _request(self, messages: list[PromptMessage]) -> Any:
+    def _build_analysis_messages(self, untrusted_context: str) -> list[PromptMessage]:
+        return build_analysis_messages(untrusted_context)
+
+    async def _request(self, messages: list[PromptMessage]) -> tuple[Any, int]:
         creator = cast(CompletionCreator, self._client.chat.completions)
 
         for attempt in range(self.max_network_retries + 1):
             try:
-                return await creator.create(
-                    model=self.model,
-                    messages=messages,
-                    response_format=RESPONSE_FORMAT,
-                    extra_body=THINKING_DISABLED,
-                    max_tokens=self.max_tokens,
-                    stream=False,
+                return (
+                    await creator.create(
+                        model=self.model,
+                        messages=messages,
+                        response_format=RESPONSE_FORMAT,
+                        extra_body=THINKING_DISABLED,
+                        max_tokens=self.max_tokens,
+                        stream=False,
+                    ),
+                    attempt + 1,
                 )
             except APITimeoutError as exc:
                 if attempt < self.max_network_retries:
@@ -167,11 +191,8 @@ class _OpenAICompatibleDeepSeekProvider(LLMProvider):
                     await self._wait_before_retry(attempt)
                     continue
                 raise LLMProviderError(
-                    code="DEEPSEEK_CONNECTION_FAILED",
-                    message=(
-                        "Could not connect to DeepSeek. Check the base URL, proxy, DNS, "
-                        "and firewall."
-                    ),
+                    code=self.connection_error_code,
+                    message=self.connection_error_message,
                 ) from exc
             except APIStatusError as exc:
                 status_code = exc.status_code
@@ -340,9 +361,21 @@ class DirectDeepSeekProvider(_OpenAICompatibleDeepSeekProvider):
 
 
 class ParitokDeepSeekProvider(_OpenAICompatibleDeepSeekProvider):
-    """The only provider intended for future formal application analysis."""
+    """The only provider allowed for formal application analysis."""
 
     provider_name = "paritok_deepseek"
+    connection_error_code = "PARITOK_PROXY_UNAVAILABLE"
+    connection_error_message = (
+        "The local Paritok Proxy became unavailable during analysis. "
+        "Keep the proxy terminal open and try again."
+    )
+
+    def _build_analysis_messages(self, untrusted_context: str) -> list[PromptMessage]:
+        return build_paritok_analysis_messages(
+            untrusted_context,
+            target_tokens=self.chunk_target_tokens,
+            model=self.model,
+        )
 
     @classmethod
     def from_settings(cls, settings: Settings) -> "ParitokDeepSeekProvider":
@@ -354,6 +387,7 @@ class ParitokDeepSeekProvider(_OpenAICompatibleDeepSeekProvider):
             timeout_seconds=settings.deepseek_timeout_seconds,
             max_network_retries=settings.deepseek_max_network_retries,
             retry_base_delay_seconds=settings.deepseek_retry_base_delay_seconds,
+            chunk_target_tokens=settings.paritok_chunk_target_tokens,
         )
 
 
@@ -369,6 +403,12 @@ def _require_deepseek_key(settings: Settings) -> SecretStr:
 def build_application_provider(settings: Settings) -> LLMProvider:
     """Build an application provider without any direct-DeepSeek fallback."""
 
-    if settings.llm_provider == "mock":
-        return MockProvider()
+    if settings.llm_provider != "paritok":
+        raise LLMProviderError(
+            code="FORMAL_ANALYSIS_REQUIRES_PARITOK",
+            message=(
+                "Formal analysis is disabled until LLM_PROVIDER=paritok. "
+                "Mock and direct modes cannot serve /api/analyze."
+            ),
+        )
     return ParitokDeepSeekProvider.from_settings(settings)

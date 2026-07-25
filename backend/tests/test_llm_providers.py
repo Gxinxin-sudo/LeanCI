@@ -5,7 +5,7 @@ from typing import Any
 
 import httpx
 import pytest
-from openai import APIStatusError, APITimeoutError, AuthenticationError
+from openai import APIConnectionError, APIStatusError, APITimeoutError, AuthenticationError
 from pydantic import SecretStr
 
 from app.config import Settings
@@ -127,6 +127,7 @@ async def test_direct_provider_sends_fixed_deepseek_parameters() -> None:
     assert result.model == "deepseek-v4-flash"
     assert result.usage is not None
     assert result.usage.total_tokens == 30
+    assert result.request_attempts == 1
     assert len(client.completions.calls) == 1
     call = client.completions.calls[0]
     assert call["model"] == "deepseek-v4-flash"
@@ -168,6 +169,7 @@ async def test_invalid_output_gets_exactly_one_repair_attempt(
     assert result.usage.prompt_tokens == 12
     assert result.usage.completion_tokens == 11
     assert result.usage.total_tokens == 23
+    assert result.request_attempts == 2
     repair_prompt = client.completions.calls[1]["messages"][1]["content"]
     assert "<UNTRUSTED_PREVIOUS_OUTPUT>" in repair_prompt
 
@@ -245,6 +247,7 @@ async def test_retryable_failure_can_recover_within_the_limit() -> None:
     result = await provider.analyze("untrusted")
 
     assert result.analysis.summary == VALID_ANALYSIS["summary"]
+    assert result.request_attempts == 2
     assert len(client.completions.calls) == 2
 
 
@@ -261,12 +264,18 @@ async def test_paritok_provider_does_not_expose_upstream_usage_as_formal_metrics
 
     assert result.provider == "paritok_deepseek"
     assert result.usage is None
+    assert result.request_attempts == 1
+    messages = client.completions.calls[0]["messages"]
+    assert any(message["role"] == "tool" for message in messages)
+    assert "UNTRUSTED DATA" in next(
+        message["content"] for message in messages if message["role"] == "tool"
+    )
 
 
 def test_application_provider_factory_never_selects_direct_deepseek() -> None:
-    mock_provider = build_application_provider(Settings(_env_file=None))
-
-    assert isinstance(mock_provider, MockProvider)
+    with pytest.raises(LLMProviderError) as captured:
+        build_application_provider(Settings(_env_file=None, llm_provider="mock"))
+    assert captured.value.code == "FORMAL_ANALYSIS_REQUIRES_PARITOK"
 
     settings = Settings(
         _env_file=None,
@@ -284,6 +293,23 @@ def test_application_provider_does_not_fallback_when_paritok_lacks_key() -> None
         build_application_provider(settings)
 
     assert captured.value.code == "DEEPSEEK_API_KEY_MISSING"
+
+
+@pytest.mark.anyio
+async def test_paritok_connection_failure_is_not_mislabeled_as_direct_deepseek() -> None:
+    request = httpx.Request("POST", "http://127.0.0.1:8080/v1/chat/completions")
+    client = FakeClient([APIConnectionError(request=request)])
+    provider = ParitokDeepSeekProvider(
+        api_key=SecretStr("unit-test-only"),
+        base_url="http://127.0.0.1:8080/v1",
+        max_network_retries=0,
+        client=client,
+    )
+
+    with pytest.raises(LLMProviderError) as captured:
+        await provider.analyze("untrusted")
+
+    assert captured.value.code == "PARITOK_PROXY_UNAVAILABLE"
 
 
 def test_direct_provider_rejects_an_unapproved_runtime_use_case() -> None:

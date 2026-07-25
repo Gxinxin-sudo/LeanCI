@@ -11,10 +11,15 @@ afterEach(() => {
 })
 
 describe('LeanCI workbench', () => {
-  it('shows the empty and disconnected demo state', () => {
+  it('shows the empty formal Paritok state', () => {
     render(<App />)
 
-    expect(screen.getAllByText('Demo data — Paritok not connected')).toHaveLength(2)
+    expect(
+      screen.getByText('Production analysis is fail-closed through Paritok'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('Run an analysis to read a verified Paritok stats delta.'),
+    ).toBeInTheDocument()
     expect(screen.getByText('Your diagnosis will assemble here.')).toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: 'Paste CI failure log' })).toHaveAttribute(
       'maxlength',
@@ -58,7 +63,8 @@ describe('LeanCI workbench', () => {
     expect(await screen.findByText(mockAnalysis.summary)).toBeInTheDocument()
     expect(screen.getByText(mockAnalysis.root_cause)).toBeInTheDocument()
     expect(screen.getByText('94%')).toBeInTheDocument()
-    expect(screen.getByText('No token counts are estimated or generated in demo mode.')).toBeInTheDocument()
+    expect(screen.getByText(/Cumulative: 12 requests/)).toBeInTheDocument()
+    expect(screen.getByText(/Not an actual bill/)).toBeInTheDocument()
   })
 
   it('shows a useful error state when the API is unavailable', async () => {

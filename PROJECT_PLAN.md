@@ -18,12 +18,21 @@ LeanCI（Token-Efficient AI Debugging for Massive CI Logs）帮助开发者诊�
 
 ## 2. 已验证环境基线（2026-07-25）
 
+以下项目记录仓库初始化时的基线，不代表当前安装状态：
+
 - 工作目录初始为空，尚无应用源代码。
 - Node.js `v24.16.0`、npm `11.13.0`、Git `2.53.0.windows.2` 可用。
 - Python、Docker、Paritok、pytest、ruff、uv 当前不可用。
 - GitHub 账户为 `Gxinxin-sudo`；本地提交使用 GitHub noreply 地址。
 - DeepSeek 与 Paritok 密钥及价格环境变量均未设置。
 - Windows 中 `rg` 可被发现但无法执行，文件检索需使用 PowerShell 兜底。
+
+当前阶段三环境更新：
+
+- 正式 `backend/.venv` 已使用 Python 3.12.13 修复，并强制重装固定依赖；
+- `paritok[proxy]==1.2.7`、pytest、ruff 和 OpenAI SDK 已安装；
+- Paritok 当前 YAML schema、Proxy CLI、health/stats 与 hosted GPU 失败透传行为已对照官方源码和本机安装包核验；
+- 无费用后端单元/条件集成测试已通过；真实 hosted GPU + DeepSeek 验证保留为 `[MANUAL]`。
 
 ## 3. MVP 范围
 
@@ -91,15 +100,18 @@ LeanCI（Token-Efficient AI Debugging for Massive CI Logs）帮助开发者诊�
 - 固定依赖版本、TypeScript strict、ruff/pytest 和前端测试/构建命令。
 - 质量门：后端导入测试、前端类型检查、生产构建和基础 CI 通过。
 
-### 阶段 2：安全输入与 Paritok 集成
+### 阶段 2：安全输入
 
-- 实现请求体上限、文本文件验证、日志分块、代理健康检查、hosted GPU preflight、stats 独立差值和 fail-closed 错误。
-- 质量门：路径穿越、超大文件、ZIP/二进制、代理宕机、GPU 不可用、并发 stats 污染测试通过。
+- 实现请求体上限、文本文件验证与上传安全；Paritok 正式集成移入阶段三。
+- 质量门：路径穿越、超大文件、ZIP/二进制、无效 UTF-8 和控制字符测试通过。
 
-### 阶段 3：DeepSeek 结构化诊断
+### 阶段 3：正式 Paritok hosted GPU 与 DeepSeek
 
-- 实现不可信上下文封装、固定提示词、严格 Schema、一次 JSON 修复重试、脱敏调试响应和安全错误映射。
-- 质量门：有效 JSON、空内容、截断、无效 JSON、第二次失败、提示词注入和密钥脱敏测试通过。
+- 固定 FastAPI → 本地 Proxy → hosted GPU → DeepSeek 路径；实现 health、hosted preflight、
+  stats 前后快照、单次 delta、累计统计、请求数证明和 fail-closed 错误。
+- 实现不可信 tool 上下文、固定提示词、严格 Schema、一次 JSON 修复重试和安全错误映射。
+- 丢弃 Paritok 美元估算；按带日期的项目 DeepSeek 价格生成明确标注的估算值。
+- 质量门：Provider/API/stats/并发/故障测试通过；真实超过 5,000 Token 的付费验证由用户显式执行。
 
 ### 阶段 4：前端 MVP
 

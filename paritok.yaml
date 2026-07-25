@@ -1,0 +1,42 @@
+# LeanCI Paritok 1.2.7 configuration.
+# Secrets are intentionally absent. PARITOK_API_KEY is read from the process
+# environment by Paritok; DEEPSEEK_API_KEY is forwarded by the LeanCI client.
+use_gpu_server: true
+
+gpu_server:
+  base_url: https://www.paritok.com/api
+  model: paritok-4b-v1
+  api_key: ""
+  timeout: 90.0
+
+compression:
+  min_tokens: 512
+  max_tokens: 50000
+  refusal_threshold: 0.05
+
+history:
+  enabled: true
+  keep_recent_turns: 4
+  context_threshold: 0.8
+  context_window: 200000
+
+# LeanCI does not send a user-selectable tool catalogue. Passthrough avoids
+# downloading the optional embedding selector model while remaining a valid
+# Paritok 1.2.7 strategy.
+tool_discovery:
+  strategy: passthrough
+  top_k: 5
+  k_max: 8
+  adaptive: true
+  mcp_signal_threshold: 1.0
+
+trace:
+  enabled: false
+  path: compress_trace.jsonl
+
+codex:
+  enabled: false
+  model: gpt-5
+  api_key: ""
+
+shadow_storage: memory

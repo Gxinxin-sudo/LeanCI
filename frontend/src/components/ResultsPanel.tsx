@@ -28,7 +28,7 @@ function LoadingState() {
         <span className="loading-mark" aria-hidden="true" />
         <div>
           <p className="font-mono text-[0.65rem] uppercase tracking-[0.22em] text-signal">
-            Mock analysis running
+            Secure analysis running
           </p>
           <h2 className="mt-1 font-display text-xl font-semibold text-white">
             Tracing the failure signal…
@@ -65,8 +65,7 @@ function EmptyState() {
           Your diagnosis will assemble here.
         </h2>
         <p className="mt-3 text-sm leading-6 text-muted">
-          Paste a failing CI log or load the sample, then run the mock analysis to inspect
-          every response field.
+          Paste a failing CI log or load the sample, then run the verified Paritok analysis.
         </p>
       </div>
     </section>

@@ -4,7 +4,7 @@ This module does not import, configure, or call Paritok, DeepSeek, or any other
 external service.
 """
 
-from app.models import AnalysisResult, CompressionStats, EvidenceItem
+from app.models import AnalysisResult, EvidenceItem, UnavailableCompressionStats
 
 
 def build_mock_analysis() -> AnalysisResult:
@@ -83,5 +83,5 @@ def build_mock_analysis() -> AnalysisResult:
             "The current deployment environment variable inventory was not provided.",
             "No report service unit test was included with this demo log.",
         ],
-        compression_stats=CompressionStats(),
+        compression_stats=UnavailableCompressionStats(),
     )

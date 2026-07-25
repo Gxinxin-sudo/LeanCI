@@ -116,6 +116,11 @@ button:disabled {
   box-shadow: 0 0 0 4px rgb(255 122 102 / 0.08);
 }
 
+.status-dot-online {
+  background: var(--color-signal);
+  box-shadow: 0 0 0 4px rgb(124 255 178 / 0.08);
+}
+
 .empty-grid {
   background-image:
     linear-gradient(rgb(87 216 208 / 0.035) 1px, transparent 1px),

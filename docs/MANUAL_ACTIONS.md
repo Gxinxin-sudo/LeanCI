@@ -6,9 +6,9 @@
 
 ### 1. 后端 Python 环境（已完成）
 
-- [x] Python 3.11.9 已安装。
-- [x] 正式后端环境已创建为 `backend/.venv`，解释器为 Python 3.11.9。
-- [x] 新环境的 pip 已验证可用。
+- [x] 正式后端环境已修复为 `backend/.venv`，当前解释器为 Python 3.12.13。
+- [x] 已强制重装固定依赖，避免旧 Python 3.11 二进制 wheel 残留。
+- [x] `paritok[proxy]==1.2.7`、pip 与无费用测试已验证可用。
 
 后续从仓库根目录运行任何后端命令时，必须直接使用：
 
@@ -16,9 +16,9 @@
 .\backend\.venv\Scripts\python.exe
 ```
 
-不得依赖终端激活状态、根目录 `.venv` 或 Codex 自带 Python。此前的 Python 3.12 后端环境已
-重命名为 `backend/.venv.python312-backup-20260725`，仅作可恢复备份，不能用于开发、测试或正式分析。
-不要提交任何 `.venv` 内容。
+不得依赖终端激活状态、根目录 `.venv` 或 Codex 自带 Python。原 Python 3.11.9 基础解释器
+已不在系统中，因此旧虚拟环境无法启动；仓库仍保留
+`backend/.venv.python312-backup-20260725` 作为可恢复备份。不要提交任何 `.venv` 内容。
 
 ## 开发后续需要
 
@@ -72,7 +72,7 @@ DEEPSEEK_API_KEY=<在本机填写，不要发送给 Codex>
 ```dotenv
 DEEPSEEK_BASE_URL=https://api.deepseek.com
 DEEPSEEK_MODEL=deepseek-v4-flash
-LLM_PROVIDER=mock
+LLM_PROVIDER=paritok
 ```
 
 - [ ] 确认 `.env` 仍被 Git 忽略：
@@ -114,14 +114,40 @@ PARITOK_API_KEY=<在本机填写，不要发送给 Codex>
 ```
 
 - [ ] 不要把 Key 写入 `paritok.yaml`。该文件只配置 `use_gpu_server: true`，运行时从环境变量读取 Key。
-- [ ] 等 Paritok 阶段代码完成后，按 README 启动代理并检查：
+- [ ] 保留 `LLM_PROVIDER=paritok` 和固定 URL，不要改成 Direct 或 Mock。
+- [ ] 在终端 1 启动 Paritok Proxy，并保持该终端一直打开：
+
+```powershell
+.\scripts\start_paritok.ps1
+```
+
+- [ ] 在终端 2 启动单 worker FastAPI：
+
+```powershell
+.\backend\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --workers 1
+```
+
+- [ ] 在新终端完成 Proxy、hosted GPU 和累计 stats 预检：
 
 ```powershell
 Invoke-RestMethod "http://127.0.0.1:8080/health"
 Invoke-RestMethod "http://127.0.0.1:8080/stats"
+.\backend\.venv\Scripts\python.exe scripts\test_paritok_connection.py
+Invoke-RestMethod "http://127.0.0.1:8000/api/health"
 ```
 
 如果代理只警告 hosted GPU 不可用但仍返回本地 health OK，不要继续正式分析；LeanCI 必须显示不可用错误。
+
+- [ ] 确认 DeepSeek 余额后，显式批准一次真实付费的长请求验证：
+
+```powershell
+.\backend\.venv\Scripts\python.exe scripts\verify_paritok_long_request.py --confirm-cost
+```
+
+只有输出 `status=success`、`original_tokens > 5000`、固定模型、stats 验证标记和累计计数时，
+才可勾选本项。真实数值必须来自 `/stats` 差值。不要把 `/stats` 中可能出现的
+`estimated_cost_saved_usd` 当作 DeepSeek 账单；只使用 LeanCI 返回的带价格快照和免责声明的
+估算值。完整步骤见 `docs/PARITOK_VERIFICATION.md`。
 
 ## 发布阶段需要
 

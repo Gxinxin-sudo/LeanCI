@@ -5,7 +5,9 @@ description = "LeanCI API and isolated LLM provider boundary"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi==0.140.0",
+    "httpx==0.28.1",
     "openai==2.46.0",
+    "paritok[proxy]==1.2.7",
     "pydantic==2.13.4",
     "pydantic-settings==2.14.2",
     "uvicorn[standard]==0.51.0",
@@ -22,7 +24,7 @@ dev = [
 addopts = "-q --strict-config --strict-markers"
 testpaths = ["tests"]
 markers = [
-    "integration: calls an external service only when the required local secret exists",
+    "integration: external paid test that also requires an explicit RUN_* opt-in",
 ]
 
 [tool.ruff]

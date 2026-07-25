@@ -71,9 +71,10 @@ class ProviderResult(StrictModel):
     model: str = Field(min_length=1, max_length=120)
     analysis: DiagnosticAnalysis
     usage: ProviderUsage | None
+    request_attempts: int = Field(default=0, ge=0, le=12)
 
 
-class CompressionStats(StrictModel):
+class UnavailableCompressionStats(StrictModel):
     available: Literal[False] = False
     paritok_connected: Literal[False] = False
     original_tokens: int | None = None
@@ -83,22 +84,76 @@ class CompressionStats(StrictModel):
     message: Literal["Demo data — Paritok not connected"] = DEMO_NOTICE
 
 
+class CumulativeParitokStats(StrictModel):
+    """Safe cumulative counters from Paritok; its dollar estimate is excluded."""
+
+    total_requests: int = Field(ge=0)
+    input_tokens_original: int = Field(ge=0)
+    input_tokens_compressed: int = Field(ge=0)
+    compression_ratio: float = Field(ge=0)
+    tokens_saved: int = Field(ge=0)
+    tools_filtered: int = Field(ge=0)
+
+
+class DeepSeekCostEstimate(StrictModel):
+    """LeanCI-owned estimate based only on the configured DeepSeek price."""
+
+    estimated_input_cost_saved_usd: float = Field(ge=0)
+    input_cache_miss_usd_per_m_tokens: float = Field(ge=0)
+    pricing_snapshot_date: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
+    disclaimer: Literal["Estimate from LeanCI's configured DeepSeek price; not an actual bill."] = (
+        "Estimate from LeanCI's configured DeepSeek price; not an actual bill."
+    )
+
+
+class VerifiedCompressionStats(StrictModel):
+    available: Literal[True] = True
+    paritok_connected: Literal[True] = True
+    hosted_gpu_available: Literal[True] = True
+    verification: Literal["local_health+hosted_gpu_preflight+stats_delta"] = (
+        "local_health+hosted_gpu_preflight+stats_delta"
+    )
+    proxy_version: str = Field(min_length=1, max_length=80)
+    model: Literal["deepseek-v4-flash"]
+    proxy_requests: int = Field(ge=1, le=12)
+    original_tokens: int = Field(ge=0)
+    compressed_tokens: int = Field(ge=0)
+    saved_tokens: int = Field(ge=0)
+    compression_ratio: float = Field(ge=0)
+    cumulative: CumulativeParitokStats
+    cost_estimate: DeepSeekCostEstimate
+    message: Literal[
+        "Verified through Paritok; Token metrics come only from this request's stats delta."
+    ] = "Verified through Paritok; Token metrics come only from this request's stats delta."
+
+
+CompressionStats = Annotated[
+    UnavailableCompressionStats | VerifiedCompressionStats,
+    Field(discriminator="available"),
+]
+
+
 class AnalysisResult(DiagnosticAnalysis):
     compression_stats: CompressionStats
 
 
 class HealthResponse(StrictModel):
-    status: Literal["ok"]
+    status: Literal["ok", "degraded"]
     service: Literal["leanci-api"]
-    mode: Literal["demo"]
-    paritok_connected: Literal[False]
+    mode: Literal["paritok"]
+    paritok_connected: bool
+    hosted_gpu_available: bool
+    proxy_version: str | None = Field(default=None, max_length=80)
+    model: Literal["deepseek-v4-flash"]
     deepseek_called: Literal[False]
-    message: Literal["Demo data — Paritok not connected"]
+    message: str = Field(min_length=1, max_length=300)
 
 
 class ConfigStatusResponse(StrictModel):
     deepseek_api_key_configured: bool
     paritok_api_key_configured: bool
+    llm_provider: Literal["mock", "paritok"]
+    model: Literal["deepseek-v4-flash"] = "deepseek-v4-flash"
 
 
 class ErrorDetail(StrictModel):

@@ -1,30 +1,124 @@
+from typing import Any
+
 from fastapi.testclient import TestClient
 
 from app.config import Settings
+from app.errors import AppError
 from app.main import create_app
-from app.models import DEMO_NOTICE, MAX_LOG_CHARACTERS
+from app.models import (
+    MAX_LOG_CHARACTERS,
+    AnalysisResult,
+    CumulativeParitokStats,
+    DeepSeekCostEstimate,
+    EvidenceItem,
+    HealthResponse,
+    VerifiedCompressionStats,
+)
 
 
-def make_client(settings: Settings | None = None) -> TestClient:
-    return TestClient(create_app(settings))
+def build_result() -> AnalysisResult:
+    return AnalysisResult(
+        summary="Type checking failed.",
+        root_cause="A required string received an undefined value.",
+        confidence=0.95,
+        evidence=[
+            EvidenceItem(
+                source="ci.log",
+                line_start=8,
+                line_end=8,
+                excerpt="error TS2345",
+                explanation="The compiler identifies the type mismatch.",
+            )
+        ],
+        relevant_files=["src/config.ts"],
+        recommended_changes=["Validate the environment value."],
+        patch="",
+        verification_commands=["npm run typecheck"],
+        risks=["Deployment configuration may be incomplete."],
+        missing_information=["The deployment environment was not supplied."],
+        compression_stats=VerifiedCompressionStats(
+            proxy_version="1.0.0",
+            model="deepseek-v4-flash",
+            proxy_requests=1,
+            original_tokens=8000,
+            compressed_tokens=2000,
+            saved_tokens=6000,
+            compression_ratio=0.25,
+            cumulative=CumulativeParitokStats(
+                total_requests=12,
+                input_tokens_original=80_000,
+                input_tokens_compressed=20_000,
+                compression_ratio=0.25,
+                tokens_saved=60_000,
+                tools_filtered=0,
+            ),
+            cost_estimate=DeepSeekCostEstimate(
+                estimated_input_cost_saved_usd=0.00084,
+                input_cache_miss_usd_per_m_tokens=0.14,
+                pricing_snapshot_date="2026-07-25",
+            ),
+        ),
+    )
 
 
-def test_health_is_explicitly_demo_only() -> None:
+class FakeAnalysisService:
+    def __init__(self, *, failure: AppError | None = None) -> None:
+        self.failure = failure
+        self.inputs: list[str] = []
+
+    async def health(self) -> HealthResponse:
+        return HealthResponse(
+            status="ok",
+            service="leanci-api",
+            mode="paritok",
+            paritok_connected=True,
+            hosted_gpu_available=True,
+            proxy_version="1.0.0",
+            model="deepseek-v4-flash",
+            deepseek_called=False,
+            message="Local Paritok Proxy and hosted GPU are available.",
+        )
+
+    async def analyze(self, untrusted_context: str) -> AnalysisResult:
+        self.inputs.append(untrusted_context)
+        if self.failure:
+            raise self.failure
+        return build_result()
+
+
+def make_client(
+    settings: Settings | None = None,
+    *,
+    service: Any | None = None,
+) -> TestClient:
+    active_settings = settings or Settings(_env_file=None)
+    return TestClient(
+        create_app(
+            active_settings,
+            analysis_service=service or FakeAnalysisService(),
+        )
+    )
+
+
+def test_health_reports_paritok_and_hosted_gpu() -> None:
     response = make_client().get("/api/health")
 
     assert response.status_code == 200
     assert response.json() == {
         "status": "ok",
         "service": "leanci-api",
-        "mode": "demo",
-        "paritok_connected": False,
+        "mode": "paritok",
+        "paritok_connected": True,
+        "hosted_gpu_available": True,
+        "proxy_version": "1.0.0",
+        "model": "deepseek-v4-flash",
         "deepseek_called": False,
-        "message": DEMO_NOTICE,
+        "message": "Local Paritok Proxy and hosted GPU are available.",
     }
     assert len(response.headers["X-Request-ID"]) == 32
 
 
-def test_config_status_only_exposes_secret_presence() -> None:
+def test_config_status_only_exposes_secret_presence_and_safe_metadata() -> None:
     settings = Settings(
         _env_file=None,
         deepseek_api_key="test-only",
@@ -36,40 +130,32 @@ def test_config_status_only_exposes_secret_presence() -> None:
     assert response.json() == {
         "deepseek_api_key_configured": True,
         "paritok_api_key_configured": True,
+        "llm_provider": "paritok",
+        "model": "deepseek-v4-flash",
     }
     assert "test-only" not in response.text
 
 
-def test_mock_analysis_returns_complete_contract_without_token_numbers() -> None:
-    response = make_client().post(
+def test_formal_analysis_returns_verified_request_and_cumulative_stats() -> None:
+    service = FakeAnalysisService()
+    response = make_client(service=service).post(
         "/api/analyze",
         json={"log_text": "src/services/report.ts:42: type error"},
     )
 
     assert response.status_code == 200
     result = response.json()
-    assert set(result) == {
-        "summary",
-        "root_cause",
-        "confidence",
-        "evidence",
-        "relevant_files",
-        "recommended_changes",
-        "patch",
-        "verification_commands",
-        "risks",
-        "missing_information",
-        "compression_stats",
-    }
-    assert result["compression_stats"] == {
-        "available": False,
-        "paritok_connected": False,
-        "original_tokens": None,
-        "compressed_tokens": None,
-        "saved_tokens": None,
-        "compression_ratio": None,
-        "message": DEMO_NOTICE,
-    }
+    assert service.inputs == ["src/services/report.ts:42: type error"]
+    assert result["compression_stats"]["available"] is True
+    assert result["compression_stats"]["verification"] == (
+        "local_health+hosted_gpu_preflight+stats_delta"
+    )
+    assert result["compression_stats"]["original_tokens"] == 8000
+    assert result["compression_stats"]["compressed_tokens"] == 2000
+    assert result["compression_stats"]["saved_tokens"] == 6000
+    assert result["compression_stats"]["cumulative"]["total_requests"] == 12
+    assert "estimated_cost_saved_usd" not in result["compression_stats"]["cumulative"]
+    assert result["compression_stats"]["cost_estimate"]["pricing_snapshot_date"] == "2026-07-25"
 
 
 def test_whitespace_log_uses_unified_error_response() -> None:
@@ -96,6 +182,22 @@ def test_configured_log_limit_is_enforced_server_side() -> None:
 
     assert response.status_code == 413
     assert response.json()["error"]["code"] == "LOG_TOO_LARGE"
+
+
+def test_paritok_failure_is_returned_as_503_without_internal_details() -> None:
+    failure = AppError(
+        status_code=503,
+        code="PARITOK_UNAVAILABLE",
+        message="The local Paritok Proxy is unavailable.",
+    )
+    response = make_client(service=FakeAnalysisService(failure=failure)).post(
+        "/api/analyze",
+        json={"log_text": "failure"},
+    )
+
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "PARITOK_UNAVAILABLE"
+    assert "C:\\" not in response.text
 
 
 def test_unknown_route_uses_unified_error_response() -> None:

@@ -56,35 +56,44 @@
 - [x] 更新 `.env.example`、README、架构、人工操作和任务状态
 - [ ] `[MANUAL]` 在 DeepSeek 开放平台创建 Key、检查余额并完成一次真实连接测试
 
-### 原定安全输入与 Paritok 工作（尚未开始）
+### 安全输入剩余工作
 
 - [ ] 实现 4 MiB 请求体硬上限
 - [ ] 实现 2 MiB 日志、5 文件、单文件 256 KiB、合计 1 MiB 限制
 - [ ] 实现文件名、扩展名、UTF-8、NUL 和控制字符校验
 - [ ] 保证上传内容只在内存中处理
-- [ ] 按行和约 40,000 Token 目标分块
-- [ ] 创建无密钥 `paritok.yaml`，启用 `use_gpu_server: true`
-- [ ] 实现本地 `/health`、`/stats` 和固定 hosted `/test` 检查
-- [ ] 实现单 worker 分析锁和 stats 前后快照差值
-- [ ] 实现 Paritok 不可用时 fail-closed
 - [ ] 测试路径穿越、超限、ZIP、二进制、无效 UTF-8 和控制字符
-- [ ] 测试代理宕机、GPU 不可用、密钥拒绝和 stats 异常
-- [ ] 测试并发请求不会污染单次 Token 指标
-- [ ] 更新 README、架构和任务状态
 
-## 阶段 3：DeepSeek 结构化分析
+## 阶段 3：正式 Paritok hosted GPU 与 DeepSeek
 
-- [ ] 固定 `deepseek-v4-flash` 和本地 Paritok base URL
-- [ ] 实现不可信日志/文件工具结果封装和提示词注入防护
-- [ ] 实现 JSON Object、`max_tokens=4096` 和禁用 thinking
-- [ ] 定义并验证问题摘要、根因、可信度、证据、文件、建议、Diff、命令、风险和缺失信息
+- [x] 对照 Paritok 官方仓库与本机安装包核验 `paritok[proxy]==1.2.7` schema 和 CLI
+- [x] 安装并固定 `paritok[proxy]==1.2.7`
+- [x] 创建无密钥 `paritok.yaml`，启用 `use_gpu_server: true`
+- [x] 创建 Windows PowerShell 与 Linux/Docker Proxy 启动脚本
+- [x] 固定本地 base URL 和完整 DeepSeek `/chat/completions` 上游端点
+- [x] 固定 `deepseek-v4-flash`，正式接口不接受模型或 URL 覆盖
+- [x] 实现本地 `/health`、`/stats` 和固定 hosted `/test` 客户端与独立超时
+- [x] 实现分析前后 stats 快照、严格 delta、请求次数匹配和累计统计
+- [x] 返回本次原始/压缩/节省 Token、压缩比例、累计统计、Paritok 状态和模型
+- [x] 丢弃 Paritok `estimated_cost_saved_usd`，使用项目 DeepSeek 价格与快照日期估算
+- [x] 实现单 worker 分析锁，测试并发请求不会污染单次 Token 指标
+- [x] 实现正式接口只经过 Paritok；Proxy、hosted GPU 或 stats 不可用时 503
+- [x] 实现 DeepSeek 认证、余额、限流、服务错误和超时的安全公开错误
+- [x] 实现不可信 CI 证据的惰性历史 tool 结果，使 Paritok 实际压缩
+- [x] 使用保守 UTF-8 字节上限分块，且不把预分块计数冒充 Token 指标
+- [x] 实现 JSON Object、`max_tokens=4096` 和禁用 thinking
+- [x] 定义并验证问题摘要、根因、可信度、证据、文件、建议、Diff、命令、风险和缺失信息
 - [ ] 实现空内容/无效 JSON 的脱敏调试保存
-- [ ] 实现且只实现一次 JSON 修复重试
-- [ ] 实现安全错误分类，不泄露请求头、环境变量或内部路径
-- [ ] 测试有效 JSON、空内容、截断、无效 Schema 和第二次失败
-- [ ] 测试日志中的恶意指令不能覆盖系统提示词
-- [ ] 测试任何模型命令都不会被执行
-- [ ] 更新 README、架构和任务状态
+- [x] 实现且只实现一次 JSON 修复重试，并让修复仍经过 Paritok
+- [x] 实现安全错误分类，不泄露请求头、环境变量或内部路径
+- [x] 测试有效 JSON、空内容、截断、无效 Schema 和第二次失败
+- [x] 测试日志中的恶意指令不能覆盖系统提示词
+- [x] 测试任何模型命令都不会被执行
+- [x] 创建 `scripts/test_paritok_connection.py`
+- [x] 创建显式费用确认的超过 5,000 Token 验证脚本
+- [x] 添加客户端、服务、Provider、API、并发和条件真实集成测试
+- [x] 创建 Windows 设置、正式验证文档，更新 README、架构图和人工操作
+- [ ] `[MANUAL]` 配置两个真实 Key，启动 Proxy，并完成一次超过 5,000 Token 的真实验证
 
 ## 阶段 4：前端 MVP
 

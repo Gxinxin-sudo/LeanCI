@@ -84,9 +84,16 @@ export function App() {
             </div>
           </div>
           <div className="hidden items-center gap-3 sm:flex">
-            <span className="status-dot status-dot-offline" aria-hidden="true" />
+            <span
+              className={`status-dot ${
+                activeStats?.available === true ? 'status-dot-online' : 'status-dot-offline'
+              }`}
+              aria-hidden="true"
+            />
             <span className="font-mono text-[0.62rem] uppercase tracking-[0.18em] text-muted">
-              Phase 01 / Mock
+              {activeStats?.available === true
+                ? `Paritok verified / ${activeStats.model}`
+                : 'Phase 03 / Paritok'}
             </span>
           </div>
         </div>
@@ -96,7 +103,7 @@ export function App() {
         <div className="mx-auto flex max-w-[96rem] items-center gap-3 px-5 py-3 lg:px-8">
           <span className="h-2 w-2 shrink-0 bg-fault" aria-hidden="true" />
           <p className="font-mono text-[0.68rem] uppercase tracking-[0.12em] text-fault-soft">
-            Demo data — Paritok not connected
+            Production analysis is fail-closed through Paritok
           </p>
         </div>
       </div>
@@ -112,8 +119,8 @@ export function App() {
               <span className="block text-muted">Keep every claim inspectable.</span>
             </h1>
             <p className="mt-5 max-w-2xl text-sm leading-7 text-muted sm:text-base">
-              Paste a failure log and exercise the complete response contract locally. This stage
-              returns deterministic demo evidence and never contacts an external model.
+              Paste a failure log to run the fixed FastAPI → Paritok hosted GPU → DeepSeek path.
+              Every successful response includes a verified per-request stats delta.
             </p>
           </div>
           <SignalTrack />
@@ -217,9 +224,9 @@ export function App() {
       </main>
 
       <footer className="mx-auto flex max-w-[96rem] flex-col gap-2 border-t border-line px-5 py-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between lg:px-8">
-        <p>LeanCI phase-one local skeleton</p>
+        <p>LeanCI formal Paritok integration</p>
         <p className="font-mono text-[0.62rem] uppercase tracking-[0.16em]">
-          No Paritok · No DeepSeek · No command execution
+          Paritok required · Fail closed · No command execution
         </p>
       </footer>
     </div>
