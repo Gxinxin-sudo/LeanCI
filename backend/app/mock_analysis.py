@@ -1,4 +1,4 @@
-"""Deterministic phase-one analysis data.
+"""Deterministic application analysis data.
 
 This module does not import, configure, or call Paritok, DeepSeek, or any other
 external service.

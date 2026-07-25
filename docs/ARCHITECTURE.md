@@ -1,6 +1,6 @@
 # LeanCI 架构设计
 
-状态：阶段一 Mock 工程骨架
+状态：阶段二 DeepSeek 独立连接能力；正式应用仍为 Mock
 快照日期：2026-07-25
 
 ## 1. 系统边界
@@ -29,7 +29,7 @@ POST /api/benchmark（内置示例 + confirm_cost=true）
 
 正式 `/api/analyze` 不提供 baseline、模型名或上游 URL 参数。
 
-### 阶段一临时运行边界
+### 当前临时运行边界
 
 当前可运行版本只包含：
 
@@ -40,11 +40,22 @@ POST /api/benchmark（内置示例 + confirm_cost=true）
   ← 严格 Pydantic 分析结果 + 不可用的 compression_stats
 ```
 
-- 不导入、不配置、也不调用 Paritok 或 DeepSeek 客户端；
+- FastAPI 路由不构造、不配置、也不调用 Paritok 或 DeepSeek 客户端；
 - `compression_stats` 的所有 Token 数字均为 `null`；
 - 页面和 API 都明确标记 `Demo data — Paritok not connected`；
-- Mock `POST /api/analyze` 暂时接收 JSON `log_text`，文件上传与 multipart 契约在阶段二实现；
+- Mock `POST /api/analyze` 暂时接收 JSON `log_text`，文件上传与 multipart 契约在后续安全输入阶段实现；
 - 日志和 Mock 返回中的命令、Diff 仅展示，不会被服务器或浏览器执行。
+
+独立连接测试与应用隔离：
+
+```text
+人工运行 scripts/test_deepseek_connection.py
+  → DirectDeepSeekProvider(use_case=connection_test)
+    → https://api.deepseek.com
+  ← 严格 Pydantic 诊断 + DeepSeek 实际 usage
+```
+
+该脚本不经 FastAPI，不修改 `/api/analyze`，也不产生 Paritok Token 指标。
 
 ## 2. 运行组件
 
@@ -73,6 +84,18 @@ POST /api/benchmark（内置示例 + confirm_cost=true）
 - OpenAI Python SDK 的正式 base URL 是 `http://127.0.0.1:8080/v1`。
 - 模型固定 `deepseek-v4-flash`。
 - `DEEPSEEK_API_KEY` 作为请求 Authorization 经过本地代理转发。
+
+### 统一 LLM Provider
+
+- `MockProvider`：当前 FastAPI Mock 和单元测试；usage 为 `null`，不伪造 Token。
+- `DirectDeepSeekProvider`：构造时必须显式提供 `connection_test`、
+  `benchmark_baseline` 或 `troubleshooting` 用途；只有该 Provider 暴露上游实际 usage。
+- `ParitokDeepSeekProvider`：未来正式分析的唯一 Provider，base URL 固定为本地代理。
+  它不会把 OpenAI 兼容响应的 usage 暴露为正式 Token 指标；正式指标仍只能来自请求前后
+  Paritok `/stats` 快照的差值。
+
+应用工厂只接受 `LLM_PROVIDER=mock` 或 `LLM_PROVIDER=paritok`，不接受 direct。
+选择 Paritok 但缺少配置时直接失败，不回退到 Mock 或 Direct。
 
 ## 3. API 契约
 
@@ -237,6 +260,13 @@ extra_body = {"thinking": {"type": "disabled"}}
 
 系统或用户提示词必须包含 `json`，并给出期望结构。
 
+当前 Provider 使用官方 OpenAI Python SDK `2.46.0` 的 Chat Completions 兼容接口。
+SDK 自身 `max_retries=0`，由 LeanCI 执行有界重试：
+
+- 连接失败、超时、429 和 5xx 最多额外重试两次；
+- 401 认证失败和 402 余额不足不重试；
+- 公开错误只返回稳定错误码和排查提示，不包含上游正文、请求头或 Key。
+
 严格分析结构：
 
 - `summary: str`
@@ -254,11 +284,18 @@ Token、费用、请求 ID 和模式由后端添加，模型无权生成这些�
 
 ### JSON 失败处理
 
-1. 内容为空、JSON 解析失败或 Pydantic 校验失败时，保存经过密钥脱敏且有大小上限的原始响应；
+当前独立连接 Provider：
+
+1. 内容为空、截断、JSON 解析失败或 Pydantic 校验失败时，发起一次修复请求；
+2. 前一份模型输出也按不可信数据封装；
+3. 第二次失败后停止并返回 `LLM_OUTPUT_INVALID`；
+4. 不打印或落盘原始模型正文。
+
+未来正式 Paritok 分析还将：
+
+1. 保存经过密钥脱敏且有大小上限的原始响应；
 2. 调试文件只写入非静态、非公开的 `runtime/debug_responses/`；
-3. 使用同一本地 Paritok base URL进行一次 JSON 修复请求；
-4. 第二次失败后停止并返回稳定错误码；
-5. 禁止循环、递归或退避式无限修复。
+3. 使用同一本地 Paritok base URL 进行同样的一次 JSON 修复请求。
 
 调试响应不得包含请求头、环境变量或提示词原文，并应对已加载的实际密钥值及常见令牌前缀进行替换。
 

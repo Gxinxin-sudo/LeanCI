@@ -1,10 +1,11 @@
 [project]
 name = "leanci-backend"
 version = "0.1.0"
-description = "LeanCI phase-one mock API"
+description = "LeanCI API and isolated LLM provider boundary"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi==0.140.0",
+    "openai==2.46.0",
     "pydantic==2.13.4",
     "pydantic-settings==2.14.2",
     "uvicorn[standard]==0.51.0",
@@ -20,6 +21,9 @@ dev = [
 [tool.pytest.ini_options]
 addopts = "-q --strict-config --strict-markers"
 testpaths = ["tests"]
+markers = [
+    "integration: calls an external service only when the required local secret exists",
+]
 
 [tool.ruff]
 line-length = 100

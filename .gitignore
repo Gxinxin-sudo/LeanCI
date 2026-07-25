@@ -12,6 +12,7 @@ __pycache__/
 *.pyo
 .python-version
 .venv/
+backend/.venv.python312-backup-20260725/
 venv/
 env/
 .pytest_cache/

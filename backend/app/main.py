@@ -1,4 +1,4 @@
-"""FastAPI application entry point for the phase-one mock."""
+"""FastAPI application entry point; application analysis remains mock-only."""
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,7 +22,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application = FastAPI(
         title=active_settings.app_name,
         version="0.1.0",
-        description="LeanCI phase-one mock API. No external AI services are called.",
+        description=(
+            "LeanCI mock application API. DeepSeek is available only through the "
+            "separate connection-test script."
+        ),
     )
     application.middleware("http")(attach_request_id)
     application.add_middleware(

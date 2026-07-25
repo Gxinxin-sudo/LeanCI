@@ -4,39 +4,21 @@
 
 ## 当前最先需要完成
 
-### 1. 安装 Python 3.11.x（Windows）
+### 1. 后端 Python 环境（已完成）
 
-阶段一后端已经使用 Codex 隔离的 Python 3.12 环境验证通过，但当前系统 PATH 中没有
-`python` 或 `py`。仓库根目录还存在一个指向已移除解释器的旧 `.venv`，它没有被修改，
-开发脚本也不使用它。为了让普通 PowerShell 和后续阶段稳定可复现，仍需完成以下人工操作。
+- [x] Python 3.11.9 已安装。
+- [x] 正式后端环境已创建为 `backend/.venv`，解释器为 Python 3.11.9。
+- [x] 新环境的 pip 已验证可用。
 
-- [ ] 打开 [Python 官方 Windows 下载页](https://www.python.org/downloads/windows/)。
-- [ ] 在 Python 3.11 系列中下载最新的 **Windows installer (64-bit)**。
-- [ ] 启动安装器，勾选 **Add python.exe to PATH**。
-- [ ] 选择 **Customize installation** 时保留 `pip` 和 Python launcher；安装位置可使用默认值。
-- [ ] 安装完成后关闭并重新打开终端或 Codex。
-- [ ] 在 PowerShell 中运行：
+后续从仓库根目录运行任何后端命令时，必须直接使用：
 
 ```powershell
-python --version
-py -3.11 --version
-python -m pip --version
+.\backend\.venv\Scripts\python.exe
 ```
 
-预期至少有一种 Python 命令显示 `Python 3.11.x`，且 pip 可用。若 `python` 打开 Microsoft Store，请在 Windows“管理应用执行别名”中关闭 Store 的 `python.exe`/`python3.exe` 别名，再重开终端。
-
-- [ ] 如需清理根目录中损坏的 `.venv`，请在确认路径为本项目后手动删除该单个目录；不要使用批量删除命令。
-- [ ] 用已安装的 Python 为后端创建可复现环境并安装锁定依赖：
-
-```powershell
-cd backend
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --requirement requirements-dev.txt
-.\.venv\Scripts\python.exe -m pytest
-```
-
-若 `backend/.venv` 已存在且仍指向 Codex 运行时，请在确认路径后由你手动删除该目录，再用
-系统 Python 重新创建。不要提交任何 `.venv` 内容。
+不得依赖终端激活状态、根目录 `.venv` 或 Codex 自带 Python。此前的 Python 3.12 后端环境已
+重命名为 `backend/.venv.python312-backup-20260725`，仅作可恢复备份，不能用于开发、测试或正式分析。
+不要提交任何 `.venv` 内容。
 
 ## 开发后续需要
 
@@ -67,20 +49,30 @@ docker run --rm hello-world
 
 ### 4. 创建 DeepSeek API Key
 
-- [ ] 打开 [DeepSeek 开放平台](https://platform.deepseek.com/) 并登录。
+- [ ] 打开 [DeepSeek 开放平台 API Keys](https://platform.deepseek.com/api_keys) 并登录。
 - [ ] 进入 API Keys 页面，创建一个仅供 LeanCI 使用的新 Key。
 - [ ] 创建后立即复制到安全的密码管理器；关闭页面后通常无法再次查看完整 Key。
 - [ ] 检查账户余额，确保至少可以运行少量开发请求和双跑 benchmark。
-- [ ] 在项目根目录复制环境示例：
+- [ ] 仅当项目根目录还没有 `.env` 时，复制环境示例；已有 `.env` 时不要覆盖：
 
 ```powershell
-Copy-Item ".env.example" ".env"
+if (-not (Test-Path -LiteralPath ".env")) {
+    Copy-Item ".env.example" ".env"
+}
 ```
 
 - [ ] 用本地文本编辑器打开 `.env`，只填写：
 
 ```dotenv
 DEEPSEEK_API_KEY=<在本机填写，不要发送给 Codex>
+```
+
+- [ ] 保留下列非敏感默认值，不要改成旧模型名：
+
+```dotenv
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MODEL=deepseek-v4-flash
+LLM_PROVIDER=mock
 ```
 
 - [ ] 确认 `.env` 仍被 Git 忽略：
@@ -90,6 +82,25 @@ git status --short --ignored
 ```
 
 不得把 Key 写入 `.env.example`、`paritok.yaml`、README、测试或截图。
+
+- [ ] 从仓库根目录运行独立连接测试：
+
+```powershell
+.\backend\.venv\Scripts\python.exe scripts\test_deepseek_connection.py
+```
+
+成功时只应看到 `status=success`、`model=deepseek-v4-flash` 和 DeepSeek 实际返回的
+`usage`。脚本不会显示模型正文或 Key。若没有填写 Key，则显示 `status=skipped`，
+不会把 Mock 当作连接成功。
+
+失败排查：
+
+- 401：Key 无效或已撤销，在 API Keys 页面重新创建；认证失败不会自动重试；
+- 402：余额不足，在 DeepSeek 平台检查余额；
+- 429：请求过快，等待后再运行；
+- 500/503：上游暂时不可用，稍后再试；
+- timeout/connection：检查网络、DNS、防火墙和 `DEEPSEEK_BASE_URL`；
+- `LLM_OUTPUT_INVALID`：DeepSeek 连续两次没有返回通过严格 Schema 的 JSON，稍后重试。
 
 ### 5. 创建 Paritok API Key
 

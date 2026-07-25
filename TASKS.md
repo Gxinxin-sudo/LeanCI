@@ -25,7 +25,7 @@
 
 ## 阶段 1：工程脚手架
 
-- [ ] `[MANUAL]` 安装 Python 3.11.x 并确认 PATH
+- [x] 使用已安装的 Python 3.11.9 创建唯一正式后端环境 `backend/.venv`；后续命令固定使用 `./backend/.venv/Scripts/python.exe`
 - [x] 建立 FastAPI 包结构、依赖锁定和开发命令
 - [x] 建立 React + TypeScript strict + Vite + Tailwind 前端
 - [x] 建立 `examples/`、`benchmarks/`、`scripts/` 和 `tests/`
@@ -39,6 +39,24 @@
 - [x] 更新 README、架构、人工操作和任务状态
 
 ## 阶段 2：安全输入与 Paritok
+
+### 本轮增量：DeepSeek 独立连接（不接入正式分析）
+
+- [x] 安装并固定官方 OpenAI Python SDK `2.46.0`
+- [x] 固定 `deepseek-v4-flash`，拒绝 `deepseek-chat` 和 `deepseek-reasoner`
+- [x] 实现统一 `MockProvider`、`DirectDeepSeekProvider` 和 `ParitokDeepSeekProvider`
+- [x] 限制 Direct 只能用于连接测试、未压缩 baseline 和故障定位
+- [x] 保持 FastAPI `/api/analyze` 与 `LLM_PROVIDER=mock`，不启用生产直连或自动回退
+- [x] 创建只输出状态、模型和实际 usage 的 `scripts/test_deepseek_connection.py`
+- [x] 实现固定安全提示词、不可信数据边界、JSON Object 和禁用 thinking
+- [x] 实现严格 Pydantic 输出校验与空内容/无效 JSON/缺字段的一次修复
+- [x] 实现 timeout、有限网络重试、401/402 不重试和安全错误映射
+- [x] 添加 Mock、参数、修复、错误、重试和无 Key 跳过测试
+- [x] 运行后端 Ruff/格式/pytest/pip check 和前端 lint/类型检查/测试/生产构建
+- [x] 更新 `.env.example`、README、架构、人工操作和任务状态
+- [ ] `[MANUAL]` 在 DeepSeek 开放平台创建 Key、检查余额并完成一次真实连接测试
+
+### 原定安全输入与 Paritok 工作（尚未开始）
 
 - [ ] 实现 4 MiB 请求体硬上限
 - [ ] 实现 2 MiB 日志、5 文件、单文件 256 KiB、合计 1 MiB 限制
