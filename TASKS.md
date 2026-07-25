@@ -1,0 +1,126 @@
+# LeanCI 任务清单
+
+说明：
+
+- `[MANUAL]` 表示必须由用户在网页、账号或本机安装界面中完成。
+- 只有实际完成并验证的任务才能勾选。
+- 每个阶段结束前必须完成相应测试、文档更新和安全检查。
+
+## 阶段 0：规划与仓库初始化
+
+- [x] 检查初始目录与 Git 状态
+- [x] 检查 Python、Node.js、npm、Git 和 Docker 可用性
+- [x] 核对 Paritok 1.2.7 与 DeepSeek 当前官方文档
+- [x] 初始化 `main` 分支和本地 GitHub noreply 身份
+- [x] 创建 `AGENTS.md`
+- [x] 创建 `PROJECT_PLAN.md`
+- [x] 创建 `TASKS.md`
+- [x] 创建 `docs/ARCHITECTURE.md`
+- [x] 创建 `docs/MANUAL_ACTIONS.md`
+- [x] 创建 `README.md` 骨架
+- [x] 创建 `.gitignore` 和无密钥 `.env.example`
+- [x] 添加 Apache 2.0 `LICENSE`
+- [x] 运行暂存差异、空白错误和密钥模式检查
+- [x] 创建首次 Git Commit 并确认工作区干净
+
+## 阶段 1：工程脚手架
+
+- [ ] `[MANUAL]` 安装 Python 3.11.x 并确认 PATH
+- [ ] 建立 FastAPI 包结构、依赖锁定和开发命令
+- [ ] 建立 React + TypeScript strict + Vite + Tailwind 前端
+- [ ] 建立 `examples/`、`benchmarks/`、`scripts/` 和 `tests/`
+- [ ] 定义分析结果、Token 指标、错误响应和公开配置 Schema
+- [ ] 配置 pytest、ruff、前端类型检查、测试和构建
+- [ ] 添加基础 GitHub Actions 工作流
+- [ ] 运行后端导入测试、lint、前端类型检查和生产构建
+- [ ] 更新 README、架构和任务状态
+
+## 阶段 2：安全输入与 Paritok
+
+- [ ] 实现 4 MiB 请求体硬上限
+- [ ] 实现 2 MiB 日志、5 文件、单文件 256 KiB、合计 1 MiB 限制
+- [ ] 实现文件名、扩展名、UTF-8、NUL 和控制字符校验
+- [ ] 保证上传内容只在内存中处理
+- [ ] 按行和约 40,000 Token 目标分块
+- [ ] 创建无密钥 `paritok.yaml`，启用 `use_gpu_server: true`
+- [ ] 实现本地 `/health`、`/stats` 和固定 hosted `/test` 检查
+- [ ] 实现单 worker 分析锁和 stats 前后快照差值
+- [ ] 实现 Paritok 不可用时 fail-closed
+- [ ] 测试路径穿越、超限、ZIP、二进制、无效 UTF-8 和控制字符
+- [ ] 测试代理宕机、GPU 不可用、密钥拒绝和 stats 异常
+- [ ] 测试并发请求不会污染单次 Token 指标
+- [ ] 更新 README、架构和任务状态
+
+## 阶段 3：DeepSeek 结构化分析
+
+- [ ] 固定 `deepseek-v4-flash` 和本地 Paritok base URL
+- [ ] 实现不可信日志/文件工具结果封装和提示词注入防护
+- [ ] 实现 JSON Object、`max_tokens=4096` 和禁用 thinking
+- [ ] 定义并验证问题摘要、根因、可信度、证据、文件、建议、Diff、命令、风险和缺失信息
+- [ ] 实现空内容/无效 JSON 的脱敏调试保存
+- [ ] 实现且只实现一次 JSON 修复重试
+- [ ] 实现安全错误分类，不泄露请求头、环境变量或内部路径
+- [ ] 测试有效 JSON、空内容、截断、无效 Schema 和第二次失败
+- [ ] 测试日志中的恶意指令不能覆盖系统提示词
+- [ ] 测试任何模型命令都不会被执行
+- [ ] 更新 README、架构和任务状态
+
+## 阶段 4：前端 MVP
+
+- [ ] 实现日志粘贴、字符/大小提示和清空操作
+- [ ] 实现最多 5 个文件的上传、删除和客户端预检查
+- [ ] 实现三个内置示例选择
+- [ ] 实现 Paritok/服务健康状态
+- [ ] 实现提交、忙碌、失败和重试体验
+- [ ] 展示摘要、根因、可信度、证据和相关文件
+- [ ] 展示建议、Git Diff、验证命令、风险和缺失信息
+- [ ] 展示 Token 主指标和费用估算免责声明
+- [ ] 实现复制 Diff、证据和命令
+- [ ] 完成响应式和基础无障碍体验
+- [ ] 运行组件测试、类型检查和生产构建
+- [ ] 更新 README、架构和任务状态
+
+## 阶段 5：示例与 Benchmark
+
+- [ ] 创建 GitHub Actions/pytest 示例及预期根因
+- [ ] 创建 TypeScript Build 示例及预期根因
+- [ ] 创建 Docker Build 示例及预期根因
+- [ ] 限制 live benchmark 只能使用内置示例
+- [ ] 要求 `confirm_cost=true` 并在 UI 提示两次 API 调用
+- [ ] 顺序执行压缩与未压缩 baseline
+- [ ] 为两路结果记录结构化有效性、延迟和配置价格估算
+- [ ] 确保 baseline 代码无法被 `/api/analyze` 调用
+- [ ] 导出带日期、模型和配置的固定 benchmark 结果
+- [ ] 测试重复运行、错误恢复、费用提示和 stats 隔离
+- [ ] 更新 README、架构和任务状态
+
+## 阶段 6：Docker 与端到端验证
+
+- [ ] `[MANUAL]` 安装并启动 Docker Desktop
+- [ ] 创建前端构建 + Python 运行时的多阶段 Dockerfile
+- [ ] 创建固定命令的 Python 双进程管理脚本
+- [ ] FastAPI 监听平台 `PORT`
+- [ ] Paritok 只监听 `127.0.0.1:8080`
+- [ ] 创建本地开发 `docker-compose.yml`
+- [ ] 验证缺少密钥时安全失败
+- [ ] 验证代理或 FastAPI 退出时容器联动退出
+- [ ] 构建镜像并运行 API、静态站点和分析 smoke test
+- [ ] 扫描镜像与构建上下文中的密钥
+- [ ] 更新 README、架构和任务状态
+
+## 阶段 7：安全、开源与 Devpost
+
+- [ ] 创建 `SECURITY.md` 和 `CONTRIBUTING.md`
+- [ ] 完成全量 pytest、ruff、前端测试、类型检查和构建
+- [ ] 完成 Docker 端到端测试
+- [ ] 完成密钥、依赖和错误响应安全检查
+- [ ] 完善 README 快速开始、部署、Benchmark 和截图
+- [ ] `[MANUAL]` 注册/加入 Devpost 项目并确认官方规则
+- [ ] `[MANUAL]` 创建 DeepSeek API Key 并确保余额可用
+- [ ] `[MANUAL]` 创建 Paritok API Key
+- [ ] `[MANUAL]` 创建公开 GitHub `LeanCI` 仓库
+- [ ] `[MANUAL]` 选择部署平台并配置环境变量
+- [ ] `[MANUAL]` 验证公开 Demo URL
+- [ ] `[MANUAL]` 录制和上传演示视频
+- [ ] `[MANUAL]` 填写并提交 Devpost 材料
+- [ ] 发布前复核所有链接、声明、价格快照和提交要求
