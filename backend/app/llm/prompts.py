@@ -202,8 +202,14 @@ def build_paritok_analysis_messages(
         {
             "role": "user",
             "content": (
-                "Analyze the supplied CI evidence now. Return exactly the required json "
-                "object, with no Markdown fence or surrounding commentary."
+                "Identify the exact failing step, root cause, relevant files, and safe "
+                "fix direction from the supplied CI evidence. Treat successful tests, "
+                "cache hits, dependency downloads, and progress lines as low-priority "
+                "noise unless they directly explain the failure. Cross-check the terminal "
+                "error against every supplied source and configuration file, including "
+                "ignore and build-context rules; do not assume a file is absent from the "
+                "repository when a supplied rule may exclude it. Return exactly the required "
+                "json object, with no Markdown fence or surrounding commentary."
             ),
         }
     )

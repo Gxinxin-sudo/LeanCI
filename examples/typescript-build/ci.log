@@ -1,915 +1,979 @@
 Run npm ci --no-audit --no-fund
 npm info using npm@11.13.0
 npm info using node@v24.16.0
-npm verbose title npm ci
-npm verbose argv "ci" "--no-audit" "--no-fund"
-npm http cache https://registry.npmjs.org/vite/-/vite-2.1.1.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.2.2.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.3.3.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.4.4.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.5.5.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.6.6.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.7.7.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.8.8.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.9.9.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.10.10.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.11.11.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.12.12.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.13.13.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.14.14.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.15.15.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.16.16.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.17.0.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.18.1.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.19.2.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.20.3.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.21.4.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.22.5.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.23.6.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.24.7.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.25.8.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.26.9.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.27.10.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.28.11.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.29.12.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.30.13.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.0.14.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.1.15.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.2.16.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.3.0.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.4.1.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.5.2.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.6.3.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.7.4.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.8.5.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.9.6.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.10.7.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.11.8.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.12.9.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.13.10.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.14.11.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.15.12.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.16.13.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.17.14.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.18.15.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.19.16.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.20.0.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.21.1.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.22.2.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.23.3.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.24.4.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.25.5.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.26.6.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.27.7.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.28.8.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.29.9.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.30.10.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.0.11.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.1.12.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.2.13.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.3.14.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.4.15.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.5.16.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.6.0.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.7.1.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.8.2.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.9.3.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.10.4.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.11.5.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.12.6.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.13.7.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.14.8.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.15.9.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.16.10.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.17.11.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.18.12.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.19.13.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.20.14.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.21.15.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.22.16.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.23.0.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.24.1.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.25.2.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.26.3.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.27.4.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.28.5.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.29.6.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.30.7.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.0.8.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.1.9.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.2.10.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.3.11.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.4.12.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.5.13.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.6.14.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.7.15.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.8.16.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.9.0.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.10.1.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.11.2.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.12.3.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.13.4.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.14.5.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.15.6.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.16.7.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.17.8.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.18.9.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.19.10.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.20.11.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.21.12.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.22.13.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.23.14.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.24.15.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.25.16.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.26.0.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.27.1.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.28.2.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.29.3.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.30.4.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.0.5.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.1.6.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.2.7.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.3.8.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.4.9.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.5.10.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.6.11.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.7.12.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.8.13.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.9.14.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.10.15.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.11.16.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.12.0.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.13.1.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.14.2.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.15.3.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.16.4.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.17.5.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.18.6.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.19.7.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.20.8.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.21.9.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.22.10.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.23.11.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.24.12.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.25.13.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.26.14.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.27.15.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.28.16.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.29.0.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.30.1.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.0.2.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.1.3.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.2.4.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.3.5.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.4.6.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.5.7.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.6.8.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.7.9.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.8.10.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.9.11.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.10.12.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.11.13.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.12.14.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.13.15.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.14.16.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.15.0.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.16.1.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.17.2.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.18.3.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.19.4.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.20.5.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.21.6.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.22.7.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.23.8.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.24.9.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.25.10.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.26.11.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.27.12.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.28.13.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.29.14.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.30.15.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.0.16.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.1.0.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.2.1.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.3.2.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.4.3.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.5.4.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.6.5.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.7.6.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.8.7.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.9.8.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.10.9.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.11.10.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.12.11.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.13.12.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.14.13.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.15.14.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.16.15.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.17.16.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.18.0.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.19.1.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.20.2.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.21.3.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.22.4.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.23.5.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.24.6.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.25.7.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.26.8.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.27.9.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.28.10.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.29.11.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.30.12.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.0.13.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.1.14.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.2.15.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.3.16.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.4.0.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.5.1.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.6.2.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.7.3.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.8.4.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.9.5.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.10.6.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.11.7.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.12.8.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.13.9.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.14.10.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.15.11.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.16.12.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.17.13.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.18.14.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.19.15.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.20.16.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.21.0.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.22.1.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.23.2.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.24.3.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.25.4.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.26.5.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.27.6.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.28.7.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.29.8.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.30.9.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.0.10.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.1.11.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.2.12.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.3.13.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.4.14.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.5.15.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.6.16.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.7.0.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.8.1.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.9.2.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.10.3.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.11.4.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.12.5.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.13.6.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.14.7.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.15.8.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.16.9.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.17.10.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.18.11.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.19.12.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.20.13.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.21.14.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.22.15.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.23.16.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.24.0.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.25.1.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.26.2.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.27.3.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.28.4.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.29.5.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.30.6.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.0.7.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.1.8.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.2.9.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.3.10.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.4.11.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.5.12.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.6.13.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.7.14.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.8.15.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.9.16.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.10.0.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.11.1.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.12.2.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.13.3.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.14.4.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.15.5.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.16.6.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.17.7.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.18.8.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.19.9.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.20.10.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.21.11.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.22.12.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.23.13.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.24.14.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.25.15.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.26.16.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.27.0.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.28.1.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.29.2.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.30.3.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.0.4.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.1.5.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.2.6.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.3.7.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.4.8.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.5.9.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.6.10.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.7.11.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.8.12.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.9.13.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.10.14.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.11.15.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.12.16.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.13.0.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.14.1.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.15.2.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.16.3.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.17.4.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.18.5.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.19.6.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.20.7.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.21.8.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.22.9.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.23.10.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.24.11.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.25.12.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.26.13.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.27.14.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.28.15.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.29.16.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.30.0.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.0.1.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.1.2.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.2.3.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.3.4.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.4.5.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.5.6.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.6.7.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.7.8.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.8.9.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.9.10.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.10.11.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.11.12.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.12.13.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.13.14.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.14.15.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.15.16.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.16.0.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.17.1.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.18.2.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.19.3.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.20.4.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.21.5.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.22.6.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.23.7.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.24.8.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.25.9.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.26.10.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.27.11.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.28.12.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.29.13.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.30.14.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.0.15.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.1.16.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.2.0.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.3.1.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.4.2.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.5.3.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.6.4.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.7.5.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.8.6.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.9.7.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.10.8.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.11.9.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.12.10.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.13.11.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.14.12.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.15.13.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.16.14.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.17.15.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.18.16.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.19.0.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.20.1.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.21.2.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.22.3.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.23.4.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.24.5.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.25.6.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.26.7.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.27.8.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.28.9.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.29.10.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.30.11.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.0.12.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.1.13.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.2.14.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.3.15.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.4.16.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.5.0.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.6.1.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.7.2.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.8.3.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.9.4.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.10.5.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.11.6.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.12.7.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.13.8.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.14.9.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.15.10.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.16.11.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.17.12.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.18.13.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.19.14.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.20.15.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.21.16.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.22.0.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.23.1.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.24.2.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.25.3.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.26.4.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.27.5.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.28.6.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.29.7.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.30.8.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.0.9.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.1.10.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.2.11.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.3.12.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.4.13.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.5.14.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.6.15.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.7.16.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.8.0.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.9.1.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.10.2.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.11.3.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.12.4.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.13.5.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.14.6.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.15.7.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.16.8.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.17.9.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.18.10.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.19.11.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.20.12.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.21.13.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.22.14.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.23.15.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.24.16.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.25.0.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.26.1.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.27.2.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.28.3.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.29.4.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.30.5.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.0.6.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.1.7.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.2.8.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.3.9.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.4.10.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.5.11.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.6.12.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.7.13.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.8.14.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.9.15.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.10.16.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.11.0.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.12.1.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.13.2.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.14.3.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.15.4.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.16.5.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.17.6.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.18.7.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.19.8.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.20.9.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.21.10.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.22.11.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.23.12.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.24.13.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.25.14.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.26.15.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.27.16.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.28.0.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.29.1.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.30.2.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.0.3.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.1.4.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.2.5.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.3.6.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.4.7.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.5.8.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.6.9.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.7.10.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.8.11.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.9.12.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.10.13.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.11.14.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.12.15.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.13.16.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.14.0.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.15.1.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.16.2.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.17.3.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.18.4.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.19.5.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.20.6.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.21.7.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.22.8.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.23.9.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.24.10.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.25.11.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.26.12.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.27.13.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.28.14.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.29.15.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.30.16.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.0.0.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.1.1.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.2.2.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.3.3.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.4.4.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.5.5.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.6.6.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.7.7.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.8.8.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.9.9.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.10.10.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.11.11.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.12.12.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.13.13.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.14.14.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.15.15.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.16.16.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.17.0.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.18.1.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.19.2.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.20.3.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.21.4.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.22.5.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.23.6.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.24.7.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.25.8.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.26.9.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.27.10.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.28.11.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.29.12.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.30.13.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.0.14.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.1.15.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.2.16.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.3.0.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.4.1.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.5.2.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.6.3.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.7.4.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.8.5.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.9.6.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.10.7.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.11.8.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.12.9.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.13.10.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.14.11.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.15.12.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.16.13.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.17.14.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.18.15.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.19.16.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.20.0.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.21.1.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.22.2.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.23.3.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.24.4.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.25.5.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.26.6.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.27.7.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.28.8.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.29.9.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.30.10.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.0.11.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.1.12.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.2.13.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.3.14.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.4.15.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.5.16.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.6.0.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.7.1.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.8.2.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.9.3.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.10.4.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.11.5.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.12.6.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.13.7.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.14.8.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.15.9.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.16.10.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.17.11.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.18.12.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.19.13.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.20.14.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.21.15.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.22.16.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.23.0.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.24.1.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.25.2.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.26.3.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.27.4.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.28.5.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.29.6.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.30.7.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.0.8.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.1.9.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.2.10.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.3.11.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.4.12.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.5.13.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.6.14.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.7.15.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.8.16.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.9.0.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.10.1.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.11.2.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.12.3.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.13.4.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.14.5.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.15.6.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.16.7.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.17.8.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.18.9.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.19.10.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.20.11.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.21.12.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.22.13.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.23.14.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.24.15.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.25.16.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.26.0.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.27.1.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.28.2.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.29.3.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.30.4.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.0.5.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.1.6.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.2.7.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.3.8.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.4.9.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.5.10.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.6.11.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.7.12.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.8.13.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.9.14.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.10.15.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.11.16.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.12.0.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.13.1.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.14.2.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.15.3.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.16.4.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.17.5.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.18.6.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.19.7.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.20.8.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.21.9.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.22.10.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.23.11.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.24.12.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.25.13.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.26.14.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.27.15.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.28.16.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.29.0.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.30.1.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.0.2.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.1.3.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.2.4.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.3.5.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.4.6.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.5.7.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.6.8.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.7.9.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.8.10.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.9.11.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.10.12.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.11.13.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.12.14.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.13.15.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.14.16.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.15.0.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.16.1.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.17.2.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.18.3.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.19.4.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.20.5.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.21.6.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.22.7.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.23.8.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.24.9.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.25.10.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.26.11.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.27.12.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.28.13.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.29.14.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.30.15.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.0.16.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.1.0.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.2.1.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.3.2.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.4.3.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.5.4.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.6.5.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.7.6.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.8.7.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.9.8.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.10.9.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.11.10.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.12.11.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.13.12.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.14.13.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.15.14.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.16.15.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.17.16.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.18.0.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.19.1.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.20.2.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.21.3.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.22.4.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.23.5.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.24.6.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.25.7.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.26.8.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.27.9.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.28.10.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.29.11.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.30.12.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.0.13.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.1.14.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.2.15.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.3.16.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.4.0.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.5.1.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.6.2.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.7.3.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.8.4.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.9.5.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.10.6.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.11.7.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.12.8.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.13.9.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.14.10.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.15.11.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.16.12.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.17.13.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.18.14.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.19.15.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.20.16.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.21.0.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.22.1.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.23.2.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.24.3.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.25.4.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.26.5.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.27.6.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.28.7.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.29.8.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.30.9.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.0.10.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.1.11.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.2.12.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.3.13.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.4.14.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.5.15.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.6.16.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.7.0.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.8.1.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.9.2.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.10.3.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.11.4.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.12.5.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.13.6.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.14.7.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.15.8.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.16.9.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.17.10.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.18.11.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.19.12.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.20.13.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.21.14.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.22.15.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.23.16.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.24.0.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.25.1.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.26.2.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.27.3.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.28.4.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.29.5.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.30.6.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.0.7.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.1.8.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.2.9.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.3.10.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.4.11.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.5.12.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.6.13.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.7.14.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.8.15.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.9.16.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.10.0.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.11.1.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.12.2.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.13.3.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.14.4.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.15.5.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.16.6.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.17.7.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.18.8.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.19.9.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.20.10.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.21.11.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.22.12.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.23.13.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.24.14.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.25.15.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.26.16.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.27.0.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.28.1.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.29.2.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.30.3.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.0.4.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.1.5.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.2.6.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.3.7.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.4.8.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.5.9.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.6.10.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.7.11.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.8.12.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.9.13.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.10.14.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.11.15.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.12.16.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.13.0.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.14.1.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.15.2.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.16.3.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.17.4.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.18.5.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.19.6.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.20.7.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.21.8.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.22.9.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.23.10.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-6.24.11.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-7.25.12.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-8.26.13.tgz 14ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-1.27.14.tgz 15ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-2.28.15.tgz 16ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-3.29.16.tgz 17ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-4.30.0.tgz 18ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-5.0.1.tgz 19ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-6.1.2.tgz 20ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-7.2.3.tgz 21ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-8.3.4.tgz 22ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-1.4.5.tgz 23ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-2.5.6.tgz 24ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-3.6.7.tgz 25ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-4.7.8.tgz 26ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-5.8.9.tgz 27ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-6.9.10.tgz 28ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-7.10.11.tgz 29ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-8.11.12.tgz 30ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-1.12.13.tgz 31ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-2.13.14.tgz 32ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-3.14.15.tgz 33ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-4.15.16.tgz 34ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-5.16.0.tgz 35ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-6.17.1.tgz 36ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-7.18.2.tgz 37ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-8.19.3.tgz 38ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-1.20.4.tgz 2ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-2.21.5.tgz 3ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-3.22.6.tgz 4ms (cache hit)
-npm http cache https://registry.npmjs.org/vite/-/vite-4.23.7.tgz 5ms (cache hit)
-npm http cache https://registry.npmjs.org/react/-/react-5.24.8.tgz 6ms (cache hit)
-npm http cache https://registry.npmjs.org/react-dom/-/react-dom-6.25.9.tgz 7ms (cache hit)
-npm http cache https://registry.npmjs.org/eslint/-/eslint-7.26.10.tgz 8ms (cache hit)
-npm http cache https://registry.npmjs.org/vitest/-/vitest-8.27.11.tgz 9ms (cache hit)
-npm http cache https://registry.npmjs.org/zod/-/zod-1.28.12.tgz 10ms (cache hit)
-npm http cache https://registry.npmjs.org/undici/-/undici-2.29.13.tgz 11ms (cache hit)
-npm http cache https://registry.npmjs.org/rollup/-/rollup-3.30.14.tgz 12ms (cache hit)
-npm http cache https://registry.npmjs.org/esbuild/-/esbuild-4.0.15.tgz 13ms (cache hit)
-npm http cache https://registry.npmjs.org/typescript/-/typescript-5.1.16.tgz 14ms (cache hit)
-
 added 412 packages in 4s
 
-Run npm run build
+Run npm run build:workspaces
 
-> release-dashboard@2.4.0 build
-> tsc -b && vite build
+> release-dashboard@2.4.0 build:workspaces
+> turbo run build --output-logs=full
+
+turbo 2.5.6
+• Packages in scope: 320
+• Running build in 320 packages
+@release-dashboard/package-001:build: cache hit, replaying logs 00000001
+@release-dashboard/package-001:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-001:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-002:build: cache hit, replaying logs 00000002
+@release-dashboard/package-002:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-002:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-003:build: cache hit, replaying logs 00000003
+@release-dashboard/package-003:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-003:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-004:build: cache hit, replaying logs 00000004
+@release-dashboard/package-004:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-004:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-005:build: cache hit, replaying logs 00000005
+@release-dashboard/package-005:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-005:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-006:build: cache hit, replaying logs 00000006
+@release-dashboard/package-006:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-006:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-007:build: cache hit, replaying logs 00000007
+@release-dashboard/package-007:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-007:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-008:build: cache hit, replaying logs 00000008
+@release-dashboard/package-008:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-008:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-009:build: cache hit, replaying logs 00000009
+@release-dashboard/package-009:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-009:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-010:build: cache hit, replaying logs 0000000a
+@release-dashboard/package-010:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-010:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-011:build: cache hit, replaying logs 0000000b
+@release-dashboard/package-011:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-011:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-012:build: cache hit, replaying logs 0000000c
+@release-dashboard/package-012:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-012:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-013:build: cache hit, replaying logs 0000000d
+@release-dashboard/package-013:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-013:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-014:build: cache hit, replaying logs 0000000e
+@release-dashboard/package-014:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-014:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-015:build: cache hit, replaying logs 0000000f
+@release-dashboard/package-015:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-015:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-016:build: cache hit, replaying logs 00000010
+@release-dashboard/package-016:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-016:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-017:build: cache hit, replaying logs 00000011
+@release-dashboard/package-017:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-017:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-018:build: cache hit, replaying logs 00000012
+@release-dashboard/package-018:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-018:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-019:build: cache hit, replaying logs 00000013
+@release-dashboard/package-019:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-019:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-020:build: cache hit, replaying logs 00000014
+@release-dashboard/package-020:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-020:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-021:build: cache hit, replaying logs 00000015
+@release-dashboard/package-021:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-021:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-022:build: cache hit, replaying logs 00000016
+@release-dashboard/package-022:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-022:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-023:build: cache hit, replaying logs 00000017
+@release-dashboard/package-023:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-023:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-024:build: cache hit, replaying logs 00000018
+@release-dashboard/package-024:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-024:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-025:build: cache hit, replaying logs 00000019
+@release-dashboard/package-025:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-025:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-026:build: cache hit, replaying logs 0000001a
+@release-dashboard/package-026:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-026:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-027:build: cache hit, replaying logs 0000001b
+@release-dashboard/package-027:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-027:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-028:build: cache hit, replaying logs 0000001c
+@release-dashboard/package-028:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-028:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-029:build: cache hit, replaying logs 0000001d
+@release-dashboard/package-029:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-029:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-030:build: cache hit, replaying logs 0000001e
+@release-dashboard/package-030:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-030:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-031:build: cache hit, replaying logs 0000001f
+@release-dashboard/package-031:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-031:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-032:build: cache hit, replaying logs 00000020
+@release-dashboard/package-032:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-032:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-033:build: cache hit, replaying logs 00000021
+@release-dashboard/package-033:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-033:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-034:build: cache hit, replaying logs 00000022
+@release-dashboard/package-034:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-034:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-035:build: cache hit, replaying logs 00000023
+@release-dashboard/package-035:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-035:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-036:build: cache hit, replaying logs 00000024
+@release-dashboard/package-036:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-036:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-037:build: cache hit, replaying logs 00000025
+@release-dashboard/package-037:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-037:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-038:build: cache hit, replaying logs 00000026
+@release-dashboard/package-038:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-038:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-039:build: cache hit, replaying logs 00000027
+@release-dashboard/package-039:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-039:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-040:build: cache hit, replaying logs 00000028
+@release-dashboard/package-040:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-040:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-041:build: cache hit, replaying logs 00000029
+@release-dashboard/package-041:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-041:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-042:build: cache hit, replaying logs 0000002a
+@release-dashboard/package-042:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-042:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-043:build: cache hit, replaying logs 0000002b
+@release-dashboard/package-043:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-043:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-044:build: cache hit, replaying logs 0000002c
+@release-dashboard/package-044:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-044:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-045:build: cache hit, replaying logs 0000002d
+@release-dashboard/package-045:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-045:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-046:build: cache hit, replaying logs 0000002e
+@release-dashboard/package-046:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-046:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-047:build: cache hit, replaying logs 0000002f
+@release-dashboard/package-047:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-047:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-048:build: cache hit, replaying logs 00000030
+@release-dashboard/package-048:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-048:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-049:build: cache hit, replaying logs 00000031
+@release-dashboard/package-049:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-049:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-050:build: cache hit, replaying logs 00000032
+@release-dashboard/package-050:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-050:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-051:build: cache hit, replaying logs 00000033
+@release-dashboard/package-051:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-051:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-052:build: cache hit, replaying logs 00000034
+@release-dashboard/package-052:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-052:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-053:build: cache hit, replaying logs 00000035
+@release-dashboard/package-053:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-053:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-054:build: cache hit, replaying logs 00000036
+@release-dashboard/package-054:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-054:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-055:build: cache hit, replaying logs 00000037
+@release-dashboard/package-055:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-055:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-056:build: cache hit, replaying logs 00000038
+@release-dashboard/package-056:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-056:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-057:build: cache hit, replaying logs 00000039
+@release-dashboard/package-057:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-057:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-058:build: cache hit, replaying logs 0000003a
+@release-dashboard/package-058:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-058:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-059:build: cache hit, replaying logs 0000003b
+@release-dashboard/package-059:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-059:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-060:build: cache hit, replaying logs 0000003c
+@release-dashboard/package-060:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-060:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-061:build: cache hit, replaying logs 0000003d
+@release-dashboard/package-061:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-061:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-062:build: cache hit, replaying logs 0000003e
+@release-dashboard/package-062:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-062:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-063:build: cache hit, replaying logs 0000003f
+@release-dashboard/package-063:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-063:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-064:build: cache hit, replaying logs 00000040
+@release-dashboard/package-064:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-064:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-065:build: cache hit, replaying logs 00000041
+@release-dashboard/package-065:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-065:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-066:build: cache hit, replaying logs 00000042
+@release-dashboard/package-066:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-066:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-067:build: cache hit, replaying logs 00000043
+@release-dashboard/package-067:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-067:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-068:build: cache hit, replaying logs 00000044
+@release-dashboard/package-068:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-068:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-069:build: cache hit, replaying logs 00000045
+@release-dashboard/package-069:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-069:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-070:build: cache hit, replaying logs 00000046
+@release-dashboard/package-070:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-070:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-071:build: cache hit, replaying logs 00000047
+@release-dashboard/package-071:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-071:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-072:build: cache hit, replaying logs 00000048
+@release-dashboard/package-072:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-072:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-073:build: cache hit, replaying logs 00000049
+@release-dashboard/package-073:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-073:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-074:build: cache hit, replaying logs 0000004a
+@release-dashboard/package-074:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-074:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-075:build: cache hit, replaying logs 0000004b
+@release-dashboard/package-075:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-075:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-076:build: cache hit, replaying logs 0000004c
+@release-dashboard/package-076:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-076:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-077:build: cache hit, replaying logs 0000004d
+@release-dashboard/package-077:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-077:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-078:build: cache hit, replaying logs 0000004e
+@release-dashboard/package-078:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-078:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-079:build: cache hit, replaying logs 0000004f
+@release-dashboard/package-079:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-079:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-080:build: cache hit, replaying logs 00000050
+@release-dashboard/package-080:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-080:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-081:build: cache hit, replaying logs 00000051
+@release-dashboard/package-081:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-081:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-082:build: cache hit, replaying logs 00000052
+@release-dashboard/package-082:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-082:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-083:build: cache hit, replaying logs 00000053
+@release-dashboard/package-083:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-083:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-084:build: cache hit, replaying logs 00000054
+@release-dashboard/package-084:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-084:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-085:build: cache hit, replaying logs 00000055
+@release-dashboard/package-085:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-085:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-086:build: cache hit, replaying logs 00000056
+@release-dashboard/package-086:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-086:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-087:build: cache hit, replaying logs 00000057
+@release-dashboard/package-087:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-087:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-088:build: cache hit, replaying logs 00000058
+@release-dashboard/package-088:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-088:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-089:build: cache hit, replaying logs 00000059
+@release-dashboard/package-089:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-089:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-090:build: cache hit, replaying logs 0000005a
+@release-dashboard/package-090:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-090:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-091:build: cache hit, replaying logs 0000005b
+@release-dashboard/package-091:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-091:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-092:build: cache hit, replaying logs 0000005c
+@release-dashboard/package-092:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-092:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-093:build: cache hit, replaying logs 0000005d
+@release-dashboard/package-093:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-093:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-094:build: cache hit, replaying logs 0000005e
+@release-dashboard/package-094:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-094:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-095:build: cache hit, replaying logs 0000005f
+@release-dashboard/package-095:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-095:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-096:build: cache hit, replaying logs 00000060
+@release-dashboard/package-096:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-096:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-097:build: cache hit, replaying logs 00000061
+@release-dashboard/package-097:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-097:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-098:build: cache hit, replaying logs 00000062
+@release-dashboard/package-098:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-098:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-099:build: cache hit, replaying logs 00000063
+@release-dashboard/package-099:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-099:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-100:build: cache hit, replaying logs 00000064
+@release-dashboard/package-100:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-100:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-101:build: cache hit, replaying logs 00000065
+@release-dashboard/package-101:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-101:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-102:build: cache hit, replaying logs 00000066
+@release-dashboard/package-102:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-102:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-103:build: cache hit, replaying logs 00000067
+@release-dashboard/package-103:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-103:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-104:build: cache hit, replaying logs 00000068
+@release-dashboard/package-104:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-104:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-105:build: cache hit, replaying logs 00000069
+@release-dashboard/package-105:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-105:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-106:build: cache hit, replaying logs 0000006a
+@release-dashboard/package-106:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-106:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-107:build: cache hit, replaying logs 0000006b
+@release-dashboard/package-107:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-107:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-108:build: cache hit, replaying logs 0000006c
+@release-dashboard/package-108:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-108:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-109:build: cache hit, replaying logs 0000006d
+@release-dashboard/package-109:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-109:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-110:build: cache hit, replaying logs 0000006e
+@release-dashboard/package-110:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-110:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-111:build: cache hit, replaying logs 0000006f
+@release-dashboard/package-111:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-111:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-112:build: cache hit, replaying logs 00000070
+@release-dashboard/package-112:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-112:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-113:build: cache hit, replaying logs 00000071
+@release-dashboard/package-113:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-113:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-114:build: cache hit, replaying logs 00000072
+@release-dashboard/package-114:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-114:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-115:build: cache hit, replaying logs 00000073
+@release-dashboard/package-115:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-115:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-116:build: cache hit, replaying logs 00000074
+@release-dashboard/package-116:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-116:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-117:build: cache hit, replaying logs 00000075
+@release-dashboard/package-117:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-117:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-118:build: cache hit, replaying logs 00000076
+@release-dashboard/package-118:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-118:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-119:build: cache hit, replaying logs 00000077
+@release-dashboard/package-119:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-119:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-120:build: cache hit, replaying logs 00000078
+@release-dashboard/package-120:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-120:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-121:build: cache hit, replaying logs 00000079
+@release-dashboard/package-121:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-121:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-122:build: cache hit, replaying logs 0000007a
+@release-dashboard/package-122:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-122:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-123:build: cache hit, replaying logs 0000007b
+@release-dashboard/package-123:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-123:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-124:build: cache hit, replaying logs 0000007c
+@release-dashboard/package-124:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-124:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-125:build: cache hit, replaying logs 0000007d
+@release-dashboard/package-125:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-125:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-126:build: cache hit, replaying logs 0000007e
+@release-dashboard/package-126:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-126:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-127:build: cache hit, replaying logs 0000007f
+@release-dashboard/package-127:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-127:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-128:build: cache hit, replaying logs 00000080
+@release-dashboard/package-128:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-128:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-129:build: cache hit, replaying logs 00000081
+@release-dashboard/package-129:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-129:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-130:build: cache hit, replaying logs 00000082
+@release-dashboard/package-130:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-130:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-131:build: cache hit, replaying logs 00000083
+@release-dashboard/package-131:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-131:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-132:build: cache hit, replaying logs 00000084
+@release-dashboard/package-132:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-132:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-133:build: cache hit, replaying logs 00000085
+@release-dashboard/package-133:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-133:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-134:build: cache hit, replaying logs 00000086
+@release-dashboard/package-134:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-134:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-135:build: cache hit, replaying logs 00000087
+@release-dashboard/package-135:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-135:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-136:build: cache hit, replaying logs 00000088
+@release-dashboard/package-136:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-136:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-137:build: cache hit, replaying logs 00000089
+@release-dashboard/package-137:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-137:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-138:build: cache hit, replaying logs 0000008a
+@release-dashboard/package-138:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-138:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-139:build: cache hit, replaying logs 0000008b
+@release-dashboard/package-139:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-139:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-140:build: cache hit, replaying logs 0000008c
+@release-dashboard/package-140:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-140:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-141:build: cache hit, replaying logs 0000008d
+@release-dashboard/package-141:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-141:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-142:build: cache hit, replaying logs 0000008e
+@release-dashboard/package-142:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-142:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-143:build: cache hit, replaying logs 0000008f
+@release-dashboard/package-143:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-143:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-144:build: cache hit, replaying logs 00000090
+@release-dashboard/package-144:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-144:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-145:build: cache hit, replaying logs 00000091
+@release-dashboard/package-145:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-145:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-146:build: cache hit, replaying logs 00000092
+@release-dashboard/package-146:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-146:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-147:build: cache hit, replaying logs 00000093
+@release-dashboard/package-147:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-147:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-148:build: cache hit, replaying logs 00000094
+@release-dashboard/package-148:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-148:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-149:build: cache hit, replaying logs 00000095
+@release-dashboard/package-149:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-149:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-150:build: cache hit, replaying logs 00000096
+@release-dashboard/package-150:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-150:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-151:build: cache hit, replaying logs 00000097
+@release-dashboard/package-151:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-151:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-152:build: cache hit, replaying logs 00000098
+@release-dashboard/package-152:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-152:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-153:build: cache hit, replaying logs 00000099
+@release-dashboard/package-153:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-153:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-154:build: cache hit, replaying logs 0000009a
+@release-dashboard/package-154:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-154:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-155:build: cache hit, replaying logs 0000009b
+@release-dashboard/package-155:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-155:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-156:build: cache hit, replaying logs 0000009c
+@release-dashboard/package-156:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-156:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-157:build: cache hit, replaying logs 0000009d
+@release-dashboard/package-157:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-157:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-158:build: cache hit, replaying logs 0000009e
+@release-dashboard/package-158:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-158:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-159:build: cache hit, replaying logs 0000009f
+@release-dashboard/package-159:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-159:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-160:build: cache hit, replaying logs 000000a0
+@release-dashboard/package-160:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-160:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-161:build: cache hit, replaying logs 000000a1
+@release-dashboard/package-161:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-161:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-162:build: cache hit, replaying logs 000000a2
+@release-dashboard/package-162:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-162:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-163:build: cache hit, replaying logs 000000a3
+@release-dashboard/package-163:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-163:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-164:build: cache hit, replaying logs 000000a4
+@release-dashboard/package-164:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-164:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-165:build: cache hit, replaying logs 000000a5
+@release-dashboard/package-165:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-165:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-166:build: cache hit, replaying logs 000000a6
+@release-dashboard/package-166:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-166:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-167:build: cache hit, replaying logs 000000a7
+@release-dashboard/package-167:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-167:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-168:build: cache hit, replaying logs 000000a8
+@release-dashboard/package-168:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-168:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-169:build: cache hit, replaying logs 000000a9
+@release-dashboard/package-169:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-169:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-170:build: cache hit, replaying logs 000000aa
+@release-dashboard/package-170:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-170:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-171:build: cache hit, replaying logs 000000ab
+@release-dashboard/package-171:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-171:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-172:build: cache hit, replaying logs 000000ac
+@release-dashboard/package-172:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-172:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-173:build: cache hit, replaying logs 000000ad
+@release-dashboard/package-173:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-173:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-174:build: cache hit, replaying logs 000000ae
+@release-dashboard/package-174:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-174:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-175:build: cache hit, replaying logs 000000af
+@release-dashboard/package-175:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-175:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-176:build: cache hit, replaying logs 000000b0
+@release-dashboard/package-176:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-176:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-177:build: cache hit, replaying logs 000000b1
+@release-dashboard/package-177:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-177:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-178:build: cache hit, replaying logs 000000b2
+@release-dashboard/package-178:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-178:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-179:build: cache hit, replaying logs 000000b3
+@release-dashboard/package-179:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-179:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-180:build: cache hit, replaying logs 000000b4
+@release-dashboard/package-180:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-180:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-181:build: cache hit, replaying logs 000000b5
+@release-dashboard/package-181:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-181:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-182:build: cache hit, replaying logs 000000b6
+@release-dashboard/package-182:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-182:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-183:build: cache hit, replaying logs 000000b7
+@release-dashboard/package-183:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-183:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-184:build: cache hit, replaying logs 000000b8
+@release-dashboard/package-184:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-184:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-185:build: cache hit, replaying logs 000000b9
+@release-dashboard/package-185:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-185:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-186:build: cache hit, replaying logs 000000ba
+@release-dashboard/package-186:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-186:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-187:build: cache hit, replaying logs 000000bb
+@release-dashboard/package-187:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-187:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-188:build: cache hit, replaying logs 000000bc
+@release-dashboard/package-188:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-188:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-189:build: cache hit, replaying logs 000000bd
+@release-dashboard/package-189:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-189:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-190:build: cache hit, replaying logs 000000be
+@release-dashboard/package-190:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-190:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-191:build: cache hit, replaying logs 000000bf
+@release-dashboard/package-191:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-191:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-192:build: cache hit, replaying logs 000000c0
+@release-dashboard/package-192:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-192:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-193:build: cache hit, replaying logs 000000c1
+@release-dashboard/package-193:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-193:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-194:build: cache hit, replaying logs 000000c2
+@release-dashboard/package-194:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-194:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-195:build: cache hit, replaying logs 000000c3
+@release-dashboard/package-195:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-195:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-196:build: cache hit, replaying logs 000000c4
+@release-dashboard/package-196:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-196:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-197:build: cache hit, replaying logs 000000c5
+@release-dashboard/package-197:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-197:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-198:build: cache hit, replaying logs 000000c6
+@release-dashboard/package-198:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-198:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-199:build: cache hit, replaying logs 000000c7
+@release-dashboard/package-199:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-199:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-200:build: cache hit, replaying logs 000000c8
+@release-dashboard/package-200:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-200:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-201:build: cache hit, replaying logs 000000c9
+@release-dashboard/package-201:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-201:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-202:build: cache hit, replaying logs 000000ca
+@release-dashboard/package-202:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-202:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-203:build: cache hit, replaying logs 000000cb
+@release-dashboard/package-203:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-203:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-204:build: cache hit, replaying logs 000000cc
+@release-dashboard/package-204:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-204:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-205:build: cache hit, replaying logs 000000cd
+@release-dashboard/package-205:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-205:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-206:build: cache hit, replaying logs 000000ce
+@release-dashboard/package-206:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-206:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-207:build: cache hit, replaying logs 000000cf
+@release-dashboard/package-207:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-207:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-208:build: cache hit, replaying logs 000000d0
+@release-dashboard/package-208:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-208:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-209:build: cache hit, replaying logs 000000d1
+@release-dashboard/package-209:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-209:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-210:build: cache hit, replaying logs 000000d2
+@release-dashboard/package-210:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-210:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-211:build: cache hit, replaying logs 000000d3
+@release-dashboard/package-211:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-211:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-212:build: cache hit, replaying logs 000000d4
+@release-dashboard/package-212:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-212:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-213:build: cache hit, replaying logs 000000d5
+@release-dashboard/package-213:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-213:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-214:build: cache hit, replaying logs 000000d6
+@release-dashboard/package-214:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-214:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-215:build: cache hit, replaying logs 000000d7
+@release-dashboard/package-215:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-215:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-216:build: cache hit, replaying logs 000000d8
+@release-dashboard/package-216:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-216:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-217:build: cache hit, replaying logs 000000d9
+@release-dashboard/package-217:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-217:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-218:build: cache hit, replaying logs 000000da
+@release-dashboard/package-218:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-218:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-219:build: cache hit, replaying logs 000000db
+@release-dashboard/package-219:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-219:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-220:build: cache hit, replaying logs 000000dc
+@release-dashboard/package-220:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-220:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-221:build: cache hit, replaying logs 000000dd
+@release-dashboard/package-221:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-221:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-222:build: cache hit, replaying logs 000000de
+@release-dashboard/package-222:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-222:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-223:build: cache hit, replaying logs 000000df
+@release-dashboard/package-223:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-223:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-224:build: cache hit, replaying logs 000000e0
+@release-dashboard/package-224:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-224:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-225:build: cache hit, replaying logs 000000e1
+@release-dashboard/package-225:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-225:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-226:build: cache hit, replaying logs 000000e2
+@release-dashboard/package-226:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-226:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-227:build: cache hit, replaying logs 000000e3
+@release-dashboard/package-227:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-227:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-228:build: cache hit, replaying logs 000000e4
+@release-dashboard/package-228:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-228:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-229:build: cache hit, replaying logs 000000e5
+@release-dashboard/package-229:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-229:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-230:build: cache hit, replaying logs 000000e6
+@release-dashboard/package-230:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-230:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-231:build: cache hit, replaying logs 000000e7
+@release-dashboard/package-231:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-231:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-232:build: cache hit, replaying logs 000000e8
+@release-dashboard/package-232:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-232:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-233:build: cache hit, replaying logs 000000e9
+@release-dashboard/package-233:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-233:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-234:build: cache hit, replaying logs 000000ea
+@release-dashboard/package-234:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-234:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-235:build: cache hit, replaying logs 000000eb
+@release-dashboard/package-235:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-235:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-236:build: cache hit, replaying logs 000000ec
+@release-dashboard/package-236:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-236:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-237:build: cache hit, replaying logs 000000ed
+@release-dashboard/package-237:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-237:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-238:build: cache hit, replaying logs 000000ee
+@release-dashboard/package-238:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-238:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-239:build: cache hit, replaying logs 000000ef
+@release-dashboard/package-239:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-239:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-240:build: cache hit, replaying logs 000000f0
+@release-dashboard/package-240:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-240:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-241:build: cache hit, replaying logs 000000f1
+@release-dashboard/package-241:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-241:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-242:build: cache hit, replaying logs 000000f2
+@release-dashboard/package-242:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-242:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-243:build: cache hit, replaying logs 000000f3
+@release-dashboard/package-243:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-243:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-244:build: cache hit, replaying logs 000000f4
+@release-dashboard/package-244:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-244:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-245:build: cache hit, replaying logs 000000f5
+@release-dashboard/package-245:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-245:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-246:build: cache hit, replaying logs 000000f6
+@release-dashboard/package-246:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-246:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-247:build: cache hit, replaying logs 000000f7
+@release-dashboard/package-247:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-247:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-248:build: cache hit, replaying logs 000000f8
+@release-dashboard/package-248:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-248:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-249:build: cache hit, replaying logs 000000f9
+@release-dashboard/package-249:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-249:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-250:build: cache hit, replaying logs 000000fa
+@release-dashboard/package-250:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-250:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-251:build: cache hit, replaying logs 000000fb
+@release-dashboard/package-251:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-251:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-252:build: cache hit, replaying logs 000000fc
+@release-dashboard/package-252:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-252:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-253:build: cache hit, replaying logs 000000fd
+@release-dashboard/package-253:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-253:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-254:build: cache hit, replaying logs 000000fe
+@release-dashboard/package-254:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-254:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-255:build: cache hit, replaying logs 000000ff
+@release-dashboard/package-255:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-255:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-256:build: cache hit, replaying logs 00000100
+@release-dashboard/package-256:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-256:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-257:build: cache hit, replaying logs 00000101
+@release-dashboard/package-257:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-257:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-258:build: cache hit, replaying logs 00000102
+@release-dashboard/package-258:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-258:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-259:build: cache hit, replaying logs 00000103
+@release-dashboard/package-259:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-259:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-260:build: cache hit, replaying logs 00000104
+@release-dashboard/package-260:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-260:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-261:build: cache hit, replaying logs 00000105
+@release-dashboard/package-261:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-261:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-262:build: cache hit, replaying logs 00000106
+@release-dashboard/package-262:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-262:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-263:build: cache hit, replaying logs 00000107
+@release-dashboard/package-263:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-263:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-264:build: cache hit, replaying logs 00000108
+@release-dashboard/package-264:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-264:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-265:build: cache hit, replaying logs 00000109
+@release-dashboard/package-265:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-265:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-266:build: cache hit, replaying logs 0000010a
+@release-dashboard/package-266:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-266:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-267:build: cache hit, replaying logs 0000010b
+@release-dashboard/package-267:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-267:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-268:build: cache hit, replaying logs 0000010c
+@release-dashboard/package-268:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-268:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-269:build: cache hit, replaying logs 0000010d
+@release-dashboard/package-269:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-269:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-270:build: cache hit, replaying logs 0000010e
+@release-dashboard/package-270:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-270:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-271:build: cache hit, replaying logs 0000010f
+@release-dashboard/package-271:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-271:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-272:build: cache hit, replaying logs 00000110
+@release-dashboard/package-272:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-272:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-273:build: cache hit, replaying logs 00000111
+@release-dashboard/package-273:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-273:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-274:build: cache hit, replaying logs 00000112
+@release-dashboard/package-274:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-274:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-275:build: cache hit, replaying logs 00000113
+@release-dashboard/package-275:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-275:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-276:build: cache hit, replaying logs 00000114
+@release-dashboard/package-276:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-276:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-277:build: cache hit, replaying logs 00000115
+@release-dashboard/package-277:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-277:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-278:build: cache hit, replaying logs 00000116
+@release-dashboard/package-278:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-278:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-279:build: cache hit, replaying logs 00000117
+@release-dashboard/package-279:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-279:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-280:build: cache hit, replaying logs 00000118
+@release-dashboard/package-280:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-280:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-281:build: cache hit, replaying logs 00000119
+@release-dashboard/package-281:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-281:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-282:build: cache hit, replaying logs 0000011a
+@release-dashboard/package-282:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-282:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-283:build: cache hit, replaying logs 0000011b
+@release-dashboard/package-283:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-283:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-284:build: cache hit, replaying logs 0000011c
+@release-dashboard/package-284:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-284:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-285:build: cache hit, replaying logs 0000011d
+@release-dashboard/package-285:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-285:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-286:build: cache hit, replaying logs 0000011e
+@release-dashboard/package-286:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-286:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-287:build: cache hit, replaying logs 0000011f
+@release-dashboard/package-287:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-287:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-288:build: cache hit, replaying logs 00000120
+@release-dashboard/package-288:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-288:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-289:build: cache hit, replaying logs 00000121
+@release-dashboard/package-289:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-289:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-290:build: cache hit, replaying logs 00000122
+@release-dashboard/package-290:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-290:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-291:build: cache hit, replaying logs 00000123
+@release-dashboard/package-291:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-291:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-292:build: cache hit, replaying logs 00000124
+@release-dashboard/package-292:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-292:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-293:build: cache hit, replaying logs 00000125
+@release-dashboard/package-293:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-293:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-294:build: cache hit, replaying logs 00000126
+@release-dashboard/package-294:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-294:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-295:build: cache hit, replaying logs 00000127
+@release-dashboard/package-295:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-295:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-296:build: cache hit, replaying logs 00000128
+@release-dashboard/package-296:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-296:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-297:build: cache hit, replaying logs 00000129
+@release-dashboard/package-297:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-297:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-298:build: cache hit, replaying logs 0000012a
+@release-dashboard/package-298:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-298:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-299:build: cache hit, replaying logs 0000012b
+@release-dashboard/package-299:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-299:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-300:build: cache hit, replaying logs 0000012c
+@release-dashboard/package-300:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-300:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-301:build: cache hit, replaying logs 0000012d
+@release-dashboard/package-301:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-301:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-302:build: cache hit, replaying logs 0000012e
+@release-dashboard/package-302:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-302:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-303:build: cache hit, replaying logs 0000012f
+@release-dashboard/package-303:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-303:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-304:build: cache hit, replaying logs 00000130
+@release-dashboard/package-304:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-304:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-305:build: cache hit, replaying logs 00000131
+@release-dashboard/package-305:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-305:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-306:build: cache hit, replaying logs 00000132
+@release-dashboard/package-306:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-306:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-307:build: cache hit, replaying logs 00000133
+@release-dashboard/package-307:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-307:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-308:build: cache hit, replaying logs 00000134
+@release-dashboard/package-308:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-308:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-309:build: cache hit, replaying logs 00000135
+@release-dashboard/package-309:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-309:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-310:build: cache hit, replaying logs 00000136
+@release-dashboard/package-310:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-310:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-311:build: cache hit, replaying logs 00000137
+@release-dashboard/package-311:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-311:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-312:build: cache hit, replaying logs 00000138
+@release-dashboard/package-312:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-312:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-313:build: cache hit, replaying logs 00000139
+@release-dashboard/package-313:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-313:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-314:build: cache hit, replaying logs 0000013a
+@release-dashboard/package-314:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-314:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-315:build: cache hit, replaying logs 0000013b
+@release-dashboard/package-315:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-315:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-316:build: cache hit, replaying logs 0000013c
+@release-dashboard/package-316:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-316:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-317:build: cache hit, replaying logs 0000013d
+@release-dashboard/package-317:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-317:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-318:build: cache hit, replaying logs 0000013e
+@release-dashboard/package-318:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-318:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-319:build: cache hit, replaying logs 0000013f
+@release-dashboard/package-319:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-319:build: Found 0 errors. Incremental state is current.
+@release-dashboard/package-320:build: cache hit, replaying logs 00000140
+@release-dashboard/package-320:build: > tsc -b tsconfig.json --pretty false
+@release-dashboard/package-320:build: Found 0 errors. Incremental state is current.
+
+@release-dashboard/deploy-config:build: cache miss, executing 00c1f41e
+@release-dashboard/deploy-config:build: > tsc -b tsconfig.json --pretty false
 
 src/config.ts(14,5): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.

@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "sample_id": "python-pytest",
+  "captured_at": "2026-07-25T19:19:15.086253+00:00",
+  "capture_kind": "real_paritok_stats_delta",
+  "screenshot_url": "http://127.0.0.1:5173/?capture=python-pytest",
+  "ground_truth_check": {
+    "expected_root_cause": "Operator precedence subtracts one after exponentiation, so attempt 4 returns 15 instead of the configured 16-second cap.",
+    "matching_relevant_files": [
+      "retry.py",
+      "test_retry.py"
+    ]
+  },
+  "stats_before": {
+    "total_requests": 12,
+    "input_tokens_original": 98686,
+    "input_tokens_compressed": 4207,
+    "compression_ratio": 0.043,
+    "tokens_saved": 94479,
+    "tools_filtered": 0
+  },
+  "stats_after": {
+    "total_requests": 13,
+    "input_tokens_original": 122592,
+    "input_tokens_compressed": 4539,
+    "compression_ratio": 0.037,
+    "tokens_saved": 118053,
+    "tools_filtered": 0
+  },
+  "stats_delta": {
+    "proxy_requests": 1,
+    "original_tokens": 23906,
+    "compressed_tokens": 332,
+    "saved_tokens": 23574,
+    "compression_ratio": 0.013888
+  },
+  "analysis_result": {
+    "summary": "A unit test fails because the retry delay algorithm produces 15 instead of the expected 16.",
+    "root_cause": "The delay_for method subtracts 1 from the computed exponential delay before clamping, causing an off-by-one error for attempt=4.",
+    "confidence": 0.95,
+    "evidence": [
+      {
+        "source": "ci.log",
+        "line_start": 132,
+        "line_end": 133,
+        "excerpt": "tests/test_retry.py::test_retry_backoff_caps_at_maximum FAILED\nE       assert 15 == 16",
+        "explanation": "The test expectation is 16, but the function returns 15, confirming the off-by-one error."
+      },
+      {
+        "source": "ci.log",
+        "line_start": 154,
+        "line_end": 157,
+        "excerpt": "class RetryPolicy:\n    base_delay: int\n    max_delay: int\n    def delay_for(self, attempt: int) -> int:\n        return min(self.base_delay * 2**attempt - 1, self.max_delay)",
+        "explanation": "The formula subtracts 1 after exponentiation, which is unnecessary and causes the discrepancy when attempt=4."
+      }
+    ],
+    "relevant_files": [
+      "tests/test_retry.py",
+      "src/retry.py"
+    ],
+    "recommended_changes": [
+      "Remove the '- 1' from the delay_for formula. Change 'return min(self.base_delay * 2**attempt - 1, self.max_delay)' to 'return min(self.base_delay * 2**attempt, self.max_delay)'."
+    ],
+    "patch": "--- a/src/retry.py\n+++ b/src/retry.py\n@@ -1,4 +1,4 @@\n class RetryPolicy:\n     base_delay: int\n     max_delay: int\n     def delay_for(self, attempt: int) -> int:\n-        return min(self.base_delay * 2**attempt - 1, self.max_delay)\n+        return min(self.base_delay * 2**attempt, self.max_delay)",
+    "verification_commands": [
+      "pytest tests/test_retry.py -k test_retry_backoff_caps_at_maximum -v"
+    ],
+    "risks": [
+      "Other tests relying on the current behavior may need updating."
+    ],
+    "missing_information": [
+      "No other relevant evidence found."
+    ],
+    "compression_stats": {
+      "available": true,
+      "paritok_connected": true,
+      "hosted_gpu_available": true,
+      "verification": "local_health+hosted_gpu_preflight+stats_delta",
+      "proxy_version": "1.0.0",
+      "model": "deepseek-v4-flash",
+      "proxy_requests": 1,
+      "original_tokens": 23906,
+      "compressed_tokens": 332,
+      "saved_tokens": 23574,
+      "compression_ratio": 0.013888,
+      "cumulative": {
+        "total_requests": 13,
+        "input_tokens_original": 122592,
+        "input_tokens_compressed": 4539,
+        "compression_ratio": 0.037,
+        "tokens_saved": 118053,
+        "tools_filtered": 0
+      },
+      "cost_estimate": {
+        "estimated_input_cost_saved_usd": 0.00330036,
+        "input_cache_miss_usd_per_m_tokens": 0.14,
+        "pricing_snapshot_date": "2026-07-26",
+        "disclaimer": "Estimate from LeanCI's configured DeepSeek price; not an actual bill."
+      },
+      "message": "Verified through Paritok; Token metrics come only from this request's stats delta."
+    },
+    "analysis_time_ms": 5168
+  }
+}

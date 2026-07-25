@@ -6,6 +6,13 @@
     "Dockerfile",
     ".dockerignore"
   ],
+  "required_relevant_files": [
+    ".dockerignore"
+  ],
+  "required_answer_terms": [
+    ".dockerignore",
+    "package-lock"
+  ],
   "expected_fix_direction": [
     "Replace the broad *.json ignore rule with targeted generated-file rules.",
     "Alternatively add explicit !package.json and !package-lock.json exceptions."

@@ -152,15 +152,14 @@ Invoke-RestMethod "http://127.0.0.1:8000/api/health"
 
 ### 6. 阶段四真实三案例与录屏
 
-- [ ] 2026-07-26 自动验收时，FastAPI 的 hosted 预检成功，但既有 8080 进程的运行日志显示
-  Windows 阻止它连接 Paritok hosted 压缩端点；首个真实请求因此安全返回 502，且请求前后
-  `/stats` 仍为全 0。没有生成 `demo_result.json`，也不得把这次失败记录成 Token 成果。
-- [ ] 重新录制前，在明确允许停止既有 8080 进程后，从主机网络环境重启 Paritok Proxy；
-  重启后必须同时验证本地 `/health`、hosted GPU 预检与 `/stats`，不能只看本地 health。
-- [ ] 先确认页面 Formal route status 的 FastAPI、Paritok、Hosted GPU 均健康。若 hosted GPU
+- [x] 2026-07-26 已在用户明确授权后只停止旧 8080 PID 24112，并从主机网络环境以隐藏后台
+  方式启动当前工作区 Paritok。新监听 PID 24884；Vite 5173 PID 16884 全程未停止或修改。
+- [x] 已依次验证本地 `http://127.0.0.1:8080/health`、认证 hosted GPU 预检、`/stats`，
+  以及 `http://127.0.0.1:8000/api/health`；正式模型固定为 `deepseek-v4-flash`。
+- [x] 页面 Formal route status 的 FastAPI、Paritok、Hosted GPU 均健康。若以后 hosted GPU
   显示 unavailable，停止操作并稍后重试；不要把本地 Proxy health 当成正式成功。
-- [ ] 确认 DeepSeek 余额可承担三次分析后，从仓库根目录分别显式执行；每条命令只运行
-  一个案例，最长等待约 110 秒：
+- [x] 已确认并从仓库根目录分别执行三次显式付费分析；每条命令只运行一个案例，最长等待
+  约 110 秒：
 
 ```powershell
 .\backend\.venv\Scripts\python.exe scripts\run_demo_samples.py --confirm-cost --sample python-pytest
@@ -168,9 +167,11 @@ Invoke-RestMethod "http://127.0.0.1:8000/api/health"
 .\backend\.venv\Scripts\python.exe scripts\run_demo_samples.py --confirm-cost --sample docker-build
 ```
 
-- [ ] 检查三行结果都是 `status=success`，且每个 `original_tokens > 5000`。
-- [ ] 不接受 Mock、字符估算或 Paritok 的 `estimated_cost_saved_usd` 作为结果。
-- [ ] 打开以下保存的真实运行状态并准备截图：
+- [x] 三例均为 `status=success`、`proxy_requests=1` 且 `original_tokens > 5000`：
+  Python `23,906 → 332`，TypeScript `20,542 → 847`，Docker `8,325 → 117`。
+- [x] 结果只采用本次 `/stats` 差值；没有采用 Mock、字符估算或 Paritok 的
+  `estimated_cost_saved_usd`。
+- [x] 已保存并检查以下真实运行状态和三张结果页截图：
 
 ```text
 http://127.0.0.1:5173/?capture=python-pytest
@@ -178,9 +179,11 @@ http://127.0.0.1:5173/?capture=typescript-build
 http://127.0.0.1:5173/?capture=docker-build
 ```
 
-- [ ] 录制时先展示首页价值和健康状态，再点一个 Sample、点 `Analyze failure`，首先停留在
+- [ ] `[MANUAL]` 录制视频：先展示首页价值和健康状态，再点一个 Sample、点
+  `Analyze failure`，首先停留在
   `Tokens Saved`，然后滚动展示 Root Cause、Evidence、Patch 和 Download Report。
-- [ ] 截图和视频中不得出现 `.env`、终端环境变量、API Key、请求头或平台密钥页面。
+- [ ] `[MANUAL]` 发布前复查截图和视频中没有 `.env`、终端环境变量、API Key、请求头或
+  平台密钥页面。
 
 ## 发布阶段需要
 

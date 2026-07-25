@@ -1,4 +1,9 @@
-from app.samples import SAMPLE_DEFINITIONS, load_ground_truth, load_sample
+from app.samples import (
+    SAMPLE_DEFINITIONS,
+    load_ground_truth,
+    load_sample,
+    load_sample_capture,
+)
 
 
 def test_every_sample_has_long_safe_context_and_ground_truth() -> None:
@@ -14,6 +19,8 @@ def test_every_sample_has_long_safe_context_and_ground_truth() -> None:
         assert truth["minimum_original_tokens"] == 5000
         assert truth["root_cause"]
         assert truth["expected_relevant_files"]
+        assert truth["required_relevant_files"]
+        assert truth["required_answer_terms"]
         assert truth["expected_fix_direction"]
 
 
@@ -22,3 +29,15 @@ def test_sample_generation_is_deterministic() -> None:
     second = load_sample("typescript-build")
 
     assert first.model_dump() == second.model_dump()
+
+
+def test_every_saved_capture_has_strict_real_stats_proof() -> None:
+    for definition in SAMPLE_DEFINITIONS:
+        capture = load_sample_capture(definition.id)
+
+        assert capture.capture_kind == "real_paritok_stats_delta"
+        assert capture.stats_delta.original_tokens > 5_000
+        assert capture.analysis_result.compression_stats.original_tokens == (
+            capture.stats_delta.original_tokens
+        )
+        assert capture.ground_truth_check.matching_relevant_files

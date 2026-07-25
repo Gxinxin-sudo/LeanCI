@@ -117,12 +117,30 @@ def validate_result(
     expected_files = {
         str(item).casefold() for item in truth.get("expected_relevant_files", [])
     }
+    required_files = {
+        str(item).casefold() for item in truth.get("required_relevant_files", [])
+    }
     actual_files = {
         Path(str(item)).name.casefold() for item in result.get("relevant_files", [])
     }
     matches = sorted(expected_files.intersection(actual_files))
     if not matches:
         raise ValueError("analysis did not identify any ground-truth relevant file")
+    if not required_files.issubset(actual_files):
+        raise ValueError("analysis omitted a required ground-truth relevant file")
+
+    answer_text = " ".join(
+        [
+            str(result.get("root_cause", "")),
+            *[str(item) for item in result.get("recommended_changes", [])],
+            str(result.get("patch", "")),
+        ]
+    ).casefold()
+    required_terms = [
+        str(item).casefold() for item in truth.get("required_answer_terms", [])
+    ]
+    if any(term not in answer_text for term in required_terms):
+        raise ValueError("analysis omitted a required ground-truth root-cause term")
     return truth, matches
 
 
@@ -228,10 +246,22 @@ def main() -> int:
             }
         )
         return 1
-    except (httpx.HTTPError, KeyError, TypeError, ValueError):
+    except httpx.HTTPError:
+        emit(
+            {
+                "status": "failed:DEMO_CAPTURE_TRANSPORT",
+                "captures_written": sum(
+                    (PROJECT_ROOT / "examples" / item / "demo_result.json").is_file()
+                    for item in sample_ids
+                ),
+            }
+        )
+        return 1
+    except (KeyError, TypeError, ValueError) as exc:
         emit(
             {
                 "status": "failed:DEMO_CAPTURE_VALIDATION",
+                "validation_error": str(exc),
                 "captures_written": sum(
                     (PROJECT_ROOT / "examples" / item / "demo_result.json").is_file()
                     for item in sample_ids

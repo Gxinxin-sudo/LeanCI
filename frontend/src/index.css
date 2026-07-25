@@ -521,6 +521,47 @@ footer {
   padding: 2.75rem 0 5rem;
 }
 
+.capture-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1rem 1.25rem;
+  margin-top: 1rem;
+  border: 1px solid var(--color-signal-deep);
+  background: rgb(139 213 255 / 0.055);
+}
+
+.capture-banner h2 {
+  margin-top: 0.15rem;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+}
+
+.capture-banner > p {
+  max-width: 38rem;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  text-align: right;
+}
+
+.capture-mode .hero,
+.capture-mode .route-strip,
+.capture-mode .sample-rail,
+.capture-mode .input-panel {
+  display: none;
+}
+
+.capture-mode .workbench {
+  grid-template-columns: minmax(24rem, 0.68fr) minmax(0, 1.32fr);
+  padding-top: 1rem;
+}
+
+.capture-mode .input-column {
+  position: sticky;
+  top: 1rem;
+}
+
 .input-column {
   display: grid;
   gap: 1rem;
@@ -1390,8 +1431,19 @@ footer {
   .hero-instrument,
   .route-strip,
   .sample-rail,
+  .capture-banner,
   .workbench {
     width: calc(100vw - 2rem);
+  }
+
+  .capture-banner {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .capture-banner > p {
+    text-align: left;
   }
 
   .hero-promises,

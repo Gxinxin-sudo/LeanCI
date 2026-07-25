@@ -7,6 +7,13 @@
     "deploy.ts",
     "tsconfig.json"
   ],
+  "required_relevant_files": [
+    "config.ts"
+  ],
+  "required_answer_terms": [
+    "undefined",
+    "string"
+  ],
   "expected_fix_direction": [
     "Validate DEPLOY_REGION once at configuration startup.",
     "Throw a clear configuration error or provide an intentional default."

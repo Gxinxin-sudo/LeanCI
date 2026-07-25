@@ -6,6 +6,14 @@
     "retry.py",
     "test_retry.py"
   ],
+  "required_relevant_files": [
+    "retry.py",
+    "test_retry.py"
+  ],
+  "required_answer_terms": [
+    "delay_for",
+    "-1"
+  ],
   "expected_fix_direction": [
     "Make the intended backoff formula explicit with parentheses.",
     "Keep the cap test and add boundary cases around the maximum delay."

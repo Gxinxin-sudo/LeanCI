@@ -105,11 +105,23 @@ Windows 启动脚本会在监听 8080 前执行同一认证预检；失败时直
 3. 调用正式 `/api/analyze`；
 4. 读取 `/stats` after；
 5. 校验外层 delta 与 API 内层 delta 完全一致；
-6. 要求 `original_tokens > 5000`、固定模型和至少一个 ground-truth 相关文件；
+6. 要求 `original_tokens > 5000`、固定模型、所有必需 ground-truth 相关文件和修复关键词；
 7. 保存不含 Key、请求头和 Paritok 美元字段的 `examples/<id>/demo_result.json`。
 
 不带 `--confirm-cost` 时不会发送模型请求。任何案例失败都会返回非零状态；不得手动补写
 Token 或用 Mock 替代。
+
+### 2026-07-26 真实验证记录
+
+| Sample | Requests | Original | Compressed | Saved | Ratio | Cost saved estimate | Time |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `python-pytest` | 1 | 23,906 | 332 | 23,574 | 0.013888 | $0.00330036 | 5,168 ms |
+| `typescript-build` | 1 | 20,542 | 847 | 19,695 | 0.041233 | $0.00275730 | 4,674 ms |
+| `docker-build` | 1 | 8,325 | 117 | 8,208 | 0.014054 | $0.00114912 | 4,574 ms |
+
+三例均经本地 Paritok Proxy、认证 hosted GPU 和 `deepseek-v4-flash` 完成，内外两层
+stats delta 一致，ground truth 文件/修复关键词校验通过。原始 before/after 快照保存在
+各自的 `demo_result.json`；页面状态和截图均由这些文件直接加载。
 
 ## 费用口径
 

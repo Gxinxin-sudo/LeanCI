@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { App, MAX_LOG_CHARACTERS } from './App'
 import { mockAnalysis } from './test/mockAnalysis'
-import type { HealthResponse, SamplePayload } from './types/api'
+import type { CapturedSampleResult, HealthResponse, SamplePayload } from './types/api'
 
 const healthy: HealthResponse = {
   status: 'ok',
@@ -40,6 +40,7 @@ function jsonResponse(value: unknown, status = 200): Response {
 }
 
 afterEach(() => {
+  window.history.replaceState({}, '', '/')
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
 })
@@ -115,6 +116,34 @@ describe('LeanCI workbench', () => {
     expect(screen.getByText('Estimated DeepSeek Input Cost Saved')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Copy Patch' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Download Report' })).toBeInTheDocument()
+  })
+
+  it('loads a saved real-run capture directly for recording', async () => {
+    const capture: CapturedSampleResult = {
+      schema_version: 1,
+      sample_id: 'python-pytest',
+      captured_at: '2026-07-25T19:19:15.086253+00:00',
+      capture_kind: 'real_paritok_stats_delta',
+      analysis_result: mockAnalysis,
+    }
+    window.history.replaceState({}, '', '/?capture=python-pytest')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL) => {
+        const url = String(input)
+        if (url.endsWith('/health')) return Promise.resolve(jsonResponse(healthy))
+        if (url.includes('/captures/')) return Promise.resolve(jsonResponse(capture))
+        return Promise.resolve(jsonResponse(sample))
+      }),
+    )
+
+    render(<App />)
+
+    expect(await screen.findByText('Saved real Paritok run')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'python-pytest' })).toBeInTheDocument()
+    expect(screen.getByText(mockAnalysis.summary)).toBeInTheDocument()
+    expect(screen.getByText('Tokens Saved')).toBeInTheDocument()
+    expect(screen.getByText('6,000')).toBeInTheDocument()
   })
 
   it('shows a specific route error and allows retry', async () => {

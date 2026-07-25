@@ -4,9 +4,9 @@
 
 | ID | 类型 | 长日志 | 相关文件 | 根因 |
 | --- | --- | ---: | ---: | --- |
-| `python-pytest` | Python pytest | 约 71 KiB | 3 | 退避公式的运算优先级使第 4 次重试得到 15 而不是上限 16 |
-| `typescript-build` | TypeScript build | 约 79 KiB | 3 | `string \| undefined` 被赋给必需的 `string` 配置 |
-| `docker-build` | Docker BuildKit | 约 36 KiB | 3 | `.dockerignore` 的 `*.json` 排除了 `package-lock.json` |
+| `python-pytest` | Python pytest | 69.5 KiB | 3 | 退避公式的运算优先级使第 4 次重试得到 15 而不是上限 16 |
+| `typescript-build` | TypeScript build | 73.9 KiB | 3 | `string \| undefined` 被赋给必需的 `string` 配置 |
+| `docker-build` | Docker BuildKit | 40.1 KiB | 3 | `.dockerignore` 的 `*.json` 排除了 `package-lock.json` |
 
 每个目录都包含：
 
@@ -36,3 +36,13 @@ Sample 按钮通过固定 ID 加载这些资产；API 不接受调用者提供�
 
 不带 `--confirm-cost` 时脚本只返回
 `skipped:COST_CONFIRMATION_REQUIRED`，不会发送模型请求。
+
+2026-07-26 已完成的真实正式链路采集：
+
+| ID | Original Tokens | Compressed Tokens | Tokens Saved | 节省率 |
+| --- | ---: | ---: | ---: | ---: |
+| `python-pytest` | 23,906 | 332 | 23,574 | 98.61% |
+| `typescript-build` | 20,542 | 847 | 19,695 | 95.88% |
+| `docker-build` | 8,325 | 117 | 8,208 | 98.59% |
+
+每个数字都来自对应 `demo_result.json` 内单次请求的 Paritok `/stats` 前后差值。

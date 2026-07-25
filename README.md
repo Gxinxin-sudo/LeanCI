@@ -57,9 +57,9 @@ npm run dev
 
 | Sample | 长日志大小 | 明确根因 | 预期相关文件 |
 | --- | ---: | --- | --- |
-| Python pytest failure | 约 71 KiB | 重试退避公式的运算优先级使第 4 次结果为 15，而不是上限 16 | `retry.py`、`test_retry.py` |
-| TypeScript build failure | 约 79 KiB | `DEPLOY_REGION` 可能为 `undefined`，却被赋给必需的 `string` | `config.ts`、`deploy.ts` |
-| Docker build failure | 约 36 KiB | `.dockerignore` 的 `*.json` 从构建上下文排除了包清单 | `Dockerfile`、`.dockerignore` |
+| Python pytest failure | 69.5 KiB | 重试退避公式的运算优先级使第 4 次结果为 15，而不是上限 16 | `retry.py`、`test_retry.py` |
+| TypeScript build failure | 73.9 KiB | `DEPLOY_REGION` 可能为 `undefined`，却被赋给必需的 `string` | `config.ts`、`deploy.ts` |
+| Docker build failure | 40.1 KiB | `.dockerignore` 的 `*.json` 从构建上下文排除了包清单 | `Dockerfile`、`.dockerignore` |
 
 每个 `examples/<id>/` 包含 `ci.log`、少量相关文本文件和 `ground_truth.json`。Ground truth
 不会提交给模型。输入固定，因此可重复运行；输出必须通过真实 Paritok `/stats` 证明。
@@ -185,6 +185,21 @@ http://127.0.0.1:5173/?capture=typescript-build
 http://127.0.0.1:5173/?capture=docker-build
 ```
 
+2026-07-26 已通过正式链路完成三次真实采集。下表全部是各请求 `/stats` 前后差值，不是
+Mock 或字符估算：
+
+| Sample | Original | Compressed | Saved | 节省率 | 输入费用节省估算 | 分析耗时 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Python pytest | 23,906 | 332 | 23,574 | 98.61% | $0.00330036 | 5,168 ms |
+| TypeScript build | 20,542 | 847 | 19,695 | 95.88% | $0.00275730 | 4,674 ms |
+| Docker build | 8,325 | 117 | 8,208 | 98.59% | $0.00114912 | 4,574 ms |
+
+三次均为 `proxy_requests=1`、模型 `deepseek-v4-flash`、价格快照
+`2026-07-26`，并通过必需相关文件和修复关键词校验。可直接查看
+[Python 结果截图](artifacts/screenshots/python-pytest-result.png)、
+[TypeScript 结果截图](artifacts/screenshots/typescript-build-result.png) 和
+[Docker 结果截图](artifacts/screenshots/docker-build-result.png)。
+
 ## Token 和费用口径
 
 所有 Token 指标只来自同一锁内、本次请求前后 Paritok `/stats` 累计计数差值：
@@ -253,7 +268,7 @@ npm test
 npm run build
 ```
 
-阶段四最近结果：后端 `91 passed, 2 skipped`；前端 `19 passed`；Ruff、格式、pip check、
+阶段四最近结果：后端 `92 passed, 2 skipped`；前端 `20 passed`；Ruff、格式、pip check、
 lint、TypeScript strict 和 Vite 生产构建通过。两个条件集成测试只有显式设置真实集成环境
 变量时才运行。
 

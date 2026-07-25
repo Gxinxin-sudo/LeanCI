@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "sample_id": "typescript-build",
+  "captured_at": "2026-07-25T19:19:26.197436+00:00",
+  "capture_kind": "real_paritok_stats_delta",
+  "screenshot_url": "http://127.0.0.1:5173/?capture=typescript-build",
+  "ground_truth_check": {
+    "expected_root_cause": "DEPLOY_REGION is string | undefined, but loadConfig promises AppConfig with a required string region.",
+    "matching_relevant_files": [
+      "config.ts"
+    ]
+  },
+  "stats_before": {
+    "total_requests": 13,
+    "input_tokens_original": 122592,
+    "input_tokens_compressed": 4539,
+    "compression_ratio": 0.037,
+    "tokens_saved": 118053,
+    "tools_filtered": 0
+  },
+  "stats_after": {
+    "total_requests": 14,
+    "input_tokens_original": 143134,
+    "input_tokens_compressed": 5386,
+    "compression_ratio": 0.038,
+    "tokens_saved": 137748,
+    "tools_filtered": 0
+  },
+  "stats_delta": {
+    "proxy_requests": 1,
+    "original_tokens": 20542,
+    "compressed_tokens": 847,
+    "saved_tokens": 19695,
+    "compression_ratio": 0.041233
+  },
+  "analysis_result": {
+    "summary": "The build fails in the deploy-config package due to a TypeScript type error.",
+    "root_cause": "Type 'string | undefined' is not assignable to type 'string' at src/config.ts(14,5), likely because an optional value or environment variable is used without a fallback.",
+    "confidence": 0.95,
+    "evidence": [
+      {
+        "source": "ci.log",
+        "line_start": null,
+        "line_end": null,
+        "excerpt": "@release-dashboard/deploy-config:build: cache miss, executing 00c1f41e\nsrc/config.ts(14,5): error TS2322: Type 'string | undefined' is not assignable to type 'string'.",
+        "explanation": "The error is reported directly in the ci.log for the deploy-config package during the TypeScript compilation step."
+      }
+    ],
+    "relevant_files": [
+      "src/config.ts"
+    ],
+    "recommended_changes": [
+      "Ensure that the value assigned at line 14 of src/config.ts is always a string by providing a default value or a runtime check against undefined."
+    ],
+    "patch": "",
+    "verification_commands": [
+      "cd packages/deploy-config && npx tsc --noEmit"
+    ],
+    "risks": [
+      "If the undefined value is intentional for missing configuration, a default may mask missing environment variables.",
+      "Other files that consume this config may also need updates if the type was previously expected to be possibly undefined."
+    ],
+    "missing_information": [
+      "The exact content of src/config.ts line 14 is not shown in the log.",
+      "Whether the repository contains a tsconfig that enables strict null checks.",
+      "The full CI configuration file (e.g., .github/workflows/ci.yml) was not supplied."
+    ],
+    "compression_stats": {
+      "available": true,
+      "paritok_connected": true,
+      "hosted_gpu_available": true,
+      "verification": "local_health+hosted_gpu_preflight+stats_delta",
+      "proxy_version": "1.0.0",
+      "model": "deepseek-v4-flash",
+      "proxy_requests": 1,
+      "original_tokens": 20542,
+      "compressed_tokens": 847,
+      "saved_tokens": 19695,
+      "compression_ratio": 0.041233,
+      "cumulative": {
+        "total_requests": 14,
+        "input_tokens_original": 143134,
+        "input_tokens_compressed": 5386,
+        "compression_ratio": 0.038,
+        "tokens_saved": 137748,
+        "tools_filtered": 0
+      },
+      "cost_estimate": {
+        "estimated_input_cost_saved_usd": 0.0027573,
+        "input_cache_miss_usd_per_m_tokens": 0.14,
+        "pricing_snapshot_date": "2026-07-26",
+        "disclaimer": "Estimate from LeanCI's configured DeepSeek price; not an actual bill."
+      },
+      "message": "Verified through Paritok; Token metrics come only from this request's stats delta."
+    },
+    "analysis_time_ms": 4674
+  }
+}

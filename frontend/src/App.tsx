@@ -196,7 +196,7 @@ export function App() {
   const [analysisState, setAnalysisState] = useState<AnalysisState>({ status: 'idle' })
   const [healthState, setHealthState] = useState<HealthState>({ status: 'checking' })
   const [inputMessage, setInputMessage] = useState('')
-  const workbenchRef = useRef<HTMLElement>(null)
+  const captureMode = new URLSearchParams(window.location.search).has('capture')
 
   const refreshHealth = async () => {
     setHealthState({ status: 'checking' })
@@ -244,9 +244,6 @@ export function App() {
         setInputMessage(
           `Saved real run captured ${new Date(capture.captured_at).toLocaleString()}. Re-run Analyze failure for fresh stats.`,
         )
-        window.requestAnimationFrame(() => {
-          if (active) workbenchRef.current?.scrollIntoView({ block: 'start' })
-        })
       })
       .catch((error: unknown) => {
         if (!active) return
@@ -332,7 +329,7 @@ export function App() {
   const activeResult = analysisState.status === 'success' ? analysisState.data : undefined
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${captureMode ? 'capture-mode' : ''}`}>
       <header className="topbar">
         <a className="brand" href="#top" aria-label="LeanCI home">
           <BrandMark />
@@ -388,7 +385,17 @@ export function App() {
           onLoad={(sampleId) => void handleLoadSample(sampleId)}
         />
 
-        <section ref={workbenchRef} className="workbench" aria-label="LeanCI analysis workbench">
+        {captureMode && (
+          <section className="capture-banner" aria-label="Saved real run status">
+            <div>
+              <p className="eyebrow">Saved real Paritok run</p>
+              <h2>{activeSampleId ?? 'Loading capture…'}</h2>
+            </div>
+            <p>Strict stats delta and ground-truth file match loaded from this workspace.</p>
+          </section>
+        )}
+
+        <section className="workbench" aria-label="LeanCI analysis workbench">
           <aside className="input-column">
             <div className="input-panel">
               <div className="panel-heading">

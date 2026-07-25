@@ -93,7 +93,7 @@
 - [x] 创建显式费用确认的超过 5,000 Token 验证脚本
 - [x] 添加客户端、服务、Provider、API、并发和条件真实集成测试
 - [x] 创建 Windows 设置、正式验证文档，更新 README、架构图和人工操作
-- [ ] `[MANUAL]` 配置两个真实 Key，启动 Proxy，并完成一次超过 5,000 Token 的真实验证
+- [x] `[MANUAL]` 配置两个真实 Key，启动 Proxy，并完成超过 5,000 Token 的真实验证（2026-07-26 已验证）
 
 ## 阶段 4：前端 MVP
 
@@ -108,6 +108,9 @@
 - [x] 实现复制 Diff、证据和命令，并下载 Markdown 报告
 - [x] 完成响应式和基础无障碍体验
 - [x] 运行组件测试、类型检查和生产构建
+- [x] 经正式 Paritok → hosted GPU → DeepSeek 链路真实运行三个固定样例
+- [x] 核验每例独立 `/stats` 差值、`original_tokens > 5000` 和 ground truth 必需文件/修复方向
+- [x] 保存三个 `demo_result.json`、可直接载入的 capture 状态和结果页截图
 - [x] 更新 README、架构和任务状态
 
 ## 阶段 5：示例与 Benchmark

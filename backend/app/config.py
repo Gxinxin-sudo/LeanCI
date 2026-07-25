@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     paritok_health_timeout_seconds: float = Field(default=3.0, gt=0, le=30)
     paritok_stats_timeout_seconds: float = Field(default=3.0, gt=0, le=30)
     paritok_gpu_status_timeout_seconds: float = Field(default=10.0, gt=0, le=30)
-    paritok_chunk_target_tokens: int = Field(default=40_000, ge=512, le=49_000)
+    paritok_chunk_target_tokens: int = Field(default=12_000, ge=512, le=49_000)
     analysis_concurrency: int = Field(default=1, ge=1, le=1)
     deepseek_input_cache_miss_usd_per_m: Decimal = Field(
         default=Decimal("0.14"),

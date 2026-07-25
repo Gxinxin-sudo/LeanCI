@@ -123,5 +123,4 @@ def load_sample_capture(sample_id: str) -> CapturedSampleResult:
     path = _sample_root(definition) / "demo_result.json"
     if not path.is_file():
         raise SampleCaptureNotFoundError(sample_id)
-    value = json.loads(path.read_text(encoding="utf-8"))
-    return CapturedSampleResult.model_validate(value)
+    return CapturedSampleResult.model_validate_json(path.read_text(encoding="utf-8"))

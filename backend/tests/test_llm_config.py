@@ -18,6 +18,7 @@ def test_llm_defaults_are_paritok_and_v4_flash() -> None:
     assert settings.deepseek_max_network_retries == 2
     assert settings.paritok_health_timeout_seconds == 3
     assert settings.paritok_stats_timeout_seconds == 3
+    assert settings.paritok_chunk_target_tokens == 12_000
 
 
 @pytest.mark.parametrize("legacy_model", ["deepseek-chat", "deepseek-reasoner"])

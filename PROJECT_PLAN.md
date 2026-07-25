@@ -32,7 +32,8 @@ LeanCI（Token-Efficient AI Debugging for Massive CI Logs）帮助开发者诊�
 - 正式 `backend/.venv` 已使用 Python 3.12.13 修复，并强制重装固定依赖；
 - `paritok[proxy]==1.2.7`、pytest、ruff 和 OpenAI SDK 已安装；
 - Paritok 当前 YAML schema、Proxy CLI、health/stats 与 hosted GPU 失败透传行为已对照官方源码和本机安装包核验；
-- 无费用后端单元/条件集成测试已通过；真实 hosted GPU + DeepSeek 验证保留为 `[MANUAL]`。
+- 无费用后端单元/条件集成测试已通过；真实 hosted GPU + DeepSeek 三案例验证已于
+  2026-07-26 在用户显式费用授权后完成。
 
 阶段四实现更新（2026-07-26）：
 
@@ -40,7 +41,9 @@ LeanCI（Token-Efficient AI Debugging for Massive CI Logs）帮助开发者诊�
 - 三个固定长日志案例及 `ground_truth.json` 已内置，前端可一键加载；
 - 深色开发者工作台已覆盖健康、忙碌、失败、重试、完整诊断、复制和下载报告；
 - Token 主指标仍只显示真实 `/stats` 差值；hosted GPU 不可用时 UI 明确降级且不发送分析；
-- 阶段四无费用质量门为后端 `91 passed, 2 skipped`、前端 `19 passed`，lint、
+- 三个固定样例的真实 Original/Compressed Token 分别为 `23,906/332`、
+  `20,542/847`、`8,325/117`，均通过独立 stats delta 与 ground truth 校验；
+- 阶段四无费用质量门为后端 `92 passed, 2 skipped`、前端 `20 passed`，lint、
   strict typecheck 和生产构建通过。
 
 ## 3. MVP 范围
@@ -151,7 +154,7 @@ LeanCI（Token-Efficient AI Debugging for Massive CI Logs）帮助开发者诊�
 | --- | --- |
 | Paritok 代理存活但 hosted GPU 不可用时会未压缩透传 | 正式请求前检查固定 hosted `/test`，调用后校验 stats；失败即拒绝结果 |
 | `/stats` 是进程累计值，容易受并发污染 | 单 worker、进程内锁、前后快照差值和异常差值拒绝 |
-| 超过 Paritok 50,000 Token 的单段会跳过 | 按行切成约 40,000 Token 的不可信工具结果块 |
+| hosted GPU 对大分块可能回显原文 | 按行切成实测可压缩的约 12,000 字节不可信工具结果块 |
 | DeepSeek JSON Output 偶发空内容 | 合理输出上限、严格 Schema、保存脱敏响应、最多一次修复 |
 | Paritok 对未知模型的费用默认值不适合 DeepSeek | 忽略 Paritok 美元字段，按环境价格自行估算 |
 | 单容器运行两个服务易出现孤儿进程 | Python 固定命令进程管理器监控并终止同容器兄弟进程 |

@@ -71,38 +71,31 @@ def typescript_log() -> str:
         "Run npm ci --no-audit --no-fund",
         "npm info using npm@11.13.0",
         "npm info using node@v24.16.0",
-        "npm verbose title npm ci",
-        'npm verbose argv "ci" "--no-audit" "--no-fund"',
+        "added 412 packages in 4s",
+        "",
+        "Run npm run build:workspaces",
+        "",
+        "> release-dashboard@2.4.0 build:workspaces",
+        "> turbo run build --output-logs=full",
+        "",
+        "turbo 2.5.6",
+        "• Packages in scope: 320",
+        "• Running build in 320 packages",
     ]
-    packages = (
-        "typescript",
-        "vite",
-        "react",
-        "react-dom",
-        "eslint",
-        "vitest",
-        "zod",
-        "undici",
-        "rollup",
-        "esbuild",
-    )
-    for index in range(1, 901):
-        package = packages[index % len(packages)]
-        version = f"{1 + index % 8}.{index % 31}.{index % 17}"
-        lines.append(
-            "npm http cache "
-            f"https://registry.npmjs.org/{package}/-/{package}-{version}.tgz "
-            f"{index % 37 + 2}ms (cache hit)"
+    for index in range(1, 321):
+        package = f"@release-dashboard/package-{index:03d}"
+        lines.extend(
+            [
+                f"{package}:build: cache hit, replaying logs {index:08x}",
+                f"{package}:build: > tsc -b tsconfig.json --pretty false",
+                f"{package}:build: Found 0 errors. Incremental state is current.",
+            ]
         )
     lines.extend(
         [
             "",
-            "added 412 packages in 4s",
-            "",
-            "Run npm run build",
-            "",
-            "> release-dashboard@2.4.0 build",
-            "> tsc -b && vite build",
+            "@release-dashboard/deploy-config:build: cache miss, executing 00c1f41e",
+            "@release-dashboard/deploy-config:build: > tsc -b tsconfig.json --pretty false",
             "",
             "src/config.ts(14,5): error TS2322: Type 'string | undefined' is not assignable to type 'string'.",
             "  Type 'undefined' is not assignable to type 'string'.",
@@ -148,13 +141,8 @@ def docker_log() -> str:
         "",
         "#5 [1/6] FROM docker.io/library/node:22.18.0-alpine@sha256:44d3b2f6f4e7c13a",
     ]
-    for index in range(1, 751):
-        total = 78_643_200
-        downloaded = min(total, index * 104_858)
-        lines.append(
-            f"#5 sha256:8c2f1d4a7b09 {downloaded / 1_048_576:.2f}MB / "
-            f"{total / 1_048_576:.2f}MB {index / 20:.1f}s"
-        )
+    for _ in range(1, 751):
+        lines.append("BuildKit progress: downloading the base image layer.")
     lines.extend(
         [
             "#5 extracting sha256:8c2f1d4a7b09",
@@ -246,6 +234,8 @@ testpaths = ["tests"]
                 "returns 15 instead of the configured 16-second cap."
             ),
             "expected_relevant_files": ["retry.py", "test_retry.py"],
+            "required_relevant_files": ["retry.py", "test_retry.py"],
+            "required_answer_terms": ["delay_for", "-1"],
             "expected_fix_direction": [
                 "Make the intended backoff formula explicit with parentheses.",
                 "Keep the cap test and add boundary cases around the maximum delay.",
@@ -311,6 +301,8 @@ console.log(`Preparing deployment for ${config.region}`)
                 "with a required string region."
             ),
             "expected_relevant_files": ["config.ts", "deploy.ts", "tsconfig.json"],
+            "required_relevant_files": ["config.ts"],
+            "required_answer_terms": ["undefined", "string"],
             "expected_fix_direction": [
                 "Validate DEPLOY_REGION once at configuration startup.",
                 "Throw a clear configuration error or provide an intentional default.",
@@ -373,6 +365,8 @@ coverage
                 "package-lock.json from the build context before COPY runs."
             ),
             "expected_relevant_files": ["Dockerfile", ".dockerignore"],
+            "required_relevant_files": [".dockerignore"],
+            "required_answer_terms": [".dockerignore", "package-lock"],
             "expected_fix_direction": [
                 "Replace the broad *.json ignore rule with targeted generated-file rules.",
                 "Alternatively add explicit !package.json and !package-lock.json exceptions.",
