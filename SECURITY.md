@@ -49,6 +49,8 @@ LeanCI's formal analysis boundary is intentionally narrow:
   log request headers, query strings, request bodies, uploaded content, or raw paths.
 - Token metrics come only from the current request's verified Paritok `/stats` delta. LeanCI does
   not manufacture token data or substitute DeepSeek usage.
+- The container runs as a fixed non-root user, exposes only FastAPI, keeps Paritok on loopback, and
+  uses a fixed Python PID 1 to stop the sibling service if either child exits.
 
 The detailed trust boundaries, abuse cases, controls, and residual risks are documented in
 [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md).
@@ -76,6 +78,7 @@ Before publishing a change, run:
 ```powershell
 .\backend\.venv\Scripts\python.exe scripts\scan_secrets.py
 .\backend\.venv\Scripts\python.exe -m pip_audit -r backend\requirements.txt
+.\backend\.venv\Scripts\python.exe -m pip_audit -r backend\requirements-container.txt
 .\backend\.venv\Scripts\python.exe -m pytest backend\tests
 
 cd frontend

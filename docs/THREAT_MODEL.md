@@ -73,6 +73,7 @@ is limited to the explicitly confirmed benchmark workflow and is labeled uncompr
 | Privacy | Visible notice: LeanCI keeps no permanent upload storage; content is processed in memory and sent to Paritok/DeepSeek | Provider/platform retention and local downloaded files remain outside LeanCI |
 | Token authenticity | Only verified Paritok `/stats` delta; request-count proof; missing proof fails closed | Correctness still depends on the external stats service |
 | Mock isolation | Formal Provider factory cannot select Mock/Direct; formal endpoint has no mode parameter | Developers must not expose test-only app instances as production |
+| Container boundary | Explicit build copies, secret-focused `.dockerignore`, non-root user, only FastAPI exposed, Paritok loopback, fixed PID 1 and no shell execution; image/process checks passed 2026-07-27 | Host/engine compromise remains out of scope |
 
 ## 4. Security and product acceptance
 
@@ -94,6 +95,11 @@ The local browser smoke test uses an isolated Mock FastAPI process and fixed loc
 The smoke test never invokes Paritok or DeepSeek and cannot validate current external provider
 availability. Frozen stage-five Token values remain the evidence for real formal runs; they are not
 regenerated during this audit.
+
+The separate Docker smoke test uses test-only dummy credentials and must not call DeepSeek. It
+checks the built image/config/history, missing-secret failure, static/API routes, fail-closed
+analysis, and PID 1 behavior when either child exits. Those real-container assertions passed on
+2026-07-27 across the bounded full runs and the final local-only FastAPI-exit check.
 
 ## 5. Residual risks and deployment requirements
 

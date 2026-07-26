@@ -311,7 +311,9 @@ Paritok 和 DeepSeek；运营方还需复核服务商、反向代理和托管平
 
 ## 11. 部署约束
 
-Windows 本地运行使用三个终端。未来单容器部署必须：
+Windows 源码模式使用三个终端。单容器实现见 [`Dockerfile`](../Dockerfile)、
+[`container_entrypoint.py`](../scripts/container_entrypoint.py) 和
+[`DOCKER.md`](DOCKER.md)，其边界为：
 
 - FastAPI 监听平台 `PORT`；
 - Paritok 只监听容器 localhost `127.0.0.1:8080`；
@@ -321,4 +323,10 @@ Windows 本地运行使用三个终端。未来单容器部署必须：
 - 用固定进程管理器监管两个进程；
 - 任一进程退出时终止另一个并让容器失败；
 - 只公开 FastAPI 端口，不公开 8080；
-- Key 只由托管平台运行时环境注入。
+- Key 只由托管平台运行时环境注入；
+- 镜像以固定非 root 用户运行，生产环境关闭交互式 OpenAPI 文档；
+- 同容器静态前端响应获得 CSP、防嵌入、`nosniff`、no-referrer 和 no-store 响应头。
+
+2026-07-27 已生成 `leanci:phase6` 镜像，并完成 Compose 展开、单元/静态检查、镜像和
+上下文密钥检查、无密钥状态 78、静态/API、假凭据 fail-closed 分析，以及 Proxy 和
+FastAPI 退出时的容器联动失败检查。测试只使用假凭据；DeepSeek 未被调用。

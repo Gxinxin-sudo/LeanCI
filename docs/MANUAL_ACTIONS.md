@@ -24,11 +24,9 @@
 
 ### 2. 安装 Docker Desktop
 
-- [ ] 打开 [Docker Desktop for Windows 官方页面](https://www.docker.com/products/docker-desktop/)。
-- [ ] 下载并安装 Docker Desktop。
-- [ ] 安装器提示时启用 WSL 2 后端；如系统要求，按提示重启 Windows。
-- [ ] 启动 Docker Desktop，等待状态显示 Engine running。
-- [ ] 在 PowerShell 中验证：
+- [x] 已安装 Docker Desktop 4.83.0，并启动 Linux Engine。
+- [x] 已验证 Docker Engine/CLI 29.6.2、Compose 5.3.1 和 Linux `amd64`。
+- [x] 已成功运行：
 
 ```powershell
 docker --version
@@ -36,7 +34,8 @@ docker compose version
 docker run --rm hello-world
 ```
 
-首次阶段不需要 Docker；可在进入 Docker 阶段前完成。
+如果安装前已经打开当前 PowerShell，它可能还没有继承 Docker CLI 的 PATH。重新打开
+PowerShell，或按 [`DOCKER.md`](DOCKER.md) 为当前会话补充路径。
 
 ### 3. 注册并确认 Devpost 赛事
 
@@ -239,6 +238,20 @@ Benchmark 运行；不得用新结果静默覆盖本次 10 行验收工件。
 
 ### 8. 阶段六安全部署收口
 
+- [x] 2026-07-27 已完成阶段六 Docker 首次构建和全部无费用容器功能检查。以后需要复现时：
+
+```powershell
+cd "C:\Users\xin'xin\Desktop\LeanCI"
+docker build --progress=plain --tag leanci:phase6 .
+$env:LEANCI_DOCKER_CLI = (Get-Command docker).Source
+.\backend\.venv\Scripts\python.exe scripts\docker_smoke.py
+```
+
+  成功判据是构建生成 `leanci:phase6`，修正后的脚本输出顶层
+  `"status":"passed"`，且无密钥退出码为 78、前端/API 检查通过、正式分析
+  `deepseek_called=false`、Proxy/API 退出联动均为非零容器状态。首次下载可能超过两分钟，
+  应让 Docker BuildKit 自然完成；不要把任何密钥传给 `docker build`。完整说明见
+  [`DOCKER.md`](DOCKER.md)。
 - [ ] 将 `CORS_ALLOWED_ORIGINS` 设置为实际生产前端的精确 Origin；多个值用逗号分隔，
   不使用 `*`，不包含路径。
 - [ ] 在 FastAPI 前配置可信 TLS 反向代理/API 网关，并设置不高于应用的请求体上限、

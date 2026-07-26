@@ -3,16 +3,18 @@
 import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
 from app.analysis import AnalysisService
 from app.benchmark import load_results
 from app.benchmark_models import BenchmarkArtifact
 from app.body_limit import RequestBodyLimitMiddleware
-from app.config import Settings, get_settings
+from app.config import PROJECT_ROOT, Settings, get_settings
 from app.errors import AppError, error_responses, register_error_handlers
 from app.models import (
     MAX_REQUEST_BYTES,
@@ -44,6 +46,7 @@ def create_app(
     settings: Settings | None = None,
     *,
     analysis_service: AnalysisService | None = None,
+    frontend_dist: Path | None = None,
 ) -> FastAPI:
     """Create an application instance with injectable validated settings."""
 
@@ -63,6 +66,9 @@ def create_app(
         title=active_settings.app_name,
         version="0.1.0",
         debug=False,
+        docs_url=None if active_settings.environment == "production" else "/docs",
+        redoc_url=None if active_settings.environment == "production" else "/redoc",
+        openapi_url=None if active_settings.environment == "production" else "/openapi.json",
         description=(
             "LeanCI formal analysis API. Requests fail closed unless the local "
             "Paritok Proxy and hosted GPU are verified."
@@ -187,6 +193,14 @@ def create_app(
                     "check the route status before retrying."
                 ),
             ) from exc
+
+    static_root = frontend_dist or PROJECT_ROOT / "frontend" / "dist"
+    if static_root.is_dir():
+        application.mount(
+            "/",
+            StaticFiles(directory=static_root, html=True, check_dir=True),
+            name="frontend",
+        )
 
     return application
 

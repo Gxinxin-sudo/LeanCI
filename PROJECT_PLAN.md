@@ -60,6 +60,18 @@ LeanCI（Token-Efficient AI Debugging for Massive CI Logs）帮助开发者诊�
 - 固定工件、报告、前端只读页、确定性评分、人工复核字段、费用场景及回归测试均已收口。
   发布工件记录的价格快照日为 `2026-07-25`；美元数仅为 DeepSeek 配置估算，不是实际账单。
 
+阶段六 Docker 实现更新（2026-07-27）：
+
+- Docker Desktop、Linux Engine、Compose 和 `hello-world` 已验证可用；
+- 多阶段 Dockerfile、非 root 运行时、固定 Python PID 1、平台 `PORT`、回环 Paritok、
+  静态前端托管、本地 Compose 和无费用容器冒烟脚本已实现；
+- `leanci:phase6` 镜像已生成；容器依赖审计、Compose 展开、Dockerfile 静态检查、容器
+  边界单元测试、镜像/上下文密钥检查、无密钥状态 78、静态/API、fail-closed 分析和
+  Proxy/FastAPI 退出联动均已通过；
+- 三条镜像构建客户端命令达到 120 秒上限后，BuildKit 最终完成镜像。完整冒烟的三次受控
+  运行依次暴露并修复响应头大小写、slim 镜像无 `kill` 二进制和同端口释放竞态；达到
+  外部预检重试上限后，缺失的 API 退出路径改为无外部请求的定向容器检查并通过。
+
 ## 3. MVP 范围
 
 必须完成：

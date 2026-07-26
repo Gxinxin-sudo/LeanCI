@@ -28,6 +28,20 @@ _API_SECURITY_HEADERS = {
     "X-Frame-Options": "DENY",
     "X-Permitted-Cross-Domain-Policies": "none",
 }
+_FRONTEND_SECURITY_HEADERS = {
+    "Cache-Control": "no-store",
+    "Content-Security-Policy": (
+        "default-src 'self'; script-src 'self'; style-src 'self'; "
+        "img-src 'self' data:; connect-src 'self'; object-src 'none'; "
+        "frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+    ),
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Referrer-Policy": "no-referrer",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "X-Permitted-Cross-Domain-Policies": "none",
+}
 
 
 def _request_id(scope: Scope) -> str:
@@ -134,9 +148,13 @@ class RequestSecurityMiddleware:
                 status_code = int(message["status"])
                 headers = MutableHeaders(scope=message)
                 headers["X-Request-ID"] = request_id
-                if str(scope.get("path", "")).startswith("/api/"):
-                    for name, value in _API_SECURITY_HEADERS.items():
-                        headers[name] = value
+                security_headers = (
+                    _API_SECURITY_HEADERS
+                    if str(scope.get("path", "")).startswith("/api/")
+                    else _FRONTEND_SECURITY_HEADERS
+                )
+                for name, value in security_headers.items():
+                    headers[name] = value
             await send(message)
 
         try:

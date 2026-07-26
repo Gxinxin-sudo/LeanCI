@@ -1,0 +1,21 @@
+name: leanci
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: leanci:local
+    env_file:
+      - path: ./.env
+        required: true
+    environment:
+      PORT: "${PORT:-8000}"
+    ports:
+      - "127.0.0.1:${PORT:-8000}:${PORT:-8000}"
+    restart: "no"
+    stop_grace_period: 15s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL

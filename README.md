@@ -321,6 +321,22 @@ estimated_input_cost_saved_usd =
 访问日志只包含 request ID、方法、固定路由标签、状态和耗时，不记录 Header、请求体、查询串、
 原始路径或上传内容。
 
+## Docker
+
+Docker 单容器使用编译后的前端、FastAPI 和仅监听容器回环地址的 Paritok Proxy。镜像以
+非 root 用户运行，由固定 Python PID 1 监管两个子进程，只公开 FastAPI 的平台 `PORT`。
+
+```powershell
+docker build --progress=plain --tag leanci:phase6 .
+$env:LEANCI_DOCKER_CLI = (Get-Command docker).Source
+.\backend\.venv\Scripts\python.exe scripts\docker_smoke.py
+```
+
+首次构建需要下载基础镜像和 Python 依赖，慢速网络下可能超过两分钟。冒烟脚本使用测试专用
+假凭据，不读取 `.env`、不调用 DeepSeek；它验证无密钥失败、静态站点/API、镜像密钥边界和
+任一子进程退出时的容器联动失败。完整构建、Compose 与故障排查步骤见
+[Docker 构建与验证](docs/DOCKER.md)。
+
 ## 质量检查
 
 ```powershell
@@ -331,6 +347,7 @@ cd "C:\Users\xin'xin\Desktop\LeanCI"
 .\backend\.venv\Scripts\python.exe -m pip check
 .\backend\.venv\Scripts\python.exe scripts\scan_secrets.py
 .\backend\.venv\Scripts\python.exe -m pip_audit -r backend\requirements.txt
+.\backend\.venv\Scripts\python.exe -m pip_audit -r backend\requirements-container.txt
 
 cd frontend
 npm audit --omit=dev --audit-level=high
@@ -357,6 +374,7 @@ npm run build
 - [架构设计](docs/ARCHITECTURE.md)
 - [安全政策](SECURITY.md)
 - [威胁模型](docs/THREAT_MODEL.md)
+- [Docker 构建与验证](docs/DOCKER.md)
 - [Windows Paritok 设置](docs/PARITOK_SETUP_WINDOWS.md)
 - [Paritok 验证](docs/PARITOK_VERIFICATION.md)
 - [人工操作清单](docs/MANUAL_ACTIONS.md)

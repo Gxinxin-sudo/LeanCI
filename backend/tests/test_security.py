@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from collections.abc import Awaitable, Callable
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -263,3 +264,39 @@ def test_unexpected_exception_never_returns_environment_or_internal_path(
     assert secret not in response.text
     assert "C:\\private" not in response.text
     assert secret not in caplog.text
+
+
+def test_built_frontend_is_served_with_document_security_headers(tmp_path: Path) -> None:
+    (tmp_path / "index.html").write_text(
+        "<!doctype html><html><body>LeanCI container frontend</body></html>",
+        encoding="utf-8",
+    )
+    client = TestClient(
+        create_app(
+            Settings(_env_file=None),
+            analysis_service=FakeAnalysisService(),
+            frontend_dist=tmp_path,
+        )
+    )
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "LeanCI container frontend" in response.text
+    assert response.headers["Cache-Control"] == "no-store"
+    assert response.headers["Content-Security-Policy"].startswith("default-src 'self'")
+    assert response.headers["X-Frame-Options"] == "DENY"
+
+
+def test_production_disables_interactive_api_documentation(tmp_path: Path) -> None:
+    (tmp_path / "index.html").write_text("<!doctype html><title>LeanCI</title>", encoding="utf-8")
+    client = TestClient(
+        create_app(
+            Settings(_env_file=None, environment="production"),
+            analysis_service=FakeAnalysisService(),
+            frontend_dist=tmp_path,
+        )
+    )
+
+    assert client.get("/docs").status_code == 404
+    assert client.get("/openapi.json").status_code == 404

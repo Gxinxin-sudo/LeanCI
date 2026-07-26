@@ -156,7 +156,7 @@
 ### 安全与产品验收（2026-07-26）
 
 - [x] 盘点所有 API Key 读取/展开位置；确认公开状态只返回是否配置
-- [x] 扫描当前 tracked/unignored 文件和全部 11 个 Git Commit；未发现真实密钥模式
+- [x] 扫描当前 tracked/unignored 文件和完整 Git 历史；未发现真实密钥模式
 - [x] 强化 `.gitignore`，覆盖环境文件、私钥/证书、凭据文件、调试响应和运行时 trace
 - [x] 限制安全日志字段，验证不记录 Header、请求正文、原始路径或上传内容
 - [x] 验证异常不返回环境变量、密钥、请求头、堆栈或绝对路径
@@ -173,24 +173,24 @@
 - [ ] `[MANUAL]` 公网前配置生产 CORS、可信反向代理/分布式限流与预算、数据保留政策
 - [ ] `[MANUAL]` 公开 GitHub 仓库建立后启用 private vulnerability reporting
 
-- [ ] `[MANUAL]` 安装并启动 Docker Desktop
-- [ ] 创建前端构建 + Python 运行时的多阶段 Dockerfile
-- [ ] 创建固定命令的 Python 双进程管理脚本
-- [ ] FastAPI 监听平台 `PORT`
-- [ ] Paritok 只监听 `127.0.0.1:8080`
-- [ ] 创建本地开发 `docker-compose.yml`
-- [ ] 验证缺少密钥时安全失败
-- [ ] 验证代理或 FastAPI 退出时容器联动退出
-- [ ] 构建镜像并运行 API、静态站点和分析 smoke test
-- [ ] 扫描镜像与构建上下文中的密钥
-- [ ] 更新 README、架构和任务状态
+- [x] `[MANUAL]` 安装并启动 Docker Desktop；已验证 Engine、Compose 和 `hello-world`
+- [x] 创建前端构建 + Python 运行时的多阶段 Dockerfile
+- [x] 创建固定命令的 Python PID 1 双进程管理脚本
+- [x] FastAPI 监听平台 `PORT`
+- [x] Paritok 只监听 `127.0.0.1:8080`
+- [x] 创建并静态验证本地开发 `docker-compose.yml`
+- [x] 验证缺少密钥时以状态 78 安全失败，且不泄露值
+- [x] 验证代理或 FastAPI 退出时容器联动非零退出
+- [x] 构建镜像并运行 API、静态站点和 fail-closed 分析 smoke test
+- [x] 扫描镜像配置/历史与构建上下文中的密钥
+- [x] 更新 README、Docker 指南、架构和任务状态
 
 ## 阶段 7：开源发布与 Devpost
 
 - [x] 创建 `SECURITY.md`
 - [ ] 创建 `CONTRIBUTING.md`
 - [x] 完成阶段六全量 pytest、ruff、前端测试、类型检查和构建
-- [ ] 完成 Docker 端到端测试
+- [x] 完成 Docker 端到端功能检查；修复响应头大小写、slim 镜像信号和端口复用测试缺陷
 - [x] 完成密钥、依赖和错误响应安全检查
 - [ ] 完善 README 快速开始、部署、Benchmark 和截图
 - [ ] `[MANUAL]` 注册/加入 Devpost 项目并确认官方规则
