@@ -327,7 +327,7 @@ npm test
 npm run build
 ```
 
-阶段五最近结果：后端 `107 passed, 2 skipped`；前端 `21 passed`；Ruff、格式、pip check、
+阶段五最终冻结审计结果：后端 `110 passed, 2 skipped`；前端 `21 passed`；Ruff、格式、pip check、
 lint、TypeScript strict、Vite 生产构建、结果完整性和密钥模式检查通过。两个条件集成测试
 只有显式设置真实集成环境变量时才运行；它们不应在没有单独费用授权时自动发送模型请求。
 

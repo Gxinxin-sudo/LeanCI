@@ -23,6 +23,17 @@
 
 On these five fixed cases, the run observed 85.53% average Token savings across 2 rows where compression actually occurred and a -19.00-point deterministic quality change across 5 valid pairs; 3 low-yield skips, 0 unavailable rows, and 0 upstream failures remain included. This does not establish universal quality preservation, production reliability, or actual billing savings.
 
+## Acceptance-run accounting
+
+- Actual model requests: **10** (**5** Baseline + **5** Paritok).
+- JSON repair requests: **0**.
+- Network retries: **0**.
+- Command or provider timeouts: **0**.
+- Hosted preflight: **successful** before the paid run.
+
+These are the recorded counts for this one controlled acceptance run. They are not inferred from
+Token fields, and rerunning the commands below requires a new explicit cost authorization.
+
 ## Fixed quality rubric
 
 | Check | Points | Method |

@@ -46,6 +46,20 @@ LeanCI（Token-Efficient AI Debugging for Massive CI Logs）帮助开发者诊�
 - 阶段四无费用质量门为后端 `92 passed, 2 skipped`、前端 `20 passed`，lint、
   strict typecheck 和生产构建通过。
 
+阶段五最终验收（2026-07-26）：
+
+- 五个固定案例均按 `baseline_uncompressed` → `paritok` 顺序完成唯一一次最终真实双跑，
+  保留全部 10 行；首轮消息哈希逐例一致，模型固定为 `deepseek-v4-flash`，
+  `max_tokens=4096`、thinking disabled、JSON object，网络重试为 0；
+- 实际模型请求 10 次，JSON 修复 0、网络重试 0、超时 0；2 行实际压缩、3 行因官方
+  `below_refusal_threshold` 正常跳过低收益压缩，无 unavailable 或 upstream failure；
+- Token 平均仅以 2 个 `compressed` 行为分母，平均节省率 `85.53%`；三个
+  `skipped_low_yield` 行的压缩 Token 字段为 `null`，不是 0% 节省、缓存命中或故障；
+- 质量比较仅使用两路都有严格结构化输出的 5 个配对：Baseline `73.00/100`、
+  Paritok `54.00/100`，变化 `-19.00` 分，因此不得宣传普遍质量保持；
+- 固定工件、报告、前端只读页、确定性评分、人工复核字段、费用场景及回归测试均已收口。
+  发布工件记录的价格快照日为 `2026-07-25`；美元数仅为 DeepSeek 配置估算，不是实际账单。
+
 ## 3. MVP 范围
 
 必须完成：
