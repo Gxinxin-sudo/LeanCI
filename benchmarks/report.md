@@ -1,25 +1,27 @@
 # LeanCI Benchmark Report
 
-- Generated: `2026-07-26T06:47:05.291041+00:00`
+- Generated: `2026-07-26T14:13:42.299679+00:00`
 - Model: `deepseek-v4-flash`
 - Finalized: `true`
 - Pricing snapshot: `2026-07-25`
 - Fixed request configuration: `max_tokens=4096`, thinking disabled, JSON object, zero network retries
-- Token metric policy: baseline and `compression_skipped` fields are null; Paritok Token fields exist only when isolated `/stats` proves compression.
+- Token metric policy: baseline, `skipped_low_yield`, and `unavailable` fields are null; metrics exist only when `/stats` proves compression.
 
 ## Summary
 
-- Successful rows: **5/10**
-- Normal low-benefit compression skips: **3**
-- Failed rows retained: **2**
-- Rows with actual compression proof: **2**
-- Upstream DeepSeek timeouts: **1**
-- Average Token savings across actual compression rows only: **91.70%**
-- Baseline average quality: **73.00/100**
-- Paritok average quality: **not applicable**
-- Quality change: **not applicable**
+- Baseline completed rows: **5**
+- Compressed rows: **2**
+- Normal low-yield skips: **3**
+- Unavailable rows: **0**
+- Upstream failed rows: **0**
+- Upstream DeepSeek timeouts: **0**
+- Valid quality pairs: **5**
+- Average Token savings across actual compression rows only: **85.53%**
+- Baseline average quality across valid pairs: **73.00/100**
+- Paritok average quality across valid pairs: **54.00/100**
+- Quality change: **-19.00 points**
 
-On these five fixed cases, the run observed 91.70% average Token savings across 2 rows where compression actually occurred and no comparable Paritok quality average; 3 low-benefit compression skips and 2 failed rows remain included. This does not establish universal quality preservation, production reliability, or actual billing savings.
+On these five fixed cases, the run observed 85.53% average Token savings across 2 rows where compression actually occurred and a -19.00-point deterministic quality change across 5 valid pairs; 3 low-yield skips, 0 unavailable rows, and 0 upstream failures remain included. This does not establish universal quality preservation, production reliability, or actual billing savings.
 
 ## Fixed quality rubric
 
@@ -37,27 +39,23 @@ The model never scores itself. Every row keeps `human_review.status=pending` so 
 
 | Case | Mode | Status | Original | Compressed | Saved | Saved % | Prompt | Completion | Quality | Latency | Error |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| python-pytest | baseline_uncompressed | success | — | — | — | — | 28579 | 713 | 65 | 6925 ms | — |
-| python-pytest | paritok | failed | 10469 | 254 | 10215 | 97.57% | — | — | 0 | 62567 ms | DEEPSEEK_TIMEOUT: The DeepSeek request timed out. Check the network and try again. |
-| typescript-build | baseline_uncompressed | success | — | — | — | — | 22955 | 715 | 50 | 6883 ms | — |
-| typescript-build | paritok | compression_skipped | — | — | — | — | — | — | N/A | 20031 ms | — |
-| docker-build | baseline_uncompressed | success | — | — | — | — | 8959 | 472 | 100 | 5103 ms | — |
-| docker-build | paritok | failed | 543 | 77 | 466 | 85.82% | — | — | 0 | 18073 ms | ORIGINAL_TOKEN_MINIMUM_NOT_MET: The verified stats delta was below the fixed case minimum. |
-| dependency-resolution | baseline_uncompressed | success | — | — | — | — | 19603 | 657 | 65 | 6607 ms | — |
-| dependency-resolution | paritok | compression_skipped | — | — | — | — | — | — | N/A | 18861 ms | — |
-| github-actions-environment | baseline_uncompressed | success | — | — | — | — | 20957 | 632 | 85 | 6798 ms | — |
-| github-actions-environment | paritok | compression_skipped | — | — | — | — | — | — | N/A | 17919 ms | — |
+| python-pytest | baseline_uncompressed | baseline_completed | — | — | — | — | 28579 | 532 | 65 | 5567 ms | — |
+| python-pytest | paritok | compressed | 10469 | 254 | 10215 | 97.57% | 16531 | 472 | 10 | 11703 ms | — |
+| typescript-build | baseline_uncompressed | baseline_completed | — | — | — | — | 22955 | 497 | 70 | 5649 ms | — |
+| typescript-build | paritok | skipped_low_yield | — | — | — | — | 22955 | 548 | 70 | 10306 ms | — |
+| docker-build | baseline_uncompressed | baseline_completed | — | — | — | — | 8959 | 454 | 100 | 6175 ms | — |
+| docker-build | paritok | compressed | 543 | 144 | 399 | 73.48% | 8534 | 526 | 40 | 8376 ms | — |
+| dependency-resolution | baseline_uncompressed | baseline_completed | — | — | — | — | 19603 | 640 | 65 | 6015 ms | — |
+| dependency-resolution | paritok | skipped_low_yield | — | — | — | — | 19603 | 739 | 85 | 9768 ms | — |
+| github-actions-environment | baseline_uncompressed | baseline_completed | — | — | — | — | 20957 | 634 | 65 | 6744 ms | — |
+| github-actions-environment | paritok | skipped_low_yield | — | — | — | — | 20957 | 561 | 65 | 9034 ms | — |
 
 ## Failures and review
 
 - Expected low-benefit skips (normal Paritok behavior, not an outage, cache hit, or stats defect):
-  - `typescript-build` / `paritok`: `compression_skipped` (`below_refusal_threshold`); Token savings, compression ratio, and quality are not applicable.
-  - `dependency-resolution` / `paritok`: `compression_skipped` (`below_refusal_threshold`); Token savings, compression ratio, and quality are not applicable.
-  - `github-actions-environment` / `paritok`: `compression_skipped` (`below_refusal_threshold`); Token savings, compression ratio, and quality are not applicable.
-- `python-pytest` / `paritok`: DEEPSEEK_TIMEOUT: The DeepSeek request timed out. Check the network and try again.
-  - The isolated `/stats` delta was retained, but the upstream completion exceeded the fixed provider timeout. No response usage or analysis was invented.
-- `docker-build` / `paritok`: ORIGINAL_TOKEN_MINIMUM_NOT_MET: The verified stats delta was below the fixed case minimum.
-  - The verified `/stats` window recorded `543→77` tokens, below the fixed 5,000 original-Token acceptance gate. The returned analysis was discarded and scored zero.
+  - `typescript-build` / `paritok`: `skipped_low_yield` (`below_refusal_threshold`); Token savings and compression ratio are not applicable. Quality is shown only when a valid structured analysis exists.
+  - `dependency-resolution` / `paritok`: `skipped_low_yield` (`below_refusal_threshold`); Token savings and compression ratio are not applicable. Quality is shown only when a valid structured analysis exists.
+  - `github-actions-environment` / `paritok`: `skipped_low_yield` (`below_refusal_threshold`); Token savings and compression ratio are not applicable. Quality is shown only when a valid structured analysis exists.
 
 A quality score below 100 is not hidden and should be reviewed against the stored `analysis` object and the case's `ground_truth.json`.
 

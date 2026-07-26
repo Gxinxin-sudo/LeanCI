@@ -112,13 +112,18 @@ export interface ApiErrorEnvelope {
 }
 
 export type BenchmarkMode = 'baseline_uncompressed' | 'paritok'
-export type BenchmarkStatus = 'success' | 'compression_skipped' | 'failed'
+export type BenchmarkStatus =
+  | 'baseline_completed'
+  | 'compressed'
+  | 'skipped_low_yield'
+  | 'unavailable'
+  | 'upstream_failed'
 
 export interface BenchmarkRow {
   case_id: string
   mode: BenchmarkMode
   status: BenchmarkStatus
-  success: boolean | null
+  success: boolean
   compression_skip_reason: 'below_refusal_threshold' | null
   original_tokens: number | null
   compressed_tokens: number | null
@@ -158,7 +163,7 @@ export interface BenchmarkRow {
 }
 
 export interface BenchmarkArtifact {
-  schema_version: 2
+  schema_version: 3
   generated_at: string
   finalized: boolean
   case_ids: string[]
@@ -183,11 +188,13 @@ export interface BenchmarkArtifact {
     expected_cases: number
     expected_rows: number
     completed_rows: number
-    successful_rows: number
-    compression_skipped_rows: number
-    failed_rows: number
-    actual_compression_rows: number
+    baseline_completed_rows: number
+    compressed_rows: number
+    skipped_low_yield_rows: number
+    unavailable_rows: number
+    upstream_failed_rows: number
     upstream_timeout_rows: number
+    quality_pair_count: number
     average_tokens_saved: number | null
     average_token_savings_percent: number | null
     baseline_average_quality: number | null

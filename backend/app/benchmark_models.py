@@ -8,7 +8,13 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from app.models import DiagnosticAnalysis
 
 BenchmarkMode = Literal["baseline_uncompressed", "paritok"]
-BenchmarkStatus = Literal["success", "compression_skipped", "failed"]
+BenchmarkStatus = Literal[
+    "baseline_completed",
+    "compressed",
+    "skipped_low_yield",
+    "unavailable",
+    "upstream_failed",
+]
 CompressionSkipReason = Literal["below_refusal_threshold"]
 GroundTruthText = Annotated[str, Field(min_length=1, max_length=8_000)]
 GroundTruthTerm = Annotated[str, Field(min_length=1, max_length=300)]
@@ -101,7 +107,7 @@ class BenchmarkRow(BenchmarkStrictModel):
     case_id: str = Field(pattern=r"^[a-z0-9-]+$", max_length=80)
     mode: BenchmarkMode
     status: BenchmarkStatus
-    success: bool | None
+    success: bool
     compression_skip_reason: CompressionSkipReason | None = None
     original_tokens: int | None = Field(default=None, ge=0)
     compressed_tokens: int | None = Field(default=None, ge=0)
@@ -139,22 +145,10 @@ class BenchmarkRow(BenchmarkStrictModel):
             self.json_valid,
             self.quality_score,
         )
-        if self.status == "compression_skipped":
-            if self.mode != "paritok":
-                raise ValueError("only Paritok rows can be compression_skipped")
-            if self.success is not None:
-                raise ValueError("compression_skipped success must be null, not false")
-            if self.compression_skip_reason != "below_refusal_threshold":
-                raise ValueError("compression_skipped rows require the verified trace reason")
-            if any(value is not None for value in mirrored) or self.score is not None:
-                raise ValueError("compression_skipped quality fields must be null")
-            if self.error is not None or self.analysis is not None:
-                raise ValueError("expected low-benefit skips are not model failures")
-        else:
-            if self.compression_skip_reason is not None:
-                raise ValueError("only compression_skipped rows can store a skip reason")
-            if self.score is None:
-                raise ValueError("completed and failed rows require deterministic score fields")
+        has_analysis = self.analysis is not None
+        if has_analysis:
+            if not self.success or self.error is not None or self.score is None:
+                raise ValueError("valid analysis rows require success, score, and no error")
             score_values = (
                 self.score.root_cause_correct,
                 self.score.evidence_correct,
@@ -165,10 +159,46 @@ class BenchmarkRow(BenchmarkStrictModel):
             )
             if mirrored != score_values:
                 raise ValueError("flat score columns must match the score object")
-            if self.status == "success" and self.success is not True:
-                raise ValueError("successful status requires success=true")
-            if self.status == "failed" and self.success is not False:
-                raise ValueError("failed status requires success=false")
+            if self.prompt_tokens is None or self.completion_tokens is None:
+                raise ValueError("valid analyses require reported provider usage")
+        else:
+            if (
+                self.success
+                or self.score is not None
+                or any(value is not None for value in mirrored)
+            ):
+                raise ValueError("rows without valid analysis must use null quality fields")
+
+        if self.mode == "baseline_uncompressed":
+            if self.status not in {
+                "baseline_completed",
+                "unavailable",
+                "upstream_failed",
+            }:
+                raise ValueError("baseline rows cannot carry a Paritok compression status")
+            if self.compression_skip_reason is not None:
+                raise ValueError("baseline rows cannot carry a compression skip reason")
+        elif self.status == "baseline_completed":
+            raise ValueError("Paritok rows cannot be baseline_completed")
+
+        if self.status == "baseline_completed" and not has_analysis:
+            raise ValueError("baseline_completed requires a valid analysis")
+        if self.status == "compressed" and (self.mode != "paritok" or not has_analysis):
+            raise ValueError("compressed requires a valid Paritok analysis")
+        if self.status == "skipped_low_yield":
+            if self.mode != "paritok":
+                raise ValueError("only Paritok rows can be skipped_low_yield")
+            if self.compression_skip_reason != "below_refusal_threshold":
+                raise ValueError("skipped_low_yield requires the verified reason")
+            if self.error is not None:
+                raise ValueError("normal low-yield skips are not failures")
+        elif self.compression_skip_reason is not None:
+            raise ValueError("only skipped_low_yield rows can store a skip reason")
+        if self.status in {"unavailable", "upstream_failed"} and (
+            has_analysis or self.error is None
+        ):
+            raise ValueError("unavailable/upstream_failed require a safe error and no analysis")
+
         if self.mode == "baseline_uncompressed" and any(
             value is not None
             for value in (
@@ -185,20 +215,16 @@ class BenchmarkRow(BenchmarkStrictModel):
             self.tokens_saved,
             self.compression_ratio,
         )
-        if self.status == "compression_skipped" and any(
+        if self.status in {"skipped_low_yield", "unavailable"} and any(
             value is not None for value in token_metrics
         ):
-            raise ValueError("compression_skipped Token metrics are not applicable")
+            raise ValueError("skipped/unavailable Token metrics are not applicable")
         if any(value is not None for value in token_metrics) and any(
             value is None for value in token_metrics
         ):
             raise ValueError("stats-delta Token metrics must be complete or all null")
-        if (
-            self.mode == "paritok"
-            and self.status == "success"
-            and any(value is None for value in token_metrics)
-        ):
-            raise ValueError("successful Paritok rows require complete stats-delta metrics")
+        if self.status == "compressed" and any(value is None for value in token_metrics):
+            raise ValueError("compressed rows require complete stats-delta metrics")
         if all(value is not None for value in token_metrics):
             assert self.original_tokens is not None
             assert self.compressed_tokens is not None
@@ -211,18 +237,6 @@ class BenchmarkRow(BenchmarkStrictModel):
             expected_ratio = self.compressed_tokens / self.original_tokens
             if abs(self.compression_ratio - expected_ratio) > 0.000001:
                 raise ValueError("stored compression ratio is inconsistent")
-        if self.status == "success" and (
-            self.prompt_tokens is None or self.completion_tokens is None
-        ):
-            raise ValueError("successful benchmark rows require reported provider usage")
-        if self.status == "success" and not (
-            self.json_valid and self.analysis is not None and self.error is None
-        ):
-            raise ValueError("success must reflect a valid stored analysis and no error")
-        if self.status == "failed" and (
-            self.error is None or self.analysis is not None or self.quality_score != 0
-        ):
-            raise ValueError("failed calls score zero and remain visible")
         return self
 
 
@@ -246,7 +260,7 @@ class BenchmarkConfiguration(BenchmarkStrictModel):
     scoring_rule: Literal["40+20+15+15+10"]
     token_metric_policy: Literal[
         "Paritok Token metrics only for actual compression from per-request /stats deltas; "
-        "baseline and compression_skipped values are null."
+        "baseline, skipped_low_yield, and unavailable values are null."
     ]
 
 
@@ -254,11 +268,13 @@ class BenchmarkSummary(BenchmarkStrictModel):
     expected_cases: int = Field(ge=1)
     expected_rows: int = Field(ge=2)
     completed_rows: int = Field(ge=0)
-    successful_rows: int = Field(ge=0)
-    compression_skipped_rows: int = Field(ge=0)
-    failed_rows: int = Field(ge=0)
-    actual_compression_rows: int = Field(ge=0)
+    baseline_completed_rows: int = Field(ge=0)
+    compressed_rows: int = Field(ge=0)
+    skipped_low_yield_rows: int = Field(ge=0)
+    unavailable_rows: int = Field(ge=0)
+    upstream_failed_rows: int = Field(ge=0)
     upstream_timeout_rows: int = Field(ge=0)
+    quality_pair_count: int = Field(ge=0)
     average_tokens_saved: float | None = Field(default=None, ge=0)
     average_token_savings_percent: float | None = Field(default=None, ge=0, le=100)
     baseline_average_quality: float | None = Field(default=None, ge=0, le=100)
@@ -268,7 +284,7 @@ class BenchmarkSummary(BenchmarkStrictModel):
 
 
 class BenchmarkArtifact(BenchmarkStrictModel):
-    schema_version: Literal[2]
+    schema_version: Literal[3]
     generated_at: datetime
     finalized: bool
     case_ids: list[str] = Field(min_length=1, max_length=50)
@@ -291,21 +307,28 @@ class BenchmarkArtifact(BenchmarkStrictModel):
             raise ValueError("summary expected case count is inconsistent")
         if self.summary.completed_rows != len(self.rows):
             raise ValueError("summary completed row count is inconsistent")
-        if (
-            self.summary.successful_rows
-            + self.summary.compression_skipped_rows
-            + self.summary.failed_rows
-            != len(self.rows)
-        ):
+        counted_rows = (
+            self.summary.baseline_completed_rows
+            + self.summary.compressed_rows
+            + self.summary.skipped_low_yield_rows
+            + self.summary.unavailable_rows
+            + self.summary.upstream_failed_rows
+        )
+        if counted_rows != len(self.rows):
             raise ValueError("summary status counts are inconsistent")
-        if self.summary.actual_compression_rows != sum(
-            row.mode == "paritok" and row.original_tokens is not None for row in self.rows
-        ):
-            raise ValueError("summary actual compression count is inconsistent")
+        if self.summary.compressed_rows != sum(row.status == "compressed" for row in self.rows):
+            raise ValueError("summary compressed count is inconsistent")
         if self.summary.upstream_timeout_rows != sum(
             bool(row.error and row.error.startswith("DEEPSEEK_TIMEOUT")) for row in self.rows
         ):
             raise ValueError("summary upstream timeout count is inconsistent")
+        pair_count = 0
+        for case_id in self.case_ids:
+            case_rows = [row for row in self.rows if row.case_id == case_id]
+            if len(case_rows) == 2 and all(row.analysis is not None for row in case_rows):
+                pair_count += 1
+        if self.summary.quality_pair_count != pair_count:
+            raise ValueError("summary quality pair count is inconsistent")
         if len(self.case_ids) != len(set(self.case_ids)):
             raise ValueError("benchmark case IDs must be unique")
         if self.finalized and len(self.rows) != expected_rows:

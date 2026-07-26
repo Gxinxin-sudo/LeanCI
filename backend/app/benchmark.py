@@ -19,6 +19,7 @@ from app.benchmark_models import (
     BenchmarkGroundTruth,
     BenchmarkPricing,
     BenchmarkRow,
+    BenchmarkStatus,
     BenchmarkSummary,
     DeterministicScore,
     HumanReview,
@@ -206,6 +207,7 @@ def _row(
     *,
     case_id: str,
     mode: str,
+    status: BenchmarkStatus,
     settings: Settings,
     messages_hash: str,
     schema_hash: str,
@@ -219,15 +221,9 @@ def _row(
     compression_ratio: float | None = None,
     compression_skip_reason: str | None = None,
 ) -> BenchmarkRow:
-    compression_skipped = compression_skip_reason is not None
-    success = None if compression_skipped else result is not None and error is None
-    status = "compression_skipped" if compression_skipped else ("success" if success else "failed")
-    analysis = result.analysis if success is True else None
-    score = (
-        None
-        if compression_skipped
-        else score_analysis(analysis, ground_truth, json_valid=success is True)
-    )
+    success = result is not None and error is None
+    analysis = result.analysis if success else None
+    score = score_analysis(analysis, ground_truth, json_valid=True) if analysis else None
     usage = result.usage if result is not None else None
     return BenchmarkRow(
         case_id=case_id,
@@ -269,6 +265,18 @@ def _safe_error(exc: Exception) -> str:
         message = exc.public_message
         return f"{code}: {message}"
     return "BENCHMARK_INTERNAL_ERROR: The fixed benchmark case could not be completed."
+
+
+def _failure_status(error: str | None) -> BenchmarkStatus:
+    if error and error.startswith(
+        (
+            "PREFLIGHT_FAILED",
+            "PARITOK_",
+            "BASELINE_ISOLATION_",
+        )
+    ):
+        return "unavailable"
+    return "upstream_failed"
 
 
 class BenchmarkRunner:
@@ -334,6 +342,7 @@ class BenchmarkRunner:
                 _row(
                     case_id=case_id,
                     mode=mode,
+                    status="unavailable",
                     settings=self.settings,
                     messages_hash=messages_hash,
                     schema_hash=schema_hash,
@@ -364,9 +373,24 @@ class BenchmarkRunner:
             baseline_error = f"BASELINE_ISOLATION_CHECK_FAILED: {_safe_error(exc)}"
             baseline_stats_after = baseline_stats_before
 
+        if (
+            baseline_result is not None
+            and baseline_result.usage.prompt_tokens < ground_truth.minimum_original_tokens
+        ):
+            baseline_result = None
+            baseline_error = (
+                "FIXED_INPUT_TOKEN_MINIMUM_NOT_MET: DeepSeek reported fewer than "
+                f"{ground_truth.minimum_original_tokens} prompt tokens for the fixed case."
+            )
+
         baseline_row = _row(
             case_id=case_id,
             mode="baseline_uncompressed",
+            status=(
+                "baseline_completed"
+                if baseline_result is not None and baseline_error is None
+                else _failure_status(baseline_error)
+            ),
             settings=self.settings,
             messages_hash=messages_hash,
             schema_hash=schema_hash,
@@ -380,6 +404,7 @@ class BenchmarkRunner:
         paritok_result: ProviderResult | None = None
         paritok_error: str | None = None
         compression_skip_reason: str | None = None
+        paritok_status: BenchmarkStatus = "upstream_failed"
         stats_values: dict[str, int | float | None] = {
             "original_tokens": None,
             "compressed_tokens": None,
@@ -418,6 +443,7 @@ class BenchmarkRunner:
                     "PARITOK_ROUTE_NOT_VERIFIED: The stats request delta did not match "
                     "the benchmark provider attempts."
                 )
+                paritok_status = "unavailable"
             if paritok_result is not None and paritok_error is None and delta.original_tokens == 0:
                 stats_values = {
                     "original_tokens": None,
@@ -427,28 +453,27 @@ class BenchmarkRunner:
                 }
                 if case_id in TRACE_VERIFIED_LOW_BENEFIT_CASE_IDS:
                     compression_skip_reason = "below_refusal_threshold"
+                    paritok_status = "skipped_low_yield"
                 else:
                     paritok_result = None
                     paritok_error = (
                         "PARITOK_COMPRESSION_SKIP_UNVERIFIED: /stats recorded 0->0, "
                         "but no fixed trace diagnosis proves a low-benefit skip."
                     )
-            elif (
-                delta.original_tokens > 0
-                and delta.original_tokens < ground_truth.minimum_original_tokens
-            ):
-                paritok_result = None
-                paritok_error = (
-                    "ORIGINAL_TOKEN_MINIMUM_NOT_MET: The verified stats delta was below "
-                    "the fixed case minimum."
-                )
+                    paritok_status = "unavailable"
+            elif paritok_result is not None and paritok_error is None:
+                paritok_status = "compressed"
+            elif paritok_error is not None:
+                paritok_status = _failure_status(paritok_error)
         except Exception as exc:
             paritok_result = None
             paritok_error = f"PARITOK_STATS_VALIDATION_FAILED: {_safe_error(exc)}"
+            paritok_status = "unavailable"
 
         paritok_row = _row(
             case_id=case_id,
             mode="paritok",
+            status=paritok_status,
             settings=self.settings,
             messages_hash=messages_hash,
             schema_hash=schema_hash,
@@ -473,29 +498,39 @@ def build_artifact(settings: Settings, rows: list[BenchmarkRow]) -> BenchmarkArt
     expected_rows = len(CASE_IDS) * 2
     finalized = len(ordered_rows) == expected_rows
     compressed_paritok = [
-        row
-        for row in ordered_rows
-        if row.mode == "paritok"
-        and row.tokens_saved is not None
-        and row.compression_ratio is not None
+        row for row in ordered_rows if row.mode == "paritok" and row.status == "compressed"
     ]
-
-    def average_quality(mode: str) -> float | None:
-        mode_rows = [
-            row
-            for row in ordered_rows
-            if row.mode == mode and row.status == "success" and row.quality_score is not None
-        ]
-        if not mode_rows:
-            return None
-        return round(
-            sum(row.quality_score for row in mode_rows if row.quality_score is not None)
-            / len(mode_rows),
-            2,
+    quality_pairs: list[tuple[BenchmarkRow, BenchmarkRow]] = []
+    for case_id in CASE_IDS:
+        baseline = next(
+            (
+                row
+                for row in ordered_rows
+                if row.case_id == case_id and row.mode == "baseline_uncompressed"
+            ),
+            None,
         )
-
-    baseline_quality = average_quality("baseline_uncompressed")
-    paritok_quality = average_quality("paritok")
+        paritok = next(
+            (row for row in ordered_rows if row.case_id == case_id and row.mode == "paritok"),
+            None,
+        )
+        if (
+            baseline is not None
+            and paritok is not None
+            and baseline.quality_score is not None
+            and paritok.quality_score is not None
+        ):
+            quality_pairs.append((baseline, paritok))
+    baseline_quality = (
+        round(sum(pair[0].quality_score or 0 for pair in quality_pairs) / len(quality_pairs), 2)
+        if quality_pairs
+        else None
+    )
+    paritok_quality = (
+        round(sum(pair[1].quality_score or 0 for pair in quality_pairs) / len(quality_pairs), 2)
+        if quality_pairs
+        else None
+    )
     average_saved = (
         round(
             sum(row.tokens_saved or 0 for row in compressed_paritok) / len(compressed_paritok),
@@ -513,9 +548,16 @@ def build_artifact(settings: Settings, rows: list[BenchmarkRow]) -> BenchmarkArt
         if compressed_paritok
         else None
     )
-    failures = sum(row.status == "failed" for row in ordered_rows)
-    successful_rows = sum(row.status == "success" for row in ordered_rows)
-    skipped_rows = sum(row.status == "compression_skipped" for row in ordered_rows)
+    status_counts = {
+        status: sum(row.status == status for row in ordered_rows)
+        for status in (
+            "baseline_completed",
+            "compressed",
+            "skipped_low_yield",
+            "unavailable",
+            "upstream_failed",
+        )
+    }
     upstream_timeouts = sum(
         bool(row.error and row.error.startswith("DEEPSEEK_TIMEOUT")) for row in ordered_rows
     )
@@ -540,13 +582,16 @@ def build_artifact(settings: Settings, rows: list[BenchmarkRow]) -> BenchmarkArt
         )
         supported_claim = (
             f"On these five fixed cases, the run observed {compression_text} and "
-            f"{quality_text}; {skipped_rows} low-benefit compression skips and "
-            f"{failures} failed rows remain included. This does not establish universal "
+            f"{quality_text} across {len(quality_pairs)} valid pairs; "
+            f"{status_counts['skipped_low_yield']} low-yield skips, "
+            f"{status_counts['unavailable']} unavailable rows, and "
+            f"{status_counts['upstream_failed']} upstream failures remain included. "
+            "This does not establish universal "
             "quality preservation, production reliability, or actual billing savings."
         )
 
     return BenchmarkArtifact(
-        schema_version=2,
+        schema_version=3,
         generated_at=datetime.now(UTC),
         finalized=finalized,
         case_ids=list(CASE_IDS),
@@ -560,7 +605,7 @@ def build_artifact(settings: Settings, rows: list[BenchmarkRow]) -> BenchmarkArt
             scoring_rule="40+20+15+15+10",
             token_metric_policy=(
                 "Paritok Token metrics only for actual compression from per-request /stats "
-                "deltas; baseline and compression_skipped values are null."
+                "deltas; baseline, skipped_low_yield, and unavailable values are null."
             ),
         ),
         pricing=BenchmarkPricing(
@@ -573,11 +618,13 @@ def build_artifact(settings: Settings, rows: list[BenchmarkRow]) -> BenchmarkArt
             expected_cases=len(CASE_IDS),
             expected_rows=expected_rows,
             completed_rows=len(ordered_rows),
-            successful_rows=successful_rows,
-            compression_skipped_rows=skipped_rows,
-            failed_rows=failures,
-            actual_compression_rows=len(compressed_paritok),
+            baseline_completed_rows=status_counts["baseline_completed"],
+            compressed_rows=status_counts["compressed"],
+            skipped_low_yield_rows=status_counts["skipped_low_yield"],
+            unavailable_rows=status_counts["unavailable"],
+            upstream_failed_rows=status_counts["upstream_failed"],
             upstream_timeout_rows=upstream_timeouts,
+            quality_pair_count=len(quality_pairs),
             average_tokens_saved=average_saved,
             average_token_savings_percent=average_savings_percent,
             baseline_average_quality=baseline_quality,
@@ -592,16 +639,16 @@ def build_artifact(settings: Settings, rows: list[BenchmarkRow]) -> BenchmarkArt
 def load_results() -> BenchmarkArtifact:
     source = RESULTS_JSON_PATH.read_text(encoding="utf-8")
     payload = json.loads(source)
-    if payload.get("schema_version") == 1:
-        return migrate_v1_artifact(payload)
+    if payload.get("schema_version") in {1, 2}:
+        return migrate_legacy_artifact(payload)
     return BenchmarkArtifact.model_validate_json(source)
 
 
-def migrate_v1_artifact(payload: dict[str, Any]) -> BenchmarkArtifact:
+def migrate_legacy_artifact(payload: dict[str, Any]) -> BenchmarkArtifact:
     """Reclassify the saved acceptance run without issuing any model request."""
 
-    if payload.get("schema_version") != 1:
-        raise ValueError("only schema_version=1 benchmark artifacts can be migrated")
+    if payload.get("schema_version") not in {1, 2}:
+        raise ValueError("only schema_version 1 or 2 benchmark artifacts can be migrated")
     migrated_rows: list[BenchmarkRow] = []
     for source_row in payload.get("rows", []):
         row = dict(source_row)
@@ -609,37 +656,73 @@ def migrate_v1_artifact(payload: dict[str, Any]) -> BenchmarkArtifact:
         is_verified_skip = (
             row.get("mode") == "paritok"
             and row.get("case_id") in TRACE_VERIFIED_LOW_BENEFIT_CASE_IDS
-            and row.get("original_tokens") == 0
-            and row.get("compressed_tokens") == 0
+            and (
+                row.get("status") == "compression_skipped"
+                or (row.get("original_tokens") == 0 and row.get("compressed_tokens") == 0)
+            )
         )
         if is_verified_skip:
             row.update(
                 {
-                    "status": "compression_skipped",
-                    "success": None,
+                    "status": "skipped_low_yield",
+                    "success": bool(row.get("analysis")),
                     "compression_skip_reason": "below_refusal_threshold",
                     "original_tokens": None,
                     "compressed_tokens": None,
                     "tokens_saved": None,
                     "compression_ratio": None,
-                    "root_cause_correct": None,
-                    "evidence_correct": None,
-                    "relevant_files_correct": None,
-                    "fix_direction_correct": None,
-                    "json_valid": None,
-                    "quality_score": None,
                     "error": None,
-                    "score": None,
-                    "analysis": None,
                 }
             )
+            if row.get("analysis") is None:
+                for field in (
+                    "root_cause_correct",
+                    "evidence_correct",
+                    "relevant_files_correct",
+                    "fix_direction_correct",
+                    "json_valid",
+                    "quality_score",
+                    "score",
+                ):
+                    row[field] = None
             cost_estimate = dict(row["cost_estimate"])
             cost_estimate["saved_input_if_cache_hit_usd"] = None
             cost_estimate["saved_input_if_cache_miss_usd"] = None
             row["cost_estimate"] = cost_estimate
         else:
-            row["status"] = "success" if row.get("success") is True else "failed"
+            has_analysis = row.get("analysis") is not None and row.get("error") is None
+            if row.get("mode") == "baseline_uncompressed" and has_analysis:
+                row["status"] = "baseline_completed"
+            elif row.get("mode") == "paritok" and has_analysis:
+                row["status"] = "compressed"
+            elif str(row.get("error") or "").startswith(
+                ("PREFLIGHT_FAILED", "PARITOK_", "BASELINE_ISOLATION_")
+            ):
+                row["status"] = "unavailable"
+            else:
+                row["status"] = "upstream_failed"
+            row["success"] = has_analysis
             row["compression_skip_reason"] = None
+            if not has_analysis:
+                row["analysis"] = None
+                for field in (
+                    "root_cause_correct",
+                    "evidence_correct",
+                    "relevant_files_correct",
+                    "fix_direction_correct",
+                    "json_valid",
+                    "quality_score",
+                    "score",
+                ):
+                    row[field] = None
+            if row["status"] == "unavailable":
+                for field in (
+                    "original_tokens",
+                    "compressed_tokens",
+                    "tokens_saved",
+                    "compression_ratio",
+                ):
+                    row[field] = None
         migrated_rows.append(BenchmarkRow.model_validate(row))
 
     configuration = payload["configuration"]
@@ -708,6 +791,7 @@ def build_preflight_failure_rows(
                 _row(
                     case_id=case_id,
                     mode=mode,
+                    status="unavailable",
                     settings=settings,
                     messages_hash=messages_hash,
                     schema_hash=schema_hash,
@@ -778,17 +862,19 @@ def _markdown_report(artifact: BenchmarkArtifact) -> str:
             "JSON object, zero network retries"
         ),
         (
-            "- Token metric policy: baseline and `compression_skipped` fields are null; "
-            "Paritok Token fields exist only when isolated `/stats` proves compression."
+            "- Token metric policy: baseline, `skipped_low_yield`, and `unavailable` "
+            "fields are null; metrics exist only when `/stats` proves compression."
         ),
         "",
         "## Summary",
         "",
-        f"- Successful rows: **{summary.successful_rows}/{summary.expected_rows}**",
-        f"- Normal low-benefit compression skips: **{summary.compression_skipped_rows}**",
-        f"- Failed rows retained: **{summary.failed_rows}**",
-        f"- Rows with actual compression proof: **{summary.actual_compression_rows}**",
+        f"- Baseline completed rows: **{summary.baseline_completed_rows}**",
+        f"- Compressed rows: **{summary.compressed_rows}**",
+        f"- Normal low-yield skips: **{summary.skipped_low_yield_rows}**",
+        f"- Unavailable rows: **{summary.unavailable_rows}**",
+        f"- Upstream failed rows: **{summary.upstream_failed_rows}**",
         f"- Upstream DeepSeek timeouts: **{summary.upstream_timeout_rows}**",
+        f"- Valid quality pairs: **{summary.quality_pair_count}**",
         (
             f"- Average Token savings across actual compression rows only: "
             f"**{summary.average_token_savings_percent:.2f}%**"
@@ -796,12 +882,14 @@ def _markdown_report(artifact: BenchmarkArtifact) -> str:
             else "- Average Token savings across actual compression rows only: **unavailable**"
         ),
         (
-            f"- Baseline average quality: **{summary.baseline_average_quality:.2f}/100**"
+            f"- Baseline average quality across valid pairs: "
+            f"**{summary.baseline_average_quality:.2f}/100**"
             if summary.baseline_average_quality is not None
             else "- Baseline average quality: **not applicable**"
         ),
         (
-            f"- Paritok average quality: **{summary.paritok_average_quality:.2f}/100**"
+            f"- Paritok average quality across valid pairs: "
+            f"**{summary.paritok_average_quality:.2f}/100**"
             if summary.paritok_average_quality is not None
             else "- Paritok average quality: **not applicable**"
         ),
@@ -859,7 +947,7 @@ def _markdown_report(artifact: BenchmarkArtifact) -> str:
             "",
         ]
     )
-    skipped = [row for row in artifact.rows if row.status == "compression_skipped"]
+    skipped = [row for row in artifact.rows if row.status == "skipped_low_yield"]
     if skipped:
         lines.append(
             "- Expected low-benefit skips (normal Paritok behavior, not an outage, "
@@ -868,10 +956,14 @@ def _markdown_report(artifact: BenchmarkArtifact) -> str:
         for row in skipped:
             lines.append(
                 f"  - `{row.case_id}` / `{row.mode}`: "
-                f"`compression_skipped` (`{row.compression_skip_reason}`); Token savings, "
-                "compression ratio, and quality are not applicable."
+                f"`skipped_low_yield` (`{row.compression_skip_reason}`); Token savings and "
+                "compression ratio are not applicable. Quality is shown only when a valid "
+                "structured analysis exists."
             )
-    failed = [row for row in artifact.rows if row.status == "failed"]
+    unavailable = [row for row in artifact.rows if row.status == "unavailable"]
+    for row in unavailable:
+        lines.append(f"- `{row.case_id}` / `{row.mode}` unavailable: {row.error}")
+    failed = [row for row in artifact.rows if row.status == "upstream_failed"]
     if failed:
         for row in failed:
             lines.append(f"- `{row.case_id}` / `{row.mode}`: {row.error}")
@@ -881,14 +973,7 @@ def _markdown_report(artifact: BenchmarkArtifact) -> str:
                     "completion exceeded the fixed provider timeout. No response usage "
                     "or analysis was invented."
                 )
-            elif row.error and row.error.startswith("ORIGINAL_TOKEN_MINIMUM_NOT_MET"):
-                lines.append(
-                    "  - The verified `/stats` window recorded "
-                    f"`{row.original_tokens}→{row.compressed_tokens}` tokens, below the "
-                    "fixed 5,000 original-Token acceptance gate. The returned analysis "
-                    "was discarded and scored zero."
-                )
-    else:
+    if not skipped and not unavailable and not failed:
         lines.append("- No API or schema failures occurred in this fixed run.")
     lines.extend(
         [

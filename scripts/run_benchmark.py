@@ -46,23 +46,35 @@ async def run_case(case_id: str) -> int:
         {
             "status": (
                 "completed"
-                if all(row.status != "failed" for row in case_rows)
+                if all(
+                    row.status not in {"unavailable", "upstream_failed"}
+                    for row in case_rows
+                )
                 else "completed_with_failure"
             ),
             "case_id": case_id,
             "rows_written": len(case_rows),
-            "successful_rows": sum(row.status == "success" for row in case_rows),
-            "compression_skipped_rows": sum(
-                row.status == "compression_skipped" for row in case_rows
+            "compressed_rows": sum(row.status == "compressed" for row in case_rows),
+            "skipped_low_yield_rows": sum(
+                row.status == "skipped_low_yield" for row in case_rows
             ),
-            "failed_rows": sum(row.status == "failed" for row in case_rows),
+            "unavailable_rows": sum(row.status == "unavailable" for row in case_rows),
+            "upstream_failed_rows": sum(
+                row.status == "upstream_failed" for row in case_rows
+            ),
             "finalized": artifact.finalized,
             "expected_model_api_requests": 2,
             "maximum_model_api_requests_with_json_repairs": 4,
             "network_retries": 0,
         }
     )
-    return 0 if all(row.status != "failed" for row in case_rows) else 1
+    return (
+        0
+        if all(
+            row.status not in {"unavailable", "upstream_failed"} for row in case_rows
+        )
+        else 1
+    )
 
 
 def main() -> int:

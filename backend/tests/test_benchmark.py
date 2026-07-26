@@ -100,9 +100,13 @@ class FakeParitokClient:
         *,
         mutate_during_baseline: bool = False,
         zero_token_window: bool = False,
+        delta_original: int = 6_200,
+        delta_compressed: int = 320,
     ) -> None:
         self.mutate_during_baseline = mutate_during_baseline
         self.zero_token_window = zero_token_window
+        self.delta_original = delta_original
+        self.delta_compressed = delta_compressed
         self.stats_calls = 0
 
     async def health(self) -> SimpleNamespace:
@@ -122,7 +126,9 @@ class FakeParitokClient:
         elif self.zero_token_window:
             requests, original, compressed = 11, 50_000, 5_000
         else:
-            requests, original, compressed = 11, 56_200, 5_320
+            requests = 11
+            original = 50_000 + self.delta_original
+            compressed = 5_000 + self.delta_compressed
         return ParitokStatsSnapshot(
             total_requests=requests,
             input_tokens_original=original,
@@ -161,6 +167,7 @@ async def test_runner_uses_identical_initial_messages_and_isolated_stats() -> No
 
     assert [row.mode for row in rows] == ["baseline_uncompressed", "paritok"]
     assert all(row.success for row in rows)
+    assert [row.status for row in rows] == ["baseline_completed", "compressed"]
     assert rows[0].initial_messages_sha256 == rows[1].initial_messages_sha256
     assert runner.direct.message_hash_inputs == runner.paritok.message_hash_inputs
     assert rows[0].original_tokens is None
@@ -185,10 +192,12 @@ async def test_runner_keeps_both_failed_rows_when_baseline_stats_are_contaminate
     rows = await runner.run_case("typescript-build")
 
     assert rows[0].success is False
+    assert rows[0].status == "unavailable"
     assert "PARITOK_STATS_CHANGED_DURING_BASELINE" in (rows[0].error or "")
-    assert rows[0].quality_score == 0
+    assert rows[0].quality_score is None
     assert rows[1].success is False
-    assert rows[1].quality_score == 0
+    assert rows[1].status == "unavailable"
+    assert rows[1].quality_score is None
 
 
 @pytest.mark.anyio
@@ -205,15 +214,15 @@ async def test_zero_token_stats_window_never_claims_one_hundred_percent_savings(
 
     rows = await runner.run_case("typescript-build")
 
-    assert rows[1].status == "compression_skipped"
-    assert rows[1].success is None
+    assert rows[1].status == "skipped_low_yield"
+    assert rows[1].success is True
     assert rows[1].compression_skip_reason == "below_refusal_threshold"
     assert rows[1].original_tokens is None
     assert rows[1].compressed_tokens is None
     assert rows[1].tokens_saved is None
     assert rows[1].compression_ratio is None
-    assert rows[1].quality_score is None
-    assert rows[1].score is None
+    assert rows[1].quality_score == 100
+    assert rows[1].score is not None
     assert rows[1].error is None
 
 
@@ -241,17 +250,18 @@ async def test_timeout_remains_an_upstream_failure_with_valid_stats_delta() -> N
 
     rows = await runner.run_case("python-pytest")
 
-    assert rows[1].status == "failed"
+    assert rows[1].status == "upstream_failed"
     assert rows[1].success is False
     assert rows[1].original_tokens == 6_200
     assert rows[1].compressed_tokens == 320
     assert rows[1].tokens_saved == 5_880
-    assert rows[1].quality_score == 0
+    assert rows[1].quality_score is None
     assert (rows[1].error or "").startswith("DEEPSEEK_TIMEOUT")
     artifact = build_artifact(settings, rows)
-    assert artifact.summary.actual_compression_rows == 1
+    assert artifact.summary.compressed_rows == 0
+    assert artifact.summary.upstream_failed_rows == 1
     assert artifact.summary.upstream_timeout_rows == 1
-    assert artifact.summary.average_token_savings_percent == 94.84
+    assert artifact.summary.average_token_savings_percent is None
 
 
 @pytest.mark.anyio
@@ -268,7 +278,7 @@ async def test_unverified_zero_token_window_remains_fail_closed() -> None:
 
     rows = await runner.run_case("python-pytest")
 
-    assert rows[1].status == "failed"
+    assert rows[1].status == "unavailable"
     assert rows[1].compression_skip_reason is None
     assert rows[1].original_tokens is None
     assert (rows[1].error or "").startswith("PARITOK_COMPRESSION_SKIP_UNVERIFIED")
@@ -289,14 +299,36 @@ async def test_summary_averages_exclude_normal_compression_skips() -> None:
     rows = await runner.run_case("typescript-build")
     artifact = build_artifact(settings, rows)
 
-    assert artifact.summary.successful_rows == 1
-    assert artifact.summary.compression_skipped_rows == 1
-    assert artifact.summary.failed_rows == 0
-    assert artifact.summary.actual_compression_rows == 0
+    assert artifact.summary.baseline_completed_rows == 1
+    assert artifact.summary.skipped_low_yield_rows == 1
+    assert artifact.summary.unavailable_rows == 0
+    assert artifact.summary.upstream_failed_rows == 0
+    assert artifact.summary.compressed_rows == 0
+    assert artifact.summary.quality_pair_count == 1
     assert artifact.summary.baseline_average_quality == 100
-    assert artifact.summary.paritok_average_quality is None
-    assert artifact.summary.quality_change_points is None
+    assert artifact.summary.paritok_average_quality == 100
+    assert artifact.summary.quality_change_points == 0
     assert artifact.summary.average_token_savings_percent is None
+
+
+@pytest.mark.anyio
+async def test_small_valid_stats_delta_is_compressed_without_a_delta_minimum() -> None:
+    settings = Settings(
+        _env_file=None,
+        deepseek_api_key="unit-test-only",
+        paritok_api_key="unit-test-only",
+    )
+    runner = FakeBenchmarkRunner(
+        settings,
+        FakeParitokClient(delta_original=543, delta_compressed=77),
+    )
+
+    rows = await runner.run_case("docker-build")
+
+    assert rows[1].status == "compressed"
+    assert rows[1].original_tokens == 543
+    assert rows[1].compressed_tokens == 77
+    assert rows[1].tokens_saved == 466
 
 
 def test_partial_artifact_refuses_to_make_a_promotional_claim() -> None:
@@ -304,5 +336,5 @@ def test_partial_artifact_refuses_to_make_a_promotional_claim() -> None:
     artifact = build_artifact(settings, [])
 
     assert artifact.finalized is False
-    assert artifact.summary.failed_rows == 0
+    assert artifact.summary.upstream_failed_rows == 0
     assert artifact.summary.supported_claim.startswith("Benchmark incomplete")

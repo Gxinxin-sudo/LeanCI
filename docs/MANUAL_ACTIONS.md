@@ -220,14 +220,16 @@ http://127.0.0.1:5173/?capture=docker-build
 
 - [x] 默认 trace 已关闭；`artifacts/runtime/compress_trace.jsonl` 仅用于本地诊断并被
   Git 忽略。不要提交、打印、截图或复制其完整内容。
-- [x] 已离线迁移既有真实工件，没有发出新模型请求：5 个 Baseline 成功，3 个 Paritok
-  行因 `below_refusal_threshold` 正常跳过，2 个 Paritok 行存在有效压缩差值。
-- [x] Python 的 `DEEPSEEK_TIMEOUT` 独立保留；Docker 的 `543→77` 虽实际压缩，但没有
-  达到只适用于实际压缩块的 5,000 Token 验收门槛。两行均未被删除或悄悄重跑。
+- [x] 最终受控真实运行完成：实际模型请求 10 次，JSON 修复 0、网络重试 0、超时 0；
+  2 个 `compressed`、3 个 `skipped_low_yield`、0 个 `unavailable`、0 个
+  `upstream_failed`。
+- [x] 两个 compressed 行为 Python `10,469→254` 与 Docker `543→144`，平均 Token
+  节省率 `85.53%`；分母明确为 2，不包含三个低收益跳过。
+- [x] 五个质量有效配对为 Baseline `73.00/100`、Paritok `54.00/100`，变化 `-19.00`
+  分；所有结构化输出均保留确定性评分和待人工确认字段。
 
-当前只可宣传“2 个实际压缩行的平均 Token 节省率为 `91.70%`，3 个低收益案例按设计
-passthrough”。不得宣传这是五例整体平均、所有输入都会压缩、质量保持、生产稳定性或
-实际账单降低。Paritok 没有成功分析行，因此质量变化必须显示为“不适用”。
+当前只可宣传“2 个 compressed 行平均节省 `85.53%`，3 个低收益案例按设计 passthrough”。
+不得宣传这是五例整体平均、所有输入都会压缩、质量保持、生产稳定性或实际账单降低。
 
 ## 发布阶段需要
 

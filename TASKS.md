@@ -136,13 +136,18 @@
   命中或 stats Bug；跳过请求只增加 `total_requests`
 - [x] 临时启用且隔离官方 trace，以无 DeepSeek 假上游完成五例 tool-message 诊断；三个
   原 `0→0` 案例的确切 reason 均为 `below_refusal_threshold`
-- [x] 将三个 trace 已确认的低收益 `0→0` Benchmark 行标记为 `compression_skipped`，
-  Token/质量均为不适用；未知正式分析仍 fail closed，且不伪造 Token
-- [x] 仅对实际压缩且 `/stats` delta 有效的行计算 Token 平均值；5,000 门槛只适用于
-  实际压缩块，正常跳过不计为 0% 节省或质量 0
-- [x] 保留 Python DeepSeek timeout 和 Docker 5,000 Token 验收失败；报告与前端排除
-  skipped 行后，质量变化正确显示为不适用
+- [x] 实现 `compressed`、`skipped_low_yield`、`unavailable`、`upstream_failed`
+  四种 Paritok 状态；正常跳过不伪造 Token，未知正式分析仍 fail closed
+- [x] 仅对 `compressed` 行计算 Token 平均值；原始固定输入保持超过 5,000 Token，
+  不再把每个 Paritok stats delta 强制为 5,000
+- [x] 质量变化只使用 Baseline 与 Paritok 都有有效结构化分析的配对，并显示配对数；
+  没有有效分析的 skipped/upstream_failed 行显示不适用而非 0 分
 - [x] trace 默认关闭且诊断 JSONL 保持 Git 忽略；不提交 trace 内容
+- [x] 在最终明确费用授权后完成唯一一次五例真实运行：10 次模型请求、0 次 JSON 修复、
+  0 次网络重试、0 次超时；2 compressed、3 skipped_low_yield、0 unavailable、
+  0 upstream_failed
+- [x] 最终质量比较保留 5 个有效配对：Baseline 73、Paritok 54，变化 -19 分；文档明确
+  不支持质量保持或所有日志都会压缩的宣传
 
 ## 阶段 6：Docker 与端到端验证
 

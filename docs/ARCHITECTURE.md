@@ -273,7 +273,11 @@ Provider 工厂不提供 Direct 正式模式。已实现 Benchmark：
 - baseline 的 original/compressed/saved/ratio 保持 `null`，不以 DeepSeek usage 代替；
 - DeepSeek usage 只记录为独立的 prompt/completion/cache 字段；
 - 质量通过 ground truth 规则确定性评分，不让模型自评，并保留人工复核字段；
-- 任何 API、Schema、stats 或外部预检失败都保留为 0 分行，不删除案例；
+- Paritok 结果状态严格区分 `compressed`、`skipped_low_yield`、`unavailable` 和
+  `upstream_failed`；低收益跳过不是 hosted 故障；
+- Token 平均值只基于 `compressed` 行；`skipped_low_yield` 不计为 0%；
+- 质量变化只基于两路都有有效结构化分析的配对；无有效分析显示不适用而不是 0 分；
+- 任何 API、Schema、stats 或外部预检失败都保留，不删除案例；
 - 不复用 `/api/analyze` 的正式服务入口。
 
 单案例预期 2 次模型调用；两路均触发 JSON 修复时最多 4 次；五例完整运行预期 10 次、

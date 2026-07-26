@@ -32,7 +32,7 @@ function savedPercent(row: BenchmarkRow): string {
 
 function QualityChecks({ row }: { row: BenchmarkRow }) {
   if (row.quality_score === null) {
-    return <div className="quality-checks quality-na">Not scored — compression skipped</div>
+    return <div className="quality-checks quality-na">No valid structured analysis</div>
   }
   const checks = [
     ['Root', row.root_cause_correct, 40],
@@ -90,9 +90,9 @@ function BenchmarkLedger({ artifact }: { artifact: BenchmarkArtifact }) {
               {rows.map((row) => (
                 <div
                   className={`ledger-row ${
-                    row.status === 'failed'
+                    row.status === 'unavailable' || row.status === 'upstream_failed'
                       ? 'ledger-row-failed'
-                      : row.status === 'compression_skipped'
+                      : row.status === 'skipped_low_yield'
                         ? 'ledger-row-skipped'
                         : ''
                   }`}
@@ -104,25 +104,33 @@ function BenchmarkLedger({ artifact }: { artifact: BenchmarkArtifact }) {
                     </strong>
                     <span
                       className={
-                        row.status === 'failed'
+                        row.status === 'unavailable' || row.status === 'upstream_failed'
                           ? 'result-failed'
-                          : row.status === 'compression_skipped'
+                          : row.status === 'skipped_low_yield'
                             ? 'result-skipped'
                             : 'result-ok'
                       }
                     >
-                      {row.status === 'success'
-                        ? 'Completed'
-                        : row.status === 'compression_skipped'
-                          ? 'Compression skipped · expected low benefit'
-                          : 'Failed · retained'}
+                      {row.status === 'baseline_completed'
+                        ? 'Baseline completed'
+                        : row.status === 'compressed'
+                          ? 'Compressed · verified delta'
+                          : row.status === 'skipped_low_yield'
+                            ? 'Paritok normal skip · low yield'
+                            : row.status === 'unavailable'
+                              ? 'Unavailable · retained'
+                              : 'Upstream failed · retained'}
                     </span>
                     <small>
                       {row.mode === 'baseline_uncompressed'
                         ? 'Uncompressed mode'
-                        : row.status === 'compression_skipped'
+                        : row.status === 'skipped_low_yield'
                           ? `Normal passthrough · ${row.compression_skip_reason}`
-                          : 'Verified /stats delta'}
+                          : row.status === 'compressed'
+                            ? 'Verified /stats delta'
+                            : row.status === 'unavailable'
+                              ? 'Compression route unavailable'
+                              : 'DeepSeek or upstream response failed'}
                     </small>
                   </div>
                   <dl className="ledger-token-grid">
@@ -185,24 +193,33 @@ function BenchmarkContent({ artifact }: { artifact: BenchmarkArtifact }) {
         <div>
           <span>Average Token savings</span>
           <strong>{savings === null ? 'N/A' : `${savings.toFixed(2)}%`}</strong>
-          <small>{artifact.summary.actual_compression_rows} actual compression rows only</small>
+          <small>{artifact.summary.compressed_rows} compressed rows only</small>
         </div>
         <div>
           <span>Quality change</span>
           <strong>{change === null ? 'N/A' : `${change > 0 ? '+' : ''}${change.toFixed(2)}`}</strong>
           <small>
             {baselineQuality === null ? 'N/A' : baselineQuality.toFixed(2)} baseline →{' '}
-            {paritokQuality === null ? 'N/A' : paritokQuality.toFixed(2)} Paritok
+            {paritokQuality === null ? 'N/A' : paritokQuality.toFixed(2)} Paritok ·{' '}
+            {artifact.summary.quality_pair_count} pairs
           </small>
         </div>
         <div>
           <span>Normal low-benefit skips</span>
-          <strong>{artifact.summary.compression_skipped_rows}</strong>
+          <strong>{artifact.summary.skipped_low_yield_rows}</strong>
           <small>Expected Paritok behavior · excluded from averages</small>
         </div>
-        <div className={artifact.summary.failed_rows > 0 ? 'readout-failed' : ''}>
-          <span>Failed rows retained</span>
-          <strong>{artifact.summary.failed_rows}</strong>
+        <div
+          className={
+            artifact.summary.unavailable_rows + artifact.summary.upstream_failed_rows > 0
+              ? 'readout-failed'
+              : ''
+          }
+        >
+          <span>Unavailable / upstream failed</span>
+          <strong>
+            {artifact.summary.unavailable_rows} / {artifact.summary.upstream_failed_rows}
+          </strong>
           <small>{artifact.summary.upstream_timeout_rows} upstream timeout</small>
         </div>
       </section>

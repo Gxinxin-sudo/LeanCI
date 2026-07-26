@@ -1,6 +1,6 @@
 {
-  "schema_version": 2,
-  "generated_at": "2026-07-26T06:47:05.291041Z",
+  "schema_version": 3,
+  "generated_at": "2026-07-26T14:13:42.299679Z",
   "finalized": true,
   "case_ids": [
     "python-pytest",
@@ -17,7 +17,7 @@
     "network_retries": 0,
     "execution_order": "baseline_uncompressed_then_paritok",
     "scoring_rule": "40+20+15+15+10",
-    "token_metric_policy": "Paritok Token metrics only for actual compression from per-request /stats deltas; baseline and compression_skipped values are null."
+    "token_metric_policy": "Paritok Token metrics only for actual compression from per-request /stats deltas; baseline, skipped_low_yield, and unavailable values are null."
   },
   "pricing": {
     "snapshot_date": "2026-07-25",
@@ -30,23 +30,25 @@
     "expected_cases": 5,
     "expected_rows": 10,
     "completed_rows": 10,
-    "successful_rows": 5,
-    "compression_skipped_rows": 3,
-    "failed_rows": 2,
-    "actual_compression_rows": 2,
-    "upstream_timeout_rows": 1,
-    "average_tokens_saved": 5340.5,
-    "average_token_savings_percent": 91.7,
+    "baseline_completed_rows": 5,
+    "compressed_rows": 2,
+    "skipped_low_yield_rows": 3,
+    "unavailable_rows": 0,
+    "upstream_failed_rows": 0,
+    "upstream_timeout_rows": 0,
+    "quality_pair_count": 5,
+    "average_tokens_saved": 5307.0,
+    "average_token_savings_percent": 85.53,
     "baseline_average_quality": 73.0,
-    "paritok_average_quality": null,
-    "quality_change_points": null,
-    "supported_claim": "On these five fixed cases, the run observed 91.70% average Token savings across 2 rows where compression actually occurred and no comparable Paritok quality average; 3 low-benefit compression skips and 2 failed rows remain included. This does not establish universal quality preservation, production reliability, or actual billing savings."
+    "paritok_average_quality": 54.0,
+    "quality_change_points": -19.0,
+    "supported_claim": "On these five fixed cases, the run observed 85.53% average Token savings across 2 rows where compression actually occurred and a -19.00-point deterministic quality change across 5 valid pairs; 3 low-yield skips, 0 unavailable rows, and 0 upstream failures remain included. This does not establish universal quality preservation, production reliability, or actual billing savings."
   },
   "rows": [
     {
       "case_id": "python-pytest",
       "mode": "baseline_uncompressed",
-      "status": "success",
+      "status": "baseline_completed",
       "success": true,
       "compression_skip_reason": null,
       "original_tokens": null,
@@ -54,10 +56,10 @@
       "tokens_saved": null,
       "compression_ratio": null,
       "prompt_tokens": 28579,
-      "completion_tokens": 713,
-      "prompt_cache_hit_tokens": 10368,
-      "prompt_cache_miss_tokens": 18211,
-      "latency_ms": 6925,
+      "completion_tokens": 532,
+      "prompt_cache_hit_tokens": 28544,
+      "prompt_cache_miss_tokens": 35,
+      "latency_ms": 5567,
       "root_cause_correct": true,
       "evidence_correct": false,
       "relevant_files_correct": true,
@@ -65,7 +67,7 @@
       "json_valid": true,
       "quality_score": 65,
       "error": null,
-      "run_timestamp": "2026-07-26T06:30:57.685347Z",
+      "run_timestamp": "2026-07-26T14:11:04.014388Z",
       "model": "deepseek-v4-flash",
       "pricing_snapshot_date": "2026-07-25",
       "initial_messages_sha256": "a44130b9a0b324a0f99a29f86a386bebe0506e6fac28e1fe01c031f12a5c9b9d",
@@ -90,37 +92,30 @@
       "cost_estimate": {
         "input_if_all_cache_hit_usd": 0.00008002,
         "input_if_all_cache_miss_usd": 0.00400106,
-        "input_from_reported_cache_split_usd": 0.00257857,
-        "output_usd": 0.00019964,
+        "input_from_reported_cache_split_usd": 0.00008481999999999999,
+        "output_usd": 0.00014896,
         "saved_input_if_cache_hit_usd": null,
         "saved_input_if_cache_miss_usd": null,
         "disclaimer": "Configured estimate only; cache behavior varies and this is not an actual bill."
       },
       "analysis": {
-        "summary": "The test `test_retry_backoff_caps_at_maximum` fails because the computed delay is 15 instead of the expected 16.",
-        "root_cause": "The `delay_for` method subtracts 1 from the exponential backoff calculation (`self.base_delay * 2**attempt - 1`), which causes the result to be one less than the expected cap. For `base_delay=2` and `attempt=4`, the calculation yields `2*16-1=31`, then `min(31, 16)=15`, but the test expects `delay_for(4)=16`.",
+        "summary": "A unit test fails due to an off-by-one in the retry delay calculation.",
+        "root_cause": "The `delay_for` method subtracts 1 from the exponential backoff, causing `attempt=4` to return 15 instead of the expected 16 when capped at max_delay=16.",
         "confidence": 1.0,
         "evidence": [
           {
             "source": "ci.log",
             "line_start": 823,
-            "line_end": 823,
-            "excerpt": "tests/test_retry.py::test_retry_backoff_caps_at_maximum FAILED",
-            "explanation": "The failing test that triggered CI failure."
-          },
-          {
-            "source": "ci.log",
-            "line_start": 830,
-            "line_end": 832,
-            "excerpt": "E       assert 15 == 16\nE        +  where 15 = delay_for(attempt=4)\nE        +    where delay_for = RetryPolicy(base_delay=2, max_delay=16).delay_for",
-            "explanation": "The assertion error details showing the actual vs expected value."
+            "line_end": 828,
+            "excerpt": ">       assert policy.delay_for(attempt=4) == 16\nE       assert 15 == 16\nE        +  where 15 = delay_for(attempt=4)\nE        +    where delay_for = RetryPolicy(base_delay=2, max_delay=16).delay_for",
+            "explanation": "Test assertion fails because delay_for(4) returns 15 instead of 16."
           },
           {
             "source": "retry.py",
-            "line_start": 9,
-            "line_end": 10,
-            "excerpt": "def delay_for(self, attempt: int) -> int:\n        return min(self.base_delay * 2**attempt - 1, self.max_delay)",
-            "explanation": "The `delay_for` implementation contains `-1` which causes the off-by-one error."
+            "line_start": 8,
+            "line_end": 8,
+            "excerpt": "return min(self.base_delay * 2**attempt - 1, self.max_delay)",
+            "explanation": "The subtraction of 1 causes the result to be 15 instead of 16 for attempt=4, base_delay=2, max_delay=16."
           }
         ],
         "relevant_files": [
@@ -128,15 +123,14 @@
           "test_retry.py"
         ],
         "recommended_changes": [
-          "In `retry.py`, change `self.base_delay * 2**attempt - 1` to `self.base_delay * 2**attempt` to match the expected exponential backoff without the subtraction."
+          "Remove the '- 1' from the delay calculation to match the expected exponential backoff: `min(self.base_delay * 2**attempt, self.max_delay)`"
         ],
-        "patch": "--- a/retry.py\n+++ b/retry.py\n@@ -7,4 +7,4 @@ class RetryPolicy:\n     max_delay: int\n \n     def delay_for(self, attempt: int) -> int:\n-        return min(self.base_delay * 2**attempt - 1, self.max_delay)\n+        return min(self.base_delay * 2**attempt, self.max_delay)\n",
+        "patch": "--- a/retry.py\n+++ b/retry.py\n@@ -8 +8 @@\n-        return min(self.base_delay * 2**attempt - 1, self.max_delay)\n+        return min(self.base_delay * 2**attempt, self.max_delay)",
         "verification_commands": [
           "python -m pytest tests/test_retry.py -v"
         ],
         "risks": [
-          "Other tests or code depending on the current (buggy) behavior may break after the fix.",
-          "The test `test_zero_attempt_uses_base_delay` expects `delay_for(0) == 1` with the current code; after removing `-1`, the result would become `2`, so the test needs adjustment or the fix must handle attempt=0 separately."
+          "Fixing this may change the delay for other attempts (e.g., attempt=0 returns 1 instead of 0), but the test `test_zero_attempt_uses_base_delay` expects 1, which still holds. Ensure no other tests depend on the current off-by-one behavior."
         ],
         "missing_information": []
       }
@@ -144,26 +138,26 @@
     {
       "case_id": "python-pytest",
       "mode": "paritok",
-      "status": "failed",
-      "success": false,
+      "status": "compressed",
+      "success": true,
       "compression_skip_reason": null,
       "original_tokens": 10469,
       "compressed_tokens": 254,
       "tokens_saved": 10215,
       "compression_ratio": 0.024262,
-      "prompt_tokens": null,
-      "completion_tokens": null,
-      "prompt_cache_hit_tokens": null,
-      "prompt_cache_miss_tokens": null,
-      "latency_ms": 62567,
+      "prompt_tokens": 16531,
+      "completion_tokens": 472,
+      "prompt_cache_hit_tokens": 16512,
+      "prompt_cache_miss_tokens": 19,
+      "latency_ms": 11703,
       "root_cause_correct": false,
       "evidence_correct": false,
       "relevant_files_correct": false,
       "fix_direction_correct": false,
-      "json_valid": false,
-      "quality_score": 0,
-      "error": "DEEPSEEK_TIMEOUT: The DeepSeek request timed out. Check the network and try again.",
-      "run_timestamp": "2026-07-26T06:32:00.252146Z",
+      "json_valid": true,
+      "quality_score": 10,
+      "error": null,
+      "run_timestamp": "2026-07-26T14:11:15.717579Z",
       "model": "deepseek-v4-flash",
       "pricing_snapshot_date": "2026-07-25",
       "initial_messages_sha256": "a44130b9a0b324a0f99a29f86a386bebe0506e6fac28e1fe01c031f12a5c9b9d",
@@ -173,14 +167,13 @@
         "evidence_correct": false,
         "relevant_files_correct": false,
         "fix_direction_correct": false,
-        "json_valid": false,
-        "quality_score": 0,
+        "json_valid": true,
+        "quality_score": 10,
         "failed_checks": [
           "root_cause",
           "evidence",
           "relevant_files",
-          "fix_direction",
-          "json_valid"
+          "fix_direction"
         ]
       },
       "human_review": {
@@ -189,20 +182,57 @@
         "notes": null
       },
       "cost_estimate": {
-        "input_if_all_cache_hit_usd": null,
-        "input_if_all_cache_miss_usd": null,
-        "input_from_reported_cache_split_usd": null,
-        "output_usd": null,
-        "saved_input_if_cache_hit_usd": null,
-        "saved_input_if_cache_miss_usd": null,
+        "input_if_all_cache_hit_usd": 0.00004629,
+        "input_if_all_cache_miss_usd": 0.00231434,
+        "input_from_reported_cache_split_usd": 0.00004889,
+        "output_usd": 0.00013216,
+        "saved_input_if_cache_hit_usd": 0.0000286,
+        "saved_input_if_cache_miss_usd": 0.0014301,
         "disclaimer": "Configured estimate only; cache behavior varies and this is not an actual bill."
       },
-      "analysis": null
+      "analysis": {
+        "summary": "The test 'test_retry_backoff_caps_at_maximum' fails because the computed delay is 15 instead of the expected 16.",
+        "root_cause": "In RetryPolicy.delay_for, the calculation uses 'base_delay * 2**attempt - 1' which subtracts 1, causing the result to be one less than expected when capping at max_delay.",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "source": "ci.log (chunk 2)",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "tests/test_retry.py::test_retry_backoff_caps_at_maximum FAILED ... assert 15 == 16",
+            "explanation": "The test expects delay_for(attempt=4) to return 16, but it returns 15."
+          },
+          {
+            "source": "ci.log (chunk 2)",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "class RetryPolicy: ... def delay_for(self, attempt: int) -> int: return min(self.base_delay * 2**attempt - 1, self.max_delay)",
+            "explanation": "The implementation subtracts 1 from the exponential backoff, causing the off-by-one error."
+          }
+        ],
+        "relevant_files": [
+          "tests/test_retry.py",
+          "src/retry.py (assuming RetryPolicy is defined there)"
+        ],
+        "recommended_changes": [
+          "Change 'base_delay * 2**attempt - 1' to 'base_delay * 2**attempt' in the delay_for method."
+        ],
+        "patch": "",
+        "verification_commands": [
+          "python -m pytest tests/test_retry.py::test_retry_backoff_caps_at_maximum -v"
+        ],
+        "risks": [
+          "Changing the formula will affect all callers that rely on the current (buggy) behavior; ensure other tests still pass."
+        ],
+        "missing_information": [
+          "The exact file path for RetryPolicy class definition is not provided in the evidence."
+        ]
+      }
     },
     {
       "case_id": "typescript-build",
       "mode": "baseline_uncompressed",
-      "status": "success",
+      "status": "baseline_completed",
       "success": true,
       "compression_skip_reason": null,
       "original_tokens": null,
@@ -210,31 +240,30 @@
       "tokens_saved": null,
       "compression_ratio": null,
       "prompt_tokens": 22955,
-      "completion_tokens": 715,
-      "prompt_cache_hit_tokens": 640,
-      "prompt_cache_miss_tokens": 22315,
-      "latency_ms": 6883,
+      "completion_tokens": 497,
+      "prompt_cache_hit_tokens": 22912,
+      "prompt_cache_miss_tokens": 43,
+      "latency_ms": 5649,
       "root_cause_correct": true,
-      "evidence_correct": false,
+      "evidence_correct": true,
       "relevant_files_correct": false,
       "fix_direction_correct": false,
       "json_valid": true,
-      "quality_score": 50,
+      "quality_score": 70,
       "error": null,
-      "run_timestamp": "2026-07-26T06:33:03.969991Z",
+      "run_timestamp": "2026-07-26T14:11:32.846558Z",
       "model": "deepseek-v4-flash",
       "pricing_snapshot_date": "2026-07-25",
       "initial_messages_sha256": "40ec03286bb538401cf4c281ebac76a73da60a939abc9d3bf0a6343d2073aa5d",
       "json_schema_sha256": "863247c11d3c881222050eed880c8d6e8ff1837674bdf8609134becfc19c39d5",
       "score": {
         "root_cause_correct": true,
-        "evidence_correct": false,
+        "evidence_correct": true,
         "relevant_files_correct": false,
         "fix_direction_correct": false,
         "json_valid": true,
-        "quality_score": 50,
+        "quality_score": 70,
         "failed_checks": [
-          "evidence",
           "relevant_files",
           "fix_direction"
         ]
@@ -247,44 +276,134 @@
       "cost_estimate": {
         "input_if_all_cache_hit_usd": 0.00006427,
         "input_if_all_cache_miss_usd": 0.0032137,
-        "input_from_reported_cache_split_usd": 0.00312589,
-        "output_usd": 0.0002002,
+        "input_from_reported_cache_split_usd": 0.00007017,
+        "output_usd": 0.00013916,
         "saved_input_if_cache_hit_usd": null,
         "saved_input_if_cache_miss_usd": null,
         "disclaimer": "Configured estimate only; cache behavior varies and this is not an actual bill."
       },
       "analysis": {
-        "summary": "The build fails during TypeScript compilation of @release-dashboard/deploy-config with a type error in src/config.ts.",
-        "root_cause": "The property `region` in `AppConfig` is typed as `string`, but `loadConfig()` assigns `process.env.DEPLOY_REGION` which may be `undefined`. With strict mode and noUncheckedIndexedAccess, TypeScript catches this mismatch.",
+        "summary": "The build fails during TypeScript compilation of the deploy-config package due to a type mismatch.",
+        "root_cause": "The `region` property expects a `string` type but receives `string | undefined` from `process.env.DEPLOY_REGION` without a fallback or guard.",
         "confidence": 1.0,
         "evidence": [
           {
             "source": "ci.log",
             "line_start": null,
             "line_end": null,
-            "excerpt": "@release-dashboard/deploy-config:build: cache miss, executing 00c1f41e",
-            "explanation": "Indicates the deploy-config package was actually built (not cached), aligning with the error location."
+            "excerpt": "src/config.ts(14,5): error TS2322: Type 'string | undefined' is not assignable to type 'string'.",
+            "explanation": "The TypeScript compiler identifies an assignment that may be undefined where a string is required."
           },
+          {
+            "source": "config.ts",
+            "line_start": 8,
+            "line_end": 12,
+            "excerpt": "return {\n    apiBaseUrl: process.env.API_BASE_URL ?? 'http://127.0.0.1:3000',\n    region: process.env.DEPLOY_REGION,\n  }",
+            "explanation": "The `region` field is assigned the value of `process.env.DEPLOY_REGION`, which can be `undefined`, while the type definition requires a `string`."
+          }
+        ],
+        "relevant_files": [
+          "src/config.ts",
+          "src/deploy.ts"
+        ],
+        "recommended_changes": [
+          "Provide a default value for `process.env.DEPLOY_REGION` or add a runtime assertion/validation."
+        ],
+        "patch": "--- a/src/config.ts\n+++ b/src/config.ts\n@@ -9,5 +9,5 @@ export function loadConfig(): AppConfig {\n   return {\n     apiBaseUrl: process.env.API_BASE_URL ?? 'http://127.0.0.1:3000',\n-    region: process.env.DEPLOY_REGION,\n+    region: process.env.DEPLOY_REGION ?? 'us-east-1',\n   }\n }\n",
+        "verification_commands": [
+          "npm run build:workspaces"
+        ],
+        "risks": [
+          "The default value may not match the target environment, potentially deploying to the wrong region."
+        ],
+        "missing_information": []
+      }
+    },
+    {
+      "case_id": "typescript-build",
+      "mode": "paritok",
+      "status": "skipped_low_yield",
+      "success": true,
+      "compression_skip_reason": "below_refusal_threshold",
+      "original_tokens": null,
+      "compressed_tokens": null,
+      "tokens_saved": null,
+      "compression_ratio": null,
+      "prompt_tokens": 22955,
+      "completion_tokens": 548,
+      "prompt_cache_hit_tokens": 22912,
+      "prompt_cache_miss_tokens": 43,
+      "latency_ms": 10306,
+      "root_cause_correct": true,
+      "evidence_correct": true,
+      "relevant_files_correct": false,
+      "fix_direction_correct": false,
+      "json_valid": true,
+      "quality_score": 70,
+      "error": null,
+      "run_timestamp": "2026-07-26T14:11:43.152341Z",
+      "model": "deepseek-v4-flash",
+      "pricing_snapshot_date": "2026-07-25",
+      "initial_messages_sha256": "40ec03286bb538401cf4c281ebac76a73da60a939abc9d3bf0a6343d2073aa5d",
+      "json_schema_sha256": "863247c11d3c881222050eed880c8d6e8ff1837674bdf8609134becfc19c39d5",
+      "score": {
+        "root_cause_correct": true,
+        "evidence_correct": true,
+        "relevant_files_correct": false,
+        "fix_direction_correct": false,
+        "json_valid": true,
+        "quality_score": 70,
+        "failed_checks": [
+          "relevant_files",
+          "fix_direction"
+        ]
+      },
+      "human_review": {
+        "status": "pending",
+        "reviewer": null,
+        "notes": null
+      },
+      "cost_estimate": {
+        "input_if_all_cache_hit_usd": 0.00006427,
+        "input_if_all_cache_miss_usd": 0.0032137,
+        "input_from_reported_cache_split_usd": 0.00007017,
+        "output_usd": 0.00015344,
+        "saved_input_if_cache_hit_usd": null,
+        "saved_input_if_cache_miss_usd": null,
+        "disclaimer": "Configured estimate only; cache behavior varies and this is not an actual bill."
+      },
+      "analysis": {
+        "summary": "The build fails during TypeScript compilation in the @release-dashboard/deploy-config package.",
+        "root_cause": "The `region` property in `AppConfig` is typed as `string` but `loadConfig()` assigns `process.env.DEPLOY_REGION` which may be `undefined`, violating the strict type check.",
+        "confidence": 1.0,
+        "evidence": [
           {
             "source": "ci.log",
             "line_start": null,
             "line_end": null,
             "excerpt": "src/config.ts(14,5): error TS2322: Type 'string | undefined' is not assignable to type 'string'. Type 'undefined' is not assignable to type 'string'.",
-            "explanation": "Exact TypeScript error showing the type mismatch on line 14 of config.ts."
-          },
-          {
-            "source": "ci.log",
-            "line_start": null,
-            "line_end": null,
-            "excerpt": "region: process.env.DEPLOY_REGION",
-            "explanation": "The code assigns the result of process.env, which is string | undefined, to a field typed as string."
+            "explanation": "The compiler reports a type mismatch on line 14 of config.ts."
           },
           {
             "source": "config.ts",
             "line_start": 3,
             "line_end": 3,
             "excerpt": "region: string",
-            "explanation": "The interface AppConfig defines region as string (non-optional)."
+            "explanation": "The property `region` is declared as type `string`."
+          },
+          {
+            "source": "config.ts",
+            "line_start": 14,
+            "line_end": 14,
+            "excerpt": "region: process.env.DEPLOY_REGION,",
+            "explanation": "The actual value assigned is `process.env.DEPLOY_REGION`, which is `string | undefined`."
+          },
+          {
+            "source": "tsconfig.json",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "\"strict\": true, \"noUncheckedIndexedAccess\": true",
+            "explanation": "Strict mode and `noUncheckedIndexedAccess` cause the type error."
           }
         ],
         "relevant_files": [
@@ -292,68 +411,25 @@
           "tsconfig.json"
         ],
         "recommended_changes": [
-          "Change `region: string` to `region: string` with a default value or make it optional, or use a default value in loadConfig like `region: process.env.DEPLOY_REGION ?? 'us-east-1'`."
+          "Add a fallback value for `region` in `loadConfig()` (e.g., `process.env.DEPLOY_REGION ?? 'us-east-1'`) or provide the `DEPLOY_REGION` environment variable.",
+          "Alternatively, change the type of `region` to `string | undefined` and update consumers to handle `undefined`."
         ],
-        "patch": "--- a/src/config.ts\n+++ b/src/config.ts\n@@ -1,7 +1,7 @@\n export interface AppConfig {\n   apiBaseUrl: string\n-  region: string\n+  region: string\n }\n \n export function loadConfig(): AppConfig {\n   return {\n     apiBaseUrl: process.env.API_BASE_URL ?? 'http://127.0.0.1:3000',\n-    region: process.env.DEPLOY_REGION,\n+    region: process.env.DEPLOY_REGION ?? 'us-east-1',\n   }\n }\n",
+        "patch": "",
         "verification_commands": [
-          "npx tsc --noEmit -p tsconfig.json"
+          "npm run build:workspaces"
         ],
         "risks": [
-          "If the region environment variable is intentionally undefined, a fallback value might deploy to the wrong region."
+          "If `DEPLOY_REGION` is missing at runtime, deployment may fail."
         ],
         "missing_information": [
-          "The intended default region or whether the environment variable is always expected to be set."
+          "The intended default value for `region` is not specified."
         ]
       }
     },
     {
-      "case_id": "typescript-build",
-      "mode": "paritok",
-      "status": "compression_skipped",
-      "success": null,
-      "compression_skip_reason": "below_refusal_threshold",
-      "original_tokens": null,
-      "compressed_tokens": null,
-      "tokens_saved": null,
-      "compression_ratio": null,
-      "prompt_tokens": null,
-      "completion_tokens": null,
-      "prompt_cache_hit_tokens": null,
-      "prompt_cache_miss_tokens": null,
-      "latency_ms": 20031,
-      "root_cause_correct": null,
-      "evidence_correct": null,
-      "relevant_files_correct": null,
-      "fix_direction_correct": null,
-      "json_valid": null,
-      "quality_score": null,
-      "error": null,
-      "run_timestamp": "2026-07-26T06:33:24.001202Z",
-      "model": "deepseek-v4-flash",
-      "pricing_snapshot_date": "2026-07-25",
-      "initial_messages_sha256": "40ec03286bb538401cf4c281ebac76a73da60a939abc9d3bf0a6343d2073aa5d",
-      "json_schema_sha256": "863247c11d3c881222050eed880c8d6e8ff1837674bdf8609134becfc19c39d5",
-      "score": null,
-      "human_review": {
-        "status": "pending",
-        "reviewer": null,
-        "notes": null
-      },
-      "cost_estimate": {
-        "input_if_all_cache_hit_usd": null,
-        "input_if_all_cache_miss_usd": null,
-        "input_from_reported_cache_split_usd": null,
-        "output_usd": null,
-        "saved_input_if_cache_hit_usd": null,
-        "saved_input_if_cache_miss_usd": null,
-        "disclaimer": "Configured estimate only; cache behavior varies and this is not an actual bill."
-      },
-      "analysis": null
-    },
-    {
       "case_id": "docker-build",
       "mode": "baseline_uncompressed",
-      "status": "success",
+      "status": "baseline_completed",
       "success": true,
       "compression_skip_reason": null,
       "original_tokens": null,
@@ -361,10 +437,10 @@
       "tokens_saved": null,
       "compression_ratio": null,
       "prompt_tokens": 8959,
-      "completion_tokens": 472,
-      "prompt_cache_hit_tokens": 512,
-      "prompt_cache_miss_tokens": 8447,
-      "latency_ms": 5103,
+      "completion_tokens": 454,
+      "prompt_cache_hit_tokens": 8832,
+      "prompt_cache_miss_tokens": 127,
+      "latency_ms": 6175,
       "root_cause_correct": true,
       "evidence_correct": true,
       "relevant_files_correct": true,
@@ -372,7 +448,7 @@
       "json_valid": true,
       "quality_score": 100,
       "error": null,
-      "run_timestamp": "2026-07-26T06:35:07.259790Z",
+      "run_timestamp": "2026-07-26T14:12:19.338181Z",
       "model": "deepseek-v4-flash",
       "pricing_snapshot_date": "2026-07-25",
       "initial_messages_sha256": "dab1fd3aa88bfbab9702ed9279e96836259419849e47ea17dd7e2e2d4d15c233",
@@ -394,37 +470,37 @@
       "cost_estimate": {
         "input_if_all_cache_hit_usd": 0.00002509,
         "input_if_all_cache_miss_usd": 0.00125426,
-        "input_from_reported_cache_split_usd": 0.0011840099999999999,
-        "output_usd": 0.00013216,
+        "input_from_reported_cache_split_usd": 0.00004251,
+        "output_usd": 0.00012712,
         "saved_input_if_cache_hit_usd": null,
         "saved_input_if_cache_miss_usd": null,
         "disclaimer": "Configured estimate only; cache behavior varies and this is not an actual bill."
       },
       "analysis": {
-        "summary": "Docker build fails at COPY step because package-lock.json is missing from the build context.",
-        "root_cause": "The .dockerignore file contains '*.json', which excludes package-lock.json from the build context, causing the COPY command to fail.",
+        "summary": "Build fails during COPY step in Dockerfile because package-lock.json is filtered out by .dockerignore.",
+        "root_cause": "The .dockerignore file contains '*.json', which excludes package-lock.json from the build context. The COPY command in Dockerfile expects package-lock.json to be present.",
         "confidence": 0.95,
         "evidence": [
           {
             "source": "ci.log",
-            "line_start": null,
+            "line_start": 82,
             "line_end": null,
             "excerpt": "#8 ERROR: failed to calculate checksum of ref moby::m9g4j5h6k7l8: \"/package-lock.json\": not found",
-            "explanation": "The COPY command in Dockerfile fails because package-lock.json is not present in the build context."
-          },
-          {
-            "source": "ci.log",
-            "line_start": null,
-            "line_end": null,
-            "excerpt": "Dockerfile:5\n--------------------\n   3 |     WORKDIR /app\n   4 |\n   5 | >>> COPY package.json package-lock.json ./\n   6 |     RUN npm ci --omit=dev\n   7 |\n--------------------",
-            "explanation": "The failing step is the COPY of package-lock.json."
+            "explanation": "The build fails because package-lock.json is not found in the build context."
           },
           {
             "source": ".dockerignore",
-            "line_start": null,
-            "line_end": null,
+            "line_start": 4,
+            "line_end": 4,
             "excerpt": "*.json",
-            "explanation": "This rule excludes all JSON files, including package-lock.json, from the Docker build context."
+            "explanation": "The pattern '*.json' in .dockerignore excludes all JSON files, including package-lock.json."
+          },
+          {
+            "source": "Dockerfile",
+            "line_start": 5,
+            "line_end": 5,
+            "excerpt": "COPY package.json package-lock.json ./",
+            "explanation": "The Dockerfile attempts to copy package-lock.json, which is excluded."
           }
         ],
         "relevant_files": [
@@ -432,43 +508,43 @@
           "Dockerfile"
         ],
         "recommended_changes": [
-          "Remove '*.json' from .dockerignore, or specify exact ignores to avoid excluding package-lock.json."
+          "Modify .dockerignore to allow package-lock.json by removing '*.json' or adding '!package-lock.json' before the exclusion."
         ],
         "patch": "",
         "verification_commands": [
-          "docker buildx build --progress=plain --tag demo-api:ci ."
+          "docker build --progress=plain --tag demo-api:ci ."
         ],
         "risks": [
-          "If other JSON files are expected to be excluded, they should be listed explicitly instead of using a wildcard."
+          "Other .json files might be inadvertently included if the fix is too permissive."
         ],
         "missing_information": [
-          "The full list of files in the repository root was not provided, but the .dockerignore is the likely culprit."
+          "The exact line number of the error in ci.log is approximate due to omitted progress lines."
         ]
       }
     },
     {
       "case_id": "docker-build",
       "mode": "paritok",
-      "status": "failed",
-      "success": false,
+      "status": "compressed",
+      "success": true,
       "compression_skip_reason": null,
       "original_tokens": 543,
-      "compressed_tokens": 77,
-      "tokens_saved": 466,
-      "compression_ratio": 0.141805,
-      "prompt_tokens": null,
-      "completion_tokens": null,
-      "prompt_cache_hit_tokens": null,
-      "prompt_cache_miss_tokens": null,
-      "latency_ms": 18073,
+      "compressed_tokens": 144,
+      "tokens_saved": 399,
+      "compression_ratio": 0.265193,
+      "prompt_tokens": 8534,
+      "completion_tokens": 526,
+      "prompt_cache_hit_tokens": 8192,
+      "prompt_cache_miss_tokens": 342,
+      "latency_ms": 8376,
       "root_cause_correct": false,
       "evidence_correct": false,
-      "relevant_files_correct": false,
-      "fix_direction_correct": false,
-      "json_valid": false,
-      "quality_score": 0,
-      "error": "ORIGINAL_TOKEN_MINIMUM_NOT_MET: The verified stats delta was below the fixed case minimum.",
-      "run_timestamp": "2026-07-26T06:35:25.332408Z",
+      "relevant_files_correct": true,
+      "fix_direction_correct": true,
+      "json_valid": true,
+      "quality_score": 40,
+      "error": null,
+      "run_timestamp": "2026-07-26T14:12:27.714531Z",
       "model": "deepseek-v4-flash",
       "pricing_snapshot_date": "2026-07-25",
       "initial_messages_sha256": "dab1fd3aa88bfbab9702ed9279e96836259419849e47ea17dd7e2e2d4d15c233",
@@ -476,16 +552,13 @@
       "score": {
         "root_cause_correct": false,
         "evidence_correct": false,
-        "relevant_files_correct": false,
-        "fix_direction_correct": false,
-        "json_valid": false,
-        "quality_score": 0,
+        "relevant_files_correct": true,
+        "fix_direction_correct": true,
+        "json_valid": true,
+        "quality_score": 40,
         "failed_checks": [
           "root_cause",
-          "evidence",
-          "relevant_files",
-          "fix_direction",
-          "json_valid"
+          "evidence"
         ]
       },
       "human_review": {
@@ -494,20 +567,69 @@
         "notes": null
       },
       "cost_estimate": {
-        "input_if_all_cache_hit_usd": null,
-        "input_if_all_cache_miss_usd": null,
-        "input_from_reported_cache_split_usd": null,
-        "output_usd": null,
-        "saved_input_if_cache_hit_usd": null,
-        "saved_input_if_cache_miss_usd": null,
+        "input_if_all_cache_hit_usd": 0.0000239,
+        "input_if_all_cache_miss_usd": 0.00119476,
+        "input_from_reported_cache_split_usd": 0.00007082,
+        "output_usd": 0.00014728,
+        "saved_input_if_cache_hit_usd": 1.12e-6,
+        "saved_input_if_cache_miss_usd": 0.00005586,
         "disclaimer": "Configured estimate only; cache behavior varies and this is not an actual bill."
       },
-      "analysis": null
+      "analysis": {
+        "summary": "The Docker build fails when copying package-lock.json.",
+        "root_cause": "The file package-lock.json is excluded from the Docker build context by .dockerignore but present in the COPY instruction, or the file is missing from the source.",
+        "confidence": 0.95,
+        "evidence": [
+          {
+            "source": "ci.log",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "#8 ERROR: failed to calculate checksum of ref moby::m9g4j5h6k7l8: \"/package-lock.json\": not found",
+            "explanation": "The build fails because Docker cannot find package-lock.json at the expected location."
+          },
+          {
+            "source": "ci.log",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "Dockerfile:5\n--------------------\n   3 |     WORKDIR /app\n   4 |\n   5 | >>> COPY package.json package-lock.json ./\n   6 |     RUN npm ci --omit=dev\n   7 |",
+            "explanation": "The Dockerfile line 5 attempts to copy both package.json and package-lock.json, but package-lock.json is not found."
+          },
+          {
+            "source": "ci.log",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "#4 [internal] load .dockerignore\n#4 transferring context: 178B done",
+            "explanation": "A .dockerignore file of 178 bytes is loaded, which may exclude package-lock.json."
+          }
+        ],
+        "relevant_files": [
+          "Dockerfile",
+          ".dockerignore",
+          "package-lock.json"
+        ],
+        "recommended_changes": [
+          "Check .dockerignore for any rule that excludes package-lock.json and remove it if present.",
+          "Ensure package-lock.json exists in the repository root before building."
+        ],
+        "patch": "",
+        "verification_commands": [
+          "ls -la package-lock.json",
+          "cat .dockerignore"
+        ],
+        "risks": [
+          "If package-lock.json is intentionally excluded, npm ci may behave differently.",
+          "Including package-lock.json may increase build context size."
+        ],
+        "missing_information": [
+          "Contents of .dockerignore file",
+          "Whether package-lock.json exists in the repository"
+        ]
+      }
     },
     {
       "case_id": "dependency-resolution",
       "mode": "baseline_uncompressed",
-      "status": "success",
+      "status": "baseline_completed",
       "success": true,
       "compression_skip_reason": null,
       "original_tokens": null,
@@ -515,10 +637,10 @@
       "tokens_saved": null,
       "compression_ratio": null,
       "prompt_tokens": 19603,
-      "completion_tokens": 657,
-      "prompt_cache_hit_tokens": 640,
-      "prompt_cache_miss_tokens": 18963,
-      "latency_ms": 6607,
+      "completion_tokens": 640,
+      "prompt_cache_hit_tokens": 19584,
+      "prompt_cache_miss_tokens": 19,
+      "latency_ms": 6015,
       "root_cause_correct": true,
       "evidence_correct": false,
       "relevant_files_correct": true,
@@ -526,7 +648,7 @@
       "json_valid": true,
       "quality_score": 65,
       "error": null,
-      "run_timestamp": "2026-07-26T06:37:22.738674Z",
+      "run_timestamp": "2026-07-26T14:12:48.792953Z",
       "model": "deepseek-v4-flash",
       "pricing_snapshot_date": "2026-07-25",
       "initial_messages_sha256": "c24b0745d5cc43487e68394847d5eeaf2258ae4502dc4327bdd3f4433fac40aa",
@@ -551,15 +673,15 @@
       "cost_estimate": {
         "input_if_all_cache_hit_usd": 0.00005489,
         "input_if_all_cache_miss_usd": 0.00274442,
-        "input_from_reported_cache_split_usd": 0.0026566100000000002,
-        "output_usd": 0.00018396,
+        "input_from_reported_cache_split_usd": 0.000057499999999999995,
+        "output_usd": 0.0001792,
         "saved_input_if_cache_hit_usd": null,
         "saved_input_if_cache_miss_usd": null,
         "disclaimer": "Configured estimate only; cache behavior varies and this is not an actual bill."
       },
       "analysis": {
-        "summary": "npm install fails due to peer dependency conflict between react 19.2.0 and @legacy-grid/react requiring react ^18.2.0.",
-        "root_cause": "The project requires react 19.2.0, but @legacy-grid/react 4.6.0 declares a peer dependency on react ^18.2.0, which is not satisfied.",
+        "summary": "npm install fails due to an unresolvable peer dependency conflict between React 19.2.0 and @legacy-grid/react requiring React ^18.2.0.",
+        "root_cause": "@legacy-grid/react v4.6.0 declares a peer dependency on react ^18.2.0, but the project specifies react 19.2.0, causing npm's strict resolution to fail.",
         "confidence": 1.0,
         "evidence": [
           {
@@ -567,35 +689,42 @@
             "line_start": null,
             "line_end": null,
             "excerpt": "npm error ERESOLVE unable to resolve dependency tree",
-            "explanation": "npm reports an unresolved dependency tree, blocking installation."
+            "explanation": "The terminal error message indicates the root cause: the dependency conflict."
           },
           {
             "source": "ci.log",
             "line_start": null,
             "line_end": null,
             "excerpt": "Found: react@19.2.0",
-            "explanation": "The resolved version of react in the project is 19.2.0."
+            "explanation": "Confirms the installed React version is 19.2.0."
           },
           {
             "source": "ci.log",
             "line_start": null,
             "line_end": null,
-            "excerpt": "peer react@\"^18.2.0\" from @legacy-grid/react@4.6.0",
-            "explanation": "@legacy-grid/react 4.6.0 requires react ^18.2.0 as a peer dependency."
+            "excerpt": "Could not resolve dependency: peer react@\"^18.2.0\" from @legacy-grid/react@4.6.0",
+            "explanation": "Shows the peer dependency requirement that conflicts."
           },
           {
             "source": "package.json",
             "line_start": null,
             "line_end": null,
-            "excerpt": "\"@legacy-grid/react\": \"4.6.0\",\n\"react\": \"19.2.0\"",
-            "explanation": "package.json confirms both dependencies are specified at incompatible versions."
+            "excerpt": "\"react\": \"19.2.0\"",
+            "explanation": "The project's declared React version."
+          },
+          {
+            "source": "package.json",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "\"@legacy-grid/react\": \"4.6.0\"",
+            "explanation": "The project's dependency that causes the conflict."
           },
           {
             "source": "package-lock.json",
             "line_start": null,
             "line_end": null,
-            "excerpt": "\"peerDependencies\": {\n  \"react\": \"^18.2.0\"\n}",
-            "explanation": "package-lock.json confirms the peer dependency constraint in @legacy-grid/react."
+            "excerpt": "\"peerDependencies\": { \"react\": \"^18.2.0\" }",
+            "explanation": "Verifies the peer dependency in the lock file."
           }
         ],
         "relevant_files": [
@@ -603,82 +732,36 @@
           "package-lock.json"
         ],
         "recommended_changes": [
-          "Downgrade react to 18.2.x (and react-dom accordingly) to satisfy @legacy-grid/react peer dependency, or",
-          "Upgrade @legacy-grid/react to a version that supports react 19, or",
-          "Use --legacy-peer-deps or --force temporarily, but this is not recommended for production."
+          "Upgrade @legacy-grid/react to a version that supports React 19, or downgrade react to ^18.2.0."
         ],
         "patch": "",
         "verification_commands": [
           "npm install"
         ],
         "risks": [
-          "Downgrading react may lose features or require code changes.",
-          "Using --legacy-peer-deps may cause runtime issues due to unmet peer dependencies."
+          "Downgrading React may break features that depend on React 19 APIs.",
+          "Upgrading @legacy-grid/react may not be possible if no compatible version exists."
         ],
         "missing_information": [
-          "Whether a newer version of @legacy-grid/react exists that supports react 19."
+          "Whether a newer version of @legacy-grid/react exists that supports React 19."
         ]
       }
     },
     {
       "case_id": "dependency-resolution",
       "mode": "paritok",
-      "status": "compression_skipped",
-      "success": null,
+      "status": "skipped_low_yield",
+      "success": true,
       "compression_skip_reason": "below_refusal_threshold",
       "original_tokens": null,
       "compressed_tokens": null,
       "tokens_saved": null,
       "compression_ratio": null,
-      "prompt_tokens": null,
-      "completion_tokens": null,
-      "prompt_cache_hit_tokens": null,
-      "prompt_cache_miss_tokens": null,
-      "latency_ms": 18861,
-      "root_cause_correct": null,
-      "evidence_correct": null,
-      "relevant_files_correct": null,
-      "fix_direction_correct": null,
-      "json_valid": null,
-      "quality_score": null,
-      "error": null,
-      "run_timestamp": "2026-07-26T06:37:41.599954Z",
-      "model": "deepseek-v4-flash",
-      "pricing_snapshot_date": "2026-07-25",
-      "initial_messages_sha256": "c24b0745d5cc43487e68394847d5eeaf2258ae4502dc4327bdd3f4433fac40aa",
-      "json_schema_sha256": "863247c11d3c881222050eed880c8d6e8ff1837674bdf8609134becfc19c39d5",
-      "score": null,
-      "human_review": {
-        "status": "pending",
-        "reviewer": null,
-        "notes": null
-      },
-      "cost_estimate": {
-        "input_if_all_cache_hit_usd": null,
-        "input_if_all_cache_miss_usd": null,
-        "input_from_reported_cache_split_usd": null,
-        "output_usd": null,
-        "saved_input_if_cache_hit_usd": null,
-        "saved_input_if_cache_miss_usd": null,
-        "disclaimer": "Configured estimate only; cache behavior varies and this is not an actual bill."
-      },
-      "analysis": null
-    },
-    {
-      "case_id": "github-actions-environment",
-      "mode": "baseline_uncompressed",
-      "status": "success",
-      "success": true,
-      "compression_skip_reason": null,
-      "original_tokens": null,
-      "compressed_tokens": null,
-      "tokens_saved": null,
-      "compression_ratio": null,
-      "prompt_tokens": 20957,
-      "completion_tokens": 632,
-      "prompt_cache_hit_tokens": 512,
-      "prompt_cache_miss_tokens": 20445,
-      "latency_ms": 6798,
+      "prompt_tokens": 19603,
+      "completion_tokens": 739,
+      "prompt_cache_hit_tokens": 19584,
+      "prompt_cache_miss_tokens": 19,
+      "latency_ms": 9768,
       "root_cause_correct": true,
       "evidence_correct": true,
       "relevant_files_correct": true,
@@ -686,10 +769,10 @@
       "json_valid": true,
       "quality_score": 85,
       "error": null,
-      "run_timestamp": "2026-07-26T06:38:16.291274Z",
+      "run_timestamp": "2026-07-26T14:12:58.561113Z",
       "model": "deepseek-v4-flash",
       "pricing_snapshot_date": "2026-07-25",
-      "initial_messages_sha256": "12822b48886a0a53407974c122cbc566f554a3dc5cef3e682a3c6baf697b8cff",
+      "initial_messages_sha256": "c24b0745d5cc43487e68394847d5eeaf2258ae4502dc4327bdd3f4433fac40aa",
       "json_schema_sha256": "863247c11d3c881222050eed880c8d6e8ff1837674bdf8609134becfc19c39d5",
       "score": {
         "root_cause_correct": true,
@@ -708,39 +791,149 @@
         "notes": null
       },
       "cost_estimate": {
-        "input_if_all_cache_hit_usd": 0.00005868,
-        "input_if_all_cache_miss_usd": 0.00293398,
-        "input_from_reported_cache_split_usd": 0.00286373,
-        "output_usd": 0.00017696,
+        "input_if_all_cache_hit_usd": 0.00005489,
+        "input_if_all_cache_miss_usd": 0.00274442,
+        "input_from_reported_cache_split_usd": 0.000057499999999999995,
+        "output_usd": 0.00020692,
         "saved_input_if_cache_hit_usd": null,
         "saved_input_if_cache_miss_usd": null,
         "disclaimer": "Configured estimate only; cache behavior varies and this is not an actual bill."
       },
       "analysis": {
-        "summary": "The build fails because the DEPLOY_ENV environment variable is not set.",
-        "root_cause": "The workflow step 'Validate deployment environment' sets DEPLOY_ENV from the GitHub variable DEPLOY_ENVIRONMENT, but that variable is either undefined or empty, causing the Python script to raise a RuntimeError.",
+        "summary": "npm install fails due to an unresolvable peer dependency conflict between react 19.2.0 and @legacy-grid/react requiring react ^18.2.0.",
+        "root_cause": "The project depends on react@19.2.0, but @legacy-grid/react@4.6.0 requires a peer dependency of react@^18.2.0, which is incompatible.",
         "confidence": 1.0,
         "evidence": [
           {
             "source": "ci.log",
             "line_start": null,
             "line_end": null,
-            "excerpt": "env:\n  DEPLOY_ENV:\n##[endgroup]\nTraceback (most recent call last):\n  File \"scripts/validate_env.py\", line 8, in <module>\n    raise RuntimeError(\"DEPLOY_ENV is required\")\nRuntimeError: DEPLOY_ENV is required\n##[error]Process completed with exit code 1.",
-            "explanation": "The CI log shows the env block with DEPLOY_ENV set to an empty value, followed by the Python script raising an error because DEPLOY_ENV is required."
+            "excerpt": "npm error code ERESOLVE\nnpm error ERESOLVE unable to resolve dependency tree\nnpm error\nnpm error While resolving: analytics-console@3.2.0\nnpm error Found: react@19.2.0\nnpm error node_modules/react\nnpm error   react@\"19.2.0\" from the root project\nnpm error\nnpm error Could not resolve dependency:\nnpm error peer react@\"^18.2.0\" from @legacy-grid/react@4.6.0",
+            "explanation": "The log shows ERESOLVE error due to peer dependency conflict between react version and @legacy-grid/react requirement."
+          },
+          {
+            "source": "package.json",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "\"dependencies\": {\n    \"@legacy-grid/react\": \"4.6.0\",\n    \"react\": \"19.2.0\"\n  }",
+            "explanation": "package.json declares react@19.2.0 and @legacy-grid/react@4.6.0, confirming the conflicting versions."
+          },
+          {
+            "source": "package-lock.json",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "\"node_modules/@legacy-grid/react\": {\n  \"version\": \"4.6.0\",\n  \"peerDependencies\": {\n    \"react\": \"^18.2.0\"\n  }\n}",
+            "explanation": "package-lock.json confirms @legacy-grid/react@4.6.0 requires react ^18.2.0 as a peer dependency."
+          }
+        ],
+        "relevant_files": [
+          "package.json",
+          "package-lock.json"
+        ],
+        "recommended_changes": [
+          "Downgrade react to ^18.2.0 to match the peer dependency requirement of @legacy-grid/react, or upgrade @legacy-grid/react to a version that supports react 19.",
+          "If the team decides to proceed with react 19, use --force or --legacy-peer-deps as a temporary workaround (not recommended for production)."
+        ],
+        "patch": "",
+        "verification_commands": [
+          "npm install"
+        ],
+        "risks": [
+          "Downgrading react may lose features or require changes in other code relying on react 19.",
+          "Upgrading @legacy-grid/react may not be possible if no compatible version exists.",
+          "Using --force or --legacy-peer-deps may lead to runtime errors due to incompatible react version."
+        ],
+        "missing_information": [
+          "Whether there are alternative versions of @legacy-grid/react that support react 19.",
+          "Which other packages in the workspace might be affected by a react downgrade."
+        ]
+      }
+    },
+    {
+      "case_id": "github-actions-environment",
+      "mode": "baseline_uncompressed",
+      "status": "baseline_completed",
+      "success": true,
+      "compression_skip_reason": null,
+      "original_tokens": null,
+      "compressed_tokens": null,
+      "tokens_saved": null,
+      "compression_ratio": null,
+      "prompt_tokens": 20957,
+      "completion_tokens": 634,
+      "prompt_cache_hit_tokens": 20864,
+      "prompt_cache_miss_tokens": 93,
+      "latency_ms": 6744,
+      "root_cause_correct": true,
+      "evidence_correct": false,
+      "relevant_files_correct": true,
+      "fix_direction_correct": false,
+      "json_valid": true,
+      "quality_score": 65,
+      "error": null,
+      "run_timestamp": "2026-07-26T14:13:33.263922Z",
+      "model": "deepseek-v4-flash",
+      "pricing_snapshot_date": "2026-07-25",
+      "initial_messages_sha256": "12822b48886a0a53407974c122cbc566f554a3dc5cef3e682a3c6baf697b8cff",
+      "json_schema_sha256": "863247c11d3c881222050eed880c8d6e8ff1837674bdf8609134becfc19c39d5",
+      "score": {
+        "root_cause_correct": true,
+        "evidence_correct": false,
+        "relevant_files_correct": true,
+        "fix_direction_correct": false,
+        "json_valid": true,
+        "quality_score": 65,
+        "failed_checks": [
+          "evidence",
+          "fix_direction"
+        ]
+      },
+      "human_review": {
+        "status": "pending",
+        "reviewer": null,
+        "notes": null
+      },
+      "cost_estimate": {
+        "input_if_all_cache_hit_usd": 0.00005868,
+        "input_if_all_cache_miss_usd": 0.00293398,
+        "input_from_reported_cache_split_usd": 0.00007144000000000001,
+        "output_usd": 0.00017752,
+        "saved_input_if_cache_hit_usd": null,
+        "saved_input_if_cache_miss_usd": null,
+        "disclaimer": "Configured estimate only; cache behavior varies and this is not an actual bill."
+      },
+      "analysis": {
+        "summary": "The CI fails because DEPLOY_ENV is not set when the step runs.",
+        "root_cause": "The workflow step `Validate deployment environment` sets DEPLOY_ENV to `${{ vars.DEPLOY_ENVIRONMENT }}`, but `vars.DEPLOY_ENVIRONMENT` is not defined, so DEPLOY_ENV is empty, causing the Python script to raise RuntimeError: 'DEPLOY_ENV is required'.",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "source": "ci.log",
+            "line_start": 6,
+            "line_end": 8,
+            "excerpt": "DEPLOY_ENV:\n##[endgroup]\nTraceback (most recent call last):",
+            "explanation": "The DEPLOY_ENV variable is empty (shown as blank) immediately before the script fails."
+          },
+          {
+            "source": "ci.log",
+            "line_start": 10,
+            "line_end": 11,
+            "excerpt": "raise RuntimeError(\"DEPLOY_ENV is required\")\nRuntimeError: DEPLOY_ENV is required",
+            "explanation": "The Python script raises a RuntimeError because DEPLOY_ENV is missing."
           },
           {
             "source": "deploy.yml",
-            "line_start": null,
-            "line_end": null,
-            "excerpt": "- name: Validate deployment environment\n  env:\n    DEPLOY_ENV: ${{ vars.DEPLOY_ENVIRONMENT }}\n  run: python scripts/validate_env.py",
-            "explanation": "The workflow defines DEPLOY_ENV from the GitHub variable DEPLOY_ENVIRONMENT. If this variable is not set in the repository/organization, it defaults to an empty string."
+            "line_start": 13,
+            "line_end": 13,
+            "excerpt": "DEPLOY_ENV: ${{ vars.DEPLOY_ENVIRONMENT }}",
+            "explanation": "The workflow sets DEPLOY_ENV to a GitHub Actions variable that is not defined, resulting in an empty string."
           },
           {
             "source": "validate_env.py",
             "line_start": 4,
             "line_end": 6,
             "excerpt": "deploy_env = os.environ.get(\"DEPLOY_ENV\", \"\").strip()\nif not deploy_env:\n    raise RuntimeError(\"DEPLOY_ENV is required\")",
-            "explanation": "The script checks if DEPLOY_ENV is empty and raises an error if so."
+            "explanation": "The script checks for DEPLOY_ENV and raises an error if it's empty."
           }
         ],
         "relevant_files": [
@@ -748,65 +941,121 @@
           "scripts/validate_env.py"
         ],
         "recommended_changes": [
-          "Set the DEPLOY_ENVIRONMENT variable in the GitHub repository or organization (e.g., under Settings > Secrets and variables > Actions > Variables).",
-          "Alternatively, modify the workflow to provide a default value or fail gracefully with a clearer message."
+          "Define the GitHub Actions variable `DEPLOY_ENVIRONMENT` in the repository or organization settings with a valid value such as 'staging' or 'production'.",
+          "Alternatively, set DEPLOY_ENV directly in the workflow file using a hardcoded value or a different variable if appropriate."
         ],
         "patch": "",
         "verification_commands": [
-          "Check that DEPLOY_ENVIRONMENT variable is defined in the repository/org variables.",
-          "Re-run the workflow after setting the variable."
+          "Check that `vars.DEPLOY_ENVIRONMENT` exists in GitHub repo/organization settings.",
+          "Re-run the workflow after defining the variable."
         ],
         "risks": [
-          "If DEPLOY_ENVIRONMENT is not defined, the deployment step will always fail."
+          "If `DEPLOY_ENVIRONMENT` is defined but empty, the same error will occur.",
+          "Hardcoding the environment in the workflow reduces flexibility for multiple deployment targets."
         ],
-        "missing_information": [
-          "No evidence of the actual value or existence of DEPLOY_ENVIRONMENT variable in the repository configuration."
-        ]
+        "missing_information": []
       }
     },
     {
       "case_id": "github-actions-environment",
       "mode": "paritok",
-      "status": "compression_skipped",
-      "success": null,
+      "status": "skipped_low_yield",
+      "success": true,
       "compression_skip_reason": "below_refusal_threshold",
       "original_tokens": null,
       "compressed_tokens": null,
       "tokens_saved": null,
       "compression_ratio": null,
-      "prompt_tokens": null,
-      "completion_tokens": null,
-      "prompt_cache_hit_tokens": null,
-      "prompt_cache_miss_tokens": null,
-      "latency_ms": 17919,
-      "root_cause_correct": null,
-      "evidence_correct": null,
-      "relevant_files_correct": null,
-      "fix_direction_correct": null,
-      "json_valid": null,
-      "quality_score": null,
+      "prompt_tokens": 20957,
+      "completion_tokens": 561,
+      "prompt_cache_hit_tokens": 20864,
+      "prompt_cache_miss_tokens": 93,
+      "latency_ms": 9034,
+      "root_cause_correct": true,
+      "evidence_correct": false,
+      "relevant_files_correct": true,
+      "fix_direction_correct": false,
+      "json_valid": true,
+      "quality_score": 65,
       "error": null,
-      "run_timestamp": "2026-07-26T06:38:34.210569Z",
+      "run_timestamp": "2026-07-26T14:13:42.298266Z",
       "model": "deepseek-v4-flash",
       "pricing_snapshot_date": "2026-07-25",
       "initial_messages_sha256": "12822b48886a0a53407974c122cbc566f554a3dc5cef3e682a3c6baf697b8cff",
       "json_schema_sha256": "863247c11d3c881222050eed880c8d6e8ff1837674bdf8609134becfc19c39d5",
-      "score": null,
+      "score": {
+        "root_cause_correct": true,
+        "evidence_correct": false,
+        "relevant_files_correct": true,
+        "fix_direction_correct": false,
+        "json_valid": true,
+        "quality_score": 65,
+        "failed_checks": [
+          "evidence",
+          "fix_direction"
+        ]
+      },
       "human_review": {
         "status": "pending",
         "reviewer": null,
         "notes": null
       },
       "cost_estimate": {
-        "input_if_all_cache_hit_usd": null,
-        "input_if_all_cache_miss_usd": null,
-        "input_from_reported_cache_split_usd": null,
-        "output_usd": null,
+        "input_if_all_cache_hit_usd": 0.00005868,
+        "input_if_all_cache_miss_usd": 0.00293398,
+        "input_from_reported_cache_split_usd": 0.00007144000000000001,
+        "output_usd": 0.00015708,
         "saved_input_if_cache_hit_usd": null,
         "saved_input_if_cache_miss_usd": null,
         "disclaimer": "Configured estimate only; cache behavior varies and this is not an actual bill."
       },
-      "analysis": null
+      "analysis": {
+        "summary": "The build fails immediately during environment validation because the DEPLOY_ENV variable is not set.",
+        "root_cause": "The workflow's env block sets DEPLOY_ENV to ${{ vars.DEPLOY_ENVIRONMENT }}, but vars.DEPLOY_ENVIRONMENT is not defined in the repository or CI configuration, resulting in an empty string. The Python script validate_env.py then raises a RuntimeError because DEPLOY_ENV is empty.",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "source": "ci.log",
+            "line_start": 101,
+            "line_end": 104,
+            "excerpt": "Traceback (most recent call last):\n  File \"scripts/validate_env.py\", line 8, in <module>\n    raise RuntimeError(\"DEPLOY_ENV is required\")\nRuntimeError: DEPLOY_ENV is required",
+            "explanation": "The Python script explicitly raises an error when DEPLOY_ENV is missing, confirming the root cause."
+          },
+          {
+            "source": "ci.log",
+            "line_start": 13,
+            "line_end": 15,
+            "excerpt": "DEPLOY_ENV:",
+            "explanation": "The env block shows DEPLOY_ENV is set to an empty value, directly showing the variable is not populated."
+          },
+          {
+            "source": "deploy.yml",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "DEPLOY_ENV: ${{ vars.DEPLOY_ENVIRONMENT }}",
+            "explanation": "The workflow references vars.DEPLOY_ENVIRONMENT, which is undefined, causing the empty value seen in the log."
+          }
+        ],
+        "relevant_files": [
+          "scripts/validate_env.py",
+          "deploy.yml"
+        ],
+        "recommended_changes": [
+          "Define the variable DEPLOY_ENVIRONMENT in the GitHub repository's Actions variables (repo Settings > Secrets and variables > Actions).",
+          "Alternatively, hardcode DEPLOY_ENV in the workflow step or pass it as an input to the workflow_dispatch event."
+        ],
+        "patch": "",
+        "verification_commands": [
+          "gh variable set DEPLOY_ENVIRONMENT --body staging",
+          "python scripts/validate_env.py"
+        ],
+        "risks": [
+          "If DEPLOY_ENVIRONMENT is set to an invalid value (not 'staging' or 'production'), the script will also fail."
+        ],
+        "missing_information": [
+          "Why DEPLOY_ENVIRONMENT was not previously set or expected to be set at organization/repository level."
+        ]
+      }
     }
   ]
 }

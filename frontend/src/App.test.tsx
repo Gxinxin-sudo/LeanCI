@@ -38,7 +38,7 @@ const sample: SamplePayload = {
 }
 
 const benchmark: BenchmarkArtifact = {
-  schema_version: 2,
+  schema_version: 3,
   generated_at: '2026-07-26T08:00:00Z',
   finalized: true,
   case_ids: [
@@ -69,11 +69,13 @@ const benchmark: BenchmarkArtifact = {
     expected_cases: 5,
     expected_rows: 10,
     completed_rows: 10,
-    successful_rows: 8,
-    compression_skipped_rows: 1,
-    failed_rows: 1,
-    actual_compression_rows: 1,
-    upstream_timeout_rows: 0,
+    baseline_completed_rows: 5,
+    compressed_rows: 2,
+    skipped_low_yield_rows: 2,
+    unavailable_rows: 0,
+    upstream_failed_rows: 1,
+    upstream_timeout_rows: 1,
+    quality_pair_count: 4,
     average_tokens_saved: 8_000,
     average_token_savings_percent: 94.5,
     baseline_average_quality: 90,
@@ -85,7 +87,7 @@ const benchmark: BenchmarkArtifact = {
     {
       case_id: 'python-pytest',
       mode: 'paritok',
-      status: 'failed',
+      status: 'upstream_failed',
       success: false,
       compression_skip_reason: null,
       original_tokens: 8_200,
@@ -97,12 +99,12 @@ const benchmark: BenchmarkArtifact = {
       prompt_cache_hit_tokens: null,
       prompt_cache_miss_tokens: null,
       latency_ms: 4_200,
-      root_cause_correct: false,
-      evidence_correct: false,
-      relevant_files_correct: false,
-      fix_direction_correct: false,
-      json_valid: false,
-      quality_score: 0,
+      root_cause_correct: null,
+      evidence_correct: null,
+      relevant_files_correct: null,
+      fix_direction_correct: null,
+      json_valid: null,
+      quality_score: null,
       error: 'LLM_OUTPUT_INVALID: strict JSON failed.',
       run_timestamp: '2026-07-26T08:00:00Z',
       model: 'deepseek-v4-flash',
@@ -123,8 +125,8 @@ const benchmark: BenchmarkArtifact = {
     {
       case_id: 'typescript-build',
       mode: 'paritok',
-      status: 'compression_skipped',
-      success: null,
+      status: 'skipped_low_yield',
+      success: false,
       compression_skip_reason: 'below_refusal_threshold',
       original_tokens: null,
       compressed_tokens: null,
@@ -339,8 +341,8 @@ describe('LeanCI workbench', () => {
 
     expect(await screen.findByRole('heading', { name: 'Every row stays.' })).toBeInTheDocument()
     expect(screen.getByText('94.50%')).toBeInTheDocument()
-    expect(screen.getByText('Failed · retained')).toBeInTheDocument()
-    expect(screen.getByText('Compression skipped · expected low benefit')).toBeInTheDocument()
+    expect(screen.getByText('Upstream failed · retained')).toBeInTheDocument()
+    expect(screen.getByText('Paritok normal skip · low yield')).toBeInTheDocument()
     expect(screen.getByText('Normal passthrough · below_refusal_threshold')).toBeInTheDocument()
     expect(screen.getByRole('alert')).toHaveTextContent('LLM_OUTPUT_INVALID')
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
