@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-26T06:07:05.921069Z",
+  "generated_at": "2026-07-26T06:47:05.291041Z",
   "finalized": true,
   "case_ids": [
     "python-pytest",
@@ -20,7 +20,7 @@
     "token_metric_policy": "Paritok original/compressed/saved metrics only from per-request /stats deltas; baseline values are null."
   },
   "pricing": {
-    "snapshot_date": "2026-07-26",
+    "snapshot_date": "2026-07-25",
     "input_cache_hit_usd_per_m_tokens": 0.0028,
     "input_cache_miss_usd_per_m_tokens": 0.14,
     "output_usd_per_m_tokens": 0.28,
@@ -30,54 +30,51 @@
     "expected_cases": 5,
     "expected_rows": 10,
     "completed_rows": 10,
-    "successful_rows": 0,
-    "failed_rows": 10,
+    "successful_rows": 5,
+    "failed_rows": 5,
     "average_tokens_saved": null,
     "average_token_savings_percent": null,
-    "baseline_average_quality": 0.0,
+    "baseline_average_quality": 73.0,
     "paritok_average_quality": 0.0,
-    "quality_change_points": 0.0,
-    "supported_claim": "No benchmark or promotional claim is supported: all 10 planned rows failed before a valid model result was recorded. The failures remain visible."
+    "quality_change_points": -73.0,
+    "supported_claim": "On these five fixed cases, the run observed no verified average Token savings and a -73.00-point deterministic quality change. All 5 failed rows remain included. This does not establish universal quality preservation, production reliability, or actual billing savings."
   },
   "rows": [
     {
       "case_id": "python-pytest",
       "mode": "baseline_uncompressed",
-      "success": false,
+      "success": true,
       "original_tokens": null,
       "compressed_tokens": null,
       "tokens_saved": null,
       "compression_ratio": null,
-      "prompt_tokens": null,
-      "completion_tokens": null,
-      "prompt_cache_hit_tokens": null,
-      "prompt_cache_miss_tokens": null,
-      "latency_ms": 0,
-      "root_cause_correct": false,
+      "prompt_tokens": 28579,
+      "completion_tokens": 713,
+      "prompt_cache_hit_tokens": 10368,
+      "prompt_cache_miss_tokens": 18211,
+      "latency_ms": 6925,
+      "root_cause_correct": true,
       "evidence_correct": false,
-      "relevant_files_correct": false,
+      "relevant_files_correct": true,
       "fix_direction_correct": false,
-      "json_valid": false,
-      "quality_score": 0,
-      "error": "PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent.",
-      "run_timestamp": "2026-07-26T06:07:05.897530Z",
+      "json_valid": true,
+      "quality_score": 65,
+      "error": null,
+      "run_timestamp": "2026-07-26T06:30:57.685347Z",
       "model": "deepseek-v4-flash",
-      "pricing_snapshot_date": "2026-07-26",
+      "pricing_snapshot_date": "2026-07-25",
       "initial_messages_sha256": "a44130b9a0b324a0f99a29f86a386bebe0506e6fac28e1fe01c031f12a5c9b9d",
       "json_schema_sha256": "863247c11d3c881222050eed880c8d6e8ff1837674bdf8609134becfc19c39d5",
       "score": {
-        "root_cause_correct": false,
+        "root_cause_correct": true,
         "evidence_correct": false,
-        "relevant_files_correct": false,
+        "relevant_files_correct": true,
         "fix_direction_correct": false,
-        "json_valid": false,
-        "quality_score": 0,
+        "json_valid": true,
+        "quality_score": 65,
         "failed_checks": [
-          "root_cause",
           "evidence",
-          "relevant_files",
-          "fix_direction",
-          "json_valid"
+          "fix_direction"
         ]
       },
       "human_review": {
@@ -86,39 +83,82 @@
         "notes": null
       },
       "cost_estimate": {
-        "input_if_all_cache_hit_usd": null,
-        "input_if_all_cache_miss_usd": null,
-        "input_from_reported_cache_split_usd": null,
-        "output_usd": null,
+        "input_if_all_cache_hit_usd": 0.00008002,
+        "input_if_all_cache_miss_usd": 0.00400106,
+        "input_from_reported_cache_split_usd": 0.00257857,
+        "output_usd": 0.00019964,
         "saved_input_if_cache_hit_usd": null,
         "saved_input_if_cache_miss_usd": null,
         "disclaimer": "Configured estimate only; cache behavior varies and this is not an actual bill."
       },
-      "analysis": null
+      "analysis": {
+        "summary": "The test `test_retry_backoff_caps_at_maximum` fails because the computed delay is 15 instead of the expected 16.",
+        "root_cause": "The `delay_for` method subtracts 1 from the exponential backoff calculation (`self.base_delay * 2**attempt - 1`), which causes the result to be one less than the expected cap. For `base_delay=2` and `attempt=4`, the calculation yields `2*16-1=31`, then `min(31, 16)=15`, but the test expects `delay_for(4)=16`.",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "source": "ci.log",
+            "line_start": 823,
+            "line_end": 823,
+            "excerpt": "tests/test_retry.py::test_retry_backoff_caps_at_maximum FAILED",
+            "explanation": "The failing test that triggered CI failure."
+          },
+          {
+            "source": "ci.log",
+            "line_start": 830,
+            "line_end": 832,
+            "excerpt": "E       assert 15 == 16\nE        +  where 15 = delay_for(attempt=4)\nE        +    where delay_for = RetryPolicy(base_delay=2, max_delay=16).delay_for",
+            "explanation": "The assertion error details showing the actual vs expected value."
+          },
+          {
+            "source": "retry.py",
+            "line_start": 9,
+            "line_end": 10,
+            "excerpt": "def delay_for(self, attempt: int) -> int:\n        return min(self.base_delay * 2**attempt - 1, self.max_delay)",
+            "explanation": "The `delay_for` implementation contains `-1` which causes the off-by-one error."
+          }
+        ],
+        "relevant_files": [
+          "retry.py",
+          "test_retry.py"
+        ],
+        "recommended_changes": [
+          "In `retry.py`, change `self.base_delay * 2**attempt - 1` to `self.base_delay * 2**attempt` to match the expected exponential backoff without the subtraction."
+        ],
+        "patch": "--- a/retry.py\n+++ b/retry.py\n@@ -7,4 +7,4 @@ class RetryPolicy:\n     max_delay: int\n \n     def delay_for(self, attempt: int) -> int:\n-        return min(self.base_delay * 2**attempt - 1, self.max_delay)\n+        return min(self.base_delay * 2**attempt, self.max_delay)\n",
+        "verification_commands": [
+          "python -m pytest tests/test_retry.py -v"
+        ],
+        "risks": [
+          "Other tests or code depending on the current (buggy) behavior may break after the fix.",
+          "The test `test_zero_attempt_uses_base_delay` expects `delay_for(0) == 1` with the current code; after removing `-1`, the result would become `2`, so the test needs adjustment or the fix must handle attempt=0 separately."
+        ],
+        "missing_information": []
+      }
     },
     {
       "case_id": "python-pytest",
       "mode": "paritok",
       "success": false,
-      "original_tokens": null,
-      "compressed_tokens": null,
-      "tokens_saved": null,
-      "compression_ratio": null,
+      "original_tokens": 10469,
+      "compressed_tokens": 254,
+      "tokens_saved": 10215,
+      "compression_ratio": 0.024262,
       "prompt_tokens": null,
       "completion_tokens": null,
       "prompt_cache_hit_tokens": null,
       "prompt_cache_miss_tokens": null,
-      "latency_ms": 0,
+      "latency_ms": 62567,
       "root_cause_correct": false,
       "evidence_correct": false,
       "relevant_files_correct": false,
       "fix_direction_correct": false,
       "json_valid": false,
       "quality_score": 0,
-      "error": "PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent.",
-      "run_timestamp": "2026-07-26T06:07:05.897530Z",
+      "error": "DEEPSEEK_TIMEOUT: The DeepSeek request timed out. Check the network and try again.",
+      "run_timestamp": "2026-07-26T06:32:00.252146Z",
       "model": "deepseek-v4-flash",
-      "pricing_snapshot_date": "2026-07-26",
+      "pricing_snapshot_date": "2026-07-25",
       "initial_messages_sha256": "a44130b9a0b324a0f99a29f86a386bebe0506e6fac28e1fe01c031f12a5c9b9d",
       "json_schema_sha256": "863247c11d3c881222050eed880c8d6e8ff1837674bdf8609134becfc19c39d5",
       "score": {
@@ -155,41 +195,39 @@
     {
       "case_id": "typescript-build",
       "mode": "baseline_uncompressed",
-      "success": false,
+      "success": true,
       "original_tokens": null,
       "compressed_tokens": null,
       "tokens_saved": null,
       "compression_ratio": null,
-      "prompt_tokens": null,
-      "completion_tokens": null,
-      "prompt_cache_hit_tokens": null,
-      "prompt_cache_miss_tokens": null,
-      "latency_ms": 0,
-      "root_cause_correct": false,
+      "prompt_tokens": 22955,
+      "completion_tokens": 715,
+      "prompt_cache_hit_tokens": 640,
+      "prompt_cache_miss_tokens": 22315,
+      "latency_ms": 6883,
+      "root_cause_correct": true,
       "evidence_correct": false,
       "relevant_files_correct": false,
       "fix_direction_correct": false,
-      "json_valid": false,
-      "quality_score": 0,
-      "error": "PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent.",
-      "run_timestamp": "2026-07-26T06:07:05.908648Z",
+      "json_valid": true,
+      "quality_score": 50,
+      "error": null,
+      "run_timestamp": "2026-07-26T06:33:03.969991Z",
       "model": "deepseek-v4-flash",
-      "pricing_snapshot_date": "2026-07-26",
+      "pricing_snapshot_date": "2026-07-25",
       "initial_messages_sha256": "40ec03286bb538401cf4c281ebac76a73da60a939abc9d3bf0a6343d2073aa5d",
       "json_schema_sha256": "863247c11d3c881222050eed880c8d6e8ff1837674bdf8609134becfc19c39d5",
       "score": {
-        "root_cause_correct": false,
+        "root_cause_correct": true,
         "evidence_correct": false,
         "relevant_files_correct": false,
         "fix_direction_correct": false,
-        "json_valid": false,
-        "quality_score": 0,
+        "json_valid": true,
+        "quality_score": 50,
         "failed_checks": [
-          "root_cause",
           "evidence",
           "relevant_files",
-          "fix_direction",
-          "json_valid"
+          "fix_direction"
         ]
       },
       "human_review": {
@@ -198,39 +236,90 @@
         "notes": null
       },
       "cost_estimate": {
-        "input_if_all_cache_hit_usd": null,
-        "input_if_all_cache_miss_usd": null,
-        "input_from_reported_cache_split_usd": null,
-        "output_usd": null,
+        "input_if_all_cache_hit_usd": 0.00006427,
+        "input_if_all_cache_miss_usd": 0.0032137,
+        "input_from_reported_cache_split_usd": 0.00312589,
+        "output_usd": 0.0002002,
         "saved_input_if_cache_hit_usd": null,
         "saved_input_if_cache_miss_usd": null,
         "disclaimer": "Configured estimate only; cache behavior varies and this is not an actual bill."
       },
-      "analysis": null
+      "analysis": {
+        "summary": "The build fails during TypeScript compilation of @release-dashboard/deploy-config with a type error in src/config.ts.",
+        "root_cause": "The property `region` in `AppConfig` is typed as `string`, but `loadConfig()` assigns `process.env.DEPLOY_REGION` which may be `undefined`. With strict mode and noUncheckedIndexedAccess, TypeScript catches this mismatch.",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "source": "ci.log",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "@release-dashboard/deploy-config:build: cache miss, executing 00c1f41e",
+            "explanation": "Indicates the deploy-config package was actually built (not cached), aligning with the error location."
+          },
+          {
+            "source": "ci.log",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "src/config.ts(14,5): error TS2322: Type 'string | undefined' is not assignable to type 'string'. Type 'undefined' is not assignable to type 'string'.",
+            "explanation": "Exact TypeScript error showing the type mismatch on line 14 of config.ts."
+          },
+          {
+            "source": "ci.log",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "region: process.env.DEPLOY_REGION",
+            "explanation": "The code assigns the result of process.env, which is string | undefined, to a field typed as string."
+          },
+          {
+            "source": "config.ts",
+            "line_start": 3,
+            "line_end": 3,
+            "excerpt": "region: string",
+            "explanation": "The interface AppConfig defines region as string (non-optional)."
+          }
+        ],
+        "relevant_files": [
+          "src/config.ts",
+          "tsconfig.json"
+        ],
+        "recommended_changes": [
+          "Change `region: string` to `region: string` with a default value or make it optional, or use a default value in loadConfig like `region: process.env.DEPLOY_REGION ?? 'us-east-1'`."
+        ],
+        "patch": "--- a/src/config.ts\n+++ b/src/config.ts\n@@ -1,7 +1,7 @@\n export interface AppConfig {\n   apiBaseUrl: string\n-  region: string\n+  region: string\n }\n \n export function loadConfig(): AppConfig {\n   return {\n     apiBaseUrl: process.env.API_BASE_URL ?? 'http://127.0.0.1:3000',\n-    region: process.env.DEPLOY_REGION,\n+    region: process.env.DEPLOY_REGION ?? 'us-east-1',\n   }\n }\n",
+        "verification_commands": [
+          "npx tsc --noEmit -p tsconfig.json"
+        ],
+        "risks": [
+          "If the region environment variable is intentionally undefined, a fallback value might deploy to the wrong region."
+        ],
+        "missing_information": [
+          "The intended default region or whether the environment variable is always expected to be set."
+        ]
+      }
     },
     {
       "case_id": "typescript-build",
       "mode": "paritok",
       "success": false,
-      "original_tokens": null,
-      "compressed_tokens": null,
-      "tokens_saved": null,
+      "original_tokens": 0,
+      "compressed_tokens": 0,
+      "tokens_saved": 0,
       "compression_ratio": null,
       "prompt_tokens": null,
       "completion_tokens": null,
       "prompt_cache_hit_tokens": null,
       "prompt_cache_miss_tokens": null,
-      "latency_ms": 0,
+      "latency_ms": 20031,
       "root_cause_correct": false,
       "evidence_correct": false,
       "relevant_files_correct": false,
       "fix_direction_correct": false,
       "json_valid": false,
       "quality_score": 0,
-      "error": "PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent.",
-      "run_timestamp": "2026-07-26T06:07:05.908648Z",
+      "error": "ORIGINAL_TOKEN_MINIMUM_NOT_MET: The verified stats delta was below the fixed case minimum.",
+      "run_timestamp": "2026-07-26T06:33:24.001202Z",
       "model": "deepseek-v4-flash",
-      "pricing_snapshot_date": "2026-07-26",
+      "pricing_snapshot_date": "2026-07-25",
       "initial_messages_sha256": "40ec03286bb538401cf4c281ebac76a73da60a939abc9d3bf0a6343d2073aa5d",
       "json_schema_sha256": "863247c11d3c881222050eed880c8d6e8ff1837674bdf8609134becfc19c39d5",
       "score": {
@@ -267,42 +356,36 @@
     {
       "case_id": "docker-build",
       "mode": "baseline_uncompressed",
-      "success": false,
+      "success": true,
       "original_tokens": null,
       "compressed_tokens": null,
       "tokens_saved": null,
       "compression_ratio": null,
-      "prompt_tokens": null,
-      "completion_tokens": null,
-      "prompt_cache_hit_tokens": null,
-      "prompt_cache_miss_tokens": null,
-      "latency_ms": 0,
-      "root_cause_correct": false,
-      "evidence_correct": false,
-      "relevant_files_correct": false,
-      "fix_direction_correct": false,
-      "json_valid": false,
-      "quality_score": 0,
-      "error": "PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent.",
-      "run_timestamp": "2026-07-26T06:07:05.910863Z",
+      "prompt_tokens": 8959,
+      "completion_tokens": 472,
+      "prompt_cache_hit_tokens": 512,
+      "prompt_cache_miss_tokens": 8447,
+      "latency_ms": 5103,
+      "root_cause_correct": true,
+      "evidence_correct": true,
+      "relevant_files_correct": true,
+      "fix_direction_correct": true,
+      "json_valid": true,
+      "quality_score": 100,
+      "error": null,
+      "run_timestamp": "2026-07-26T06:35:07.259790Z",
       "model": "deepseek-v4-flash",
-      "pricing_snapshot_date": "2026-07-26",
+      "pricing_snapshot_date": "2026-07-25",
       "initial_messages_sha256": "dab1fd3aa88bfbab9702ed9279e96836259419849e47ea17dd7e2e2d4d15c233",
       "json_schema_sha256": "863247c11d3c881222050eed880c8d6e8ff1837674bdf8609134becfc19c39d5",
       "score": {
-        "root_cause_correct": false,
-        "evidence_correct": false,
-        "relevant_files_correct": false,
-        "fix_direction_correct": false,
-        "json_valid": false,
-        "quality_score": 0,
-        "failed_checks": [
-          "root_cause",
-          "evidence",
-          "relevant_files",
-          "fix_direction",
-          "json_valid"
-        ]
+        "root_cause_correct": true,
+        "evidence_correct": true,
+        "relevant_files_correct": true,
+        "fix_direction_correct": true,
+        "json_valid": true,
+        "quality_score": 100,
+        "failed_checks": []
       },
       "human_review": {
         "status": "pending",
@@ -310,39 +393,83 @@
         "notes": null
       },
       "cost_estimate": {
-        "input_if_all_cache_hit_usd": null,
-        "input_if_all_cache_miss_usd": null,
-        "input_from_reported_cache_split_usd": null,
-        "output_usd": null,
+        "input_if_all_cache_hit_usd": 0.00002509,
+        "input_if_all_cache_miss_usd": 0.00125426,
+        "input_from_reported_cache_split_usd": 0.0011840099999999999,
+        "output_usd": 0.00013216,
         "saved_input_if_cache_hit_usd": null,
         "saved_input_if_cache_miss_usd": null,
         "disclaimer": "Configured estimate only; cache behavior varies and this is not an actual bill."
       },
-      "analysis": null
+      "analysis": {
+        "summary": "Docker build fails at COPY step because package-lock.json is missing from the build context.",
+        "root_cause": "The .dockerignore file contains '*.json', which excludes package-lock.json from the build context, causing the COPY command to fail.",
+        "confidence": 0.95,
+        "evidence": [
+          {
+            "source": "ci.log",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "#8 ERROR: failed to calculate checksum of ref moby::m9g4j5h6k7l8: \"/package-lock.json\": not found",
+            "explanation": "The COPY command in Dockerfile fails because package-lock.json is not present in the build context."
+          },
+          {
+            "source": "ci.log",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "Dockerfile:5\n--------------------\n   3 |     WORKDIR /app\n   4 |\n   5 | >>> COPY package.json package-lock.json ./\n   6 |     RUN npm ci --omit=dev\n   7 |\n--------------------",
+            "explanation": "The failing step is the COPY of package-lock.json."
+          },
+          {
+            "source": ".dockerignore",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "*.json",
+            "explanation": "This rule excludes all JSON files, including package-lock.json, from the Docker build context."
+          }
+        ],
+        "relevant_files": [
+          ".dockerignore",
+          "Dockerfile"
+        ],
+        "recommended_changes": [
+          "Remove '*.json' from .dockerignore, or specify exact ignores to avoid excluding package-lock.json."
+        ],
+        "patch": "",
+        "verification_commands": [
+          "docker buildx build --progress=plain --tag demo-api:ci ."
+        ],
+        "risks": [
+          "If other JSON files are expected to be excluded, they should be listed explicitly instead of using a wildcard."
+        ],
+        "missing_information": [
+          "The full list of files in the repository root was not provided, but the .dockerignore is the likely culprit."
+        ]
+      }
     },
     {
       "case_id": "docker-build",
       "mode": "paritok",
       "success": false,
-      "original_tokens": null,
-      "compressed_tokens": null,
-      "tokens_saved": null,
-      "compression_ratio": null,
+      "original_tokens": 543,
+      "compressed_tokens": 77,
+      "tokens_saved": 466,
+      "compression_ratio": 0.141805,
       "prompt_tokens": null,
       "completion_tokens": null,
       "prompt_cache_hit_tokens": null,
       "prompt_cache_miss_tokens": null,
-      "latency_ms": 0,
+      "latency_ms": 18073,
       "root_cause_correct": false,
       "evidence_correct": false,
       "relevant_files_correct": false,
       "fix_direction_correct": false,
       "json_valid": false,
       "quality_score": 0,
-      "error": "PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent.",
-      "run_timestamp": "2026-07-26T06:07:05.910863Z",
+      "error": "ORIGINAL_TOKEN_MINIMUM_NOT_MET: The verified stats delta was below the fixed case minimum.",
+      "run_timestamp": "2026-07-26T06:35:25.332408Z",
       "model": "deepseek-v4-flash",
-      "pricing_snapshot_date": "2026-07-26",
+      "pricing_snapshot_date": "2026-07-25",
       "initial_messages_sha256": "dab1fd3aa88bfbab9702ed9279e96836259419849e47ea17dd7e2e2d4d15c233",
       "json_schema_sha256": "863247c11d3c881222050eed880c8d6e8ff1837674bdf8609134becfc19c39d5",
       "score": {
@@ -379,41 +506,38 @@
     {
       "case_id": "dependency-resolution",
       "mode": "baseline_uncompressed",
-      "success": false,
+      "success": true,
       "original_tokens": null,
       "compressed_tokens": null,
       "tokens_saved": null,
       "compression_ratio": null,
-      "prompt_tokens": null,
-      "completion_tokens": null,
-      "prompt_cache_hit_tokens": null,
-      "prompt_cache_miss_tokens": null,
-      "latency_ms": 0,
-      "root_cause_correct": false,
+      "prompt_tokens": 19603,
+      "completion_tokens": 657,
+      "prompt_cache_hit_tokens": 640,
+      "prompt_cache_miss_tokens": 18963,
+      "latency_ms": 6607,
+      "root_cause_correct": true,
       "evidence_correct": false,
-      "relevant_files_correct": false,
+      "relevant_files_correct": true,
       "fix_direction_correct": false,
-      "json_valid": false,
-      "quality_score": 0,
-      "error": "PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent.",
-      "run_timestamp": "2026-07-26T06:07:05.910863Z",
+      "json_valid": true,
+      "quality_score": 65,
+      "error": null,
+      "run_timestamp": "2026-07-26T06:37:22.738674Z",
       "model": "deepseek-v4-flash",
-      "pricing_snapshot_date": "2026-07-26",
+      "pricing_snapshot_date": "2026-07-25",
       "initial_messages_sha256": "c24b0745d5cc43487e68394847d5eeaf2258ae4502dc4327bdd3f4433fac40aa",
       "json_schema_sha256": "863247c11d3c881222050eed880c8d6e8ff1837674bdf8609134becfc19c39d5",
       "score": {
-        "root_cause_correct": false,
+        "root_cause_correct": true,
         "evidence_correct": false,
-        "relevant_files_correct": false,
+        "relevant_files_correct": true,
         "fix_direction_correct": false,
-        "json_valid": false,
-        "quality_score": 0,
+        "json_valid": true,
+        "quality_score": 65,
         "failed_checks": [
-          "root_cause",
           "evidence",
-          "relevant_files",
-          "fix_direction",
-          "json_valid"
+          "fix_direction"
         ]
       },
       "human_review": {
@@ -422,39 +546,100 @@
         "notes": null
       },
       "cost_estimate": {
-        "input_if_all_cache_hit_usd": null,
-        "input_if_all_cache_miss_usd": null,
-        "input_from_reported_cache_split_usd": null,
-        "output_usd": null,
+        "input_if_all_cache_hit_usd": 0.00005489,
+        "input_if_all_cache_miss_usd": 0.00274442,
+        "input_from_reported_cache_split_usd": 0.0026566100000000002,
+        "output_usd": 0.00018396,
         "saved_input_if_cache_hit_usd": null,
         "saved_input_if_cache_miss_usd": null,
         "disclaimer": "Configured estimate only; cache behavior varies and this is not an actual bill."
       },
-      "analysis": null
+      "analysis": {
+        "summary": "npm install fails due to peer dependency conflict between react 19.2.0 and @legacy-grid/react requiring react ^18.2.0.",
+        "root_cause": "The project requires react 19.2.0, but @legacy-grid/react 4.6.0 declares a peer dependency on react ^18.2.0, which is not satisfied.",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "source": "ci.log",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "npm error ERESOLVE unable to resolve dependency tree",
+            "explanation": "npm reports an unresolved dependency tree, blocking installation."
+          },
+          {
+            "source": "ci.log",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "Found: react@19.2.0",
+            "explanation": "The resolved version of react in the project is 19.2.0."
+          },
+          {
+            "source": "ci.log",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "peer react@\"^18.2.0\" from @legacy-grid/react@4.6.0",
+            "explanation": "@legacy-grid/react 4.6.0 requires react ^18.2.0 as a peer dependency."
+          },
+          {
+            "source": "package.json",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "\"@legacy-grid/react\": \"4.6.0\",\n\"react\": \"19.2.0\"",
+            "explanation": "package.json confirms both dependencies are specified at incompatible versions."
+          },
+          {
+            "source": "package-lock.json",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "\"peerDependencies\": {\n  \"react\": \"^18.2.0\"\n}",
+            "explanation": "package-lock.json confirms the peer dependency constraint in @legacy-grid/react."
+          }
+        ],
+        "relevant_files": [
+          "package.json",
+          "package-lock.json"
+        ],
+        "recommended_changes": [
+          "Downgrade react to 18.2.x (and react-dom accordingly) to satisfy @legacy-grid/react peer dependency, or",
+          "Upgrade @legacy-grid/react to a version that supports react 19, or",
+          "Use --legacy-peer-deps or --force temporarily, but this is not recommended for production."
+        ],
+        "patch": "",
+        "verification_commands": [
+          "npm install"
+        ],
+        "risks": [
+          "Downgrading react may lose features or require code changes.",
+          "Using --legacy-peer-deps may cause runtime issues due to unmet peer dependencies."
+        ],
+        "missing_information": [
+          "Whether a newer version of @legacy-grid/react exists that supports react 19."
+        ]
+      }
     },
     {
       "case_id": "dependency-resolution",
       "mode": "paritok",
       "success": false,
-      "original_tokens": null,
-      "compressed_tokens": null,
-      "tokens_saved": null,
+      "original_tokens": 0,
+      "compressed_tokens": 0,
+      "tokens_saved": 0,
       "compression_ratio": null,
       "prompt_tokens": null,
       "completion_tokens": null,
       "prompt_cache_hit_tokens": null,
       "prompt_cache_miss_tokens": null,
-      "latency_ms": 0,
+      "latency_ms": 18861,
       "root_cause_correct": false,
       "evidence_correct": false,
       "relevant_files_correct": false,
       "fix_direction_correct": false,
       "json_valid": false,
       "quality_score": 0,
-      "error": "PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent.",
-      "run_timestamp": "2026-07-26T06:07:05.910863Z",
+      "error": "ORIGINAL_TOKEN_MINIMUM_NOT_MET: The verified stats delta was below the fixed case minimum.",
+      "run_timestamp": "2026-07-26T06:37:41.599954Z",
       "model": "deepseek-v4-flash",
-      "pricing_snapshot_date": "2026-07-26",
+      "pricing_snapshot_date": "2026-07-25",
       "initial_messages_sha256": "c24b0745d5cc43487e68394847d5eeaf2258ae4502dc4327bdd3f4433fac40aa",
       "json_schema_sha256": "863247c11d3c881222050eed880c8d6e8ff1837674bdf8609134becfc19c39d5",
       "score": {
@@ -491,41 +676,37 @@
     {
       "case_id": "github-actions-environment",
       "mode": "baseline_uncompressed",
-      "success": false,
+      "success": true,
       "original_tokens": null,
       "compressed_tokens": null,
       "tokens_saved": null,
       "compression_ratio": null,
-      "prompt_tokens": null,
-      "completion_tokens": null,
-      "prompt_cache_hit_tokens": null,
-      "prompt_cache_miss_tokens": null,
-      "latency_ms": 0,
-      "root_cause_correct": false,
-      "evidence_correct": false,
-      "relevant_files_correct": false,
+      "prompt_tokens": 20957,
+      "completion_tokens": 632,
+      "prompt_cache_hit_tokens": 512,
+      "prompt_cache_miss_tokens": 20445,
+      "latency_ms": 6798,
+      "root_cause_correct": true,
+      "evidence_correct": true,
+      "relevant_files_correct": true,
       "fix_direction_correct": false,
-      "json_valid": false,
-      "quality_score": 0,
-      "error": "PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent.",
-      "run_timestamp": "2026-07-26T06:07:05.921069Z",
+      "json_valid": true,
+      "quality_score": 85,
+      "error": null,
+      "run_timestamp": "2026-07-26T06:38:16.291274Z",
       "model": "deepseek-v4-flash",
-      "pricing_snapshot_date": "2026-07-26",
+      "pricing_snapshot_date": "2026-07-25",
       "initial_messages_sha256": "12822b48886a0a53407974c122cbc566f554a3dc5cef3e682a3c6baf697b8cff",
       "json_schema_sha256": "863247c11d3c881222050eed880c8d6e8ff1837674bdf8609134becfc19c39d5",
       "score": {
-        "root_cause_correct": false,
-        "evidence_correct": false,
-        "relevant_files_correct": false,
+        "root_cause_correct": true,
+        "evidence_correct": true,
+        "relevant_files_correct": true,
         "fix_direction_correct": false,
-        "json_valid": false,
-        "quality_score": 0,
+        "json_valid": true,
+        "quality_score": 85,
         "failed_checks": [
-          "root_cause",
-          "evidence",
-          "relevant_files",
-          "fix_direction",
-          "json_valid"
+          "fix_direction"
         ]
       },
       "human_review": {
@@ -534,39 +715,85 @@
         "notes": null
       },
       "cost_estimate": {
-        "input_if_all_cache_hit_usd": null,
-        "input_if_all_cache_miss_usd": null,
-        "input_from_reported_cache_split_usd": null,
-        "output_usd": null,
+        "input_if_all_cache_hit_usd": 0.00005868,
+        "input_if_all_cache_miss_usd": 0.00293398,
+        "input_from_reported_cache_split_usd": 0.00286373,
+        "output_usd": 0.00017696,
         "saved_input_if_cache_hit_usd": null,
         "saved_input_if_cache_miss_usd": null,
         "disclaimer": "Configured estimate only; cache behavior varies and this is not an actual bill."
       },
-      "analysis": null
+      "analysis": {
+        "summary": "The build fails because the DEPLOY_ENV environment variable is not set.",
+        "root_cause": "The workflow step 'Validate deployment environment' sets DEPLOY_ENV from the GitHub variable DEPLOY_ENVIRONMENT, but that variable is either undefined or empty, causing the Python script to raise a RuntimeError.",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "source": "ci.log",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "env:\n  DEPLOY_ENV:\n##[endgroup]\nTraceback (most recent call last):\n  File \"scripts/validate_env.py\", line 8, in <module>\n    raise RuntimeError(\"DEPLOY_ENV is required\")\nRuntimeError: DEPLOY_ENV is required\n##[error]Process completed with exit code 1.",
+            "explanation": "The CI log shows the env block with DEPLOY_ENV set to an empty value, followed by the Python script raising an error because DEPLOY_ENV is required."
+          },
+          {
+            "source": "deploy.yml",
+            "line_start": null,
+            "line_end": null,
+            "excerpt": "- name: Validate deployment environment\n  env:\n    DEPLOY_ENV: ${{ vars.DEPLOY_ENVIRONMENT }}\n  run: python scripts/validate_env.py",
+            "explanation": "The workflow defines DEPLOY_ENV from the GitHub variable DEPLOY_ENVIRONMENT. If this variable is not set in the repository/organization, it defaults to an empty string."
+          },
+          {
+            "source": "validate_env.py",
+            "line_start": 4,
+            "line_end": 6,
+            "excerpt": "deploy_env = os.environ.get(\"DEPLOY_ENV\", \"\").strip()\nif not deploy_env:\n    raise RuntimeError(\"DEPLOY_ENV is required\")",
+            "explanation": "The script checks if DEPLOY_ENV is empty and raises an error if so."
+          }
+        ],
+        "relevant_files": [
+          "deploy.yml",
+          "scripts/validate_env.py"
+        ],
+        "recommended_changes": [
+          "Set the DEPLOY_ENVIRONMENT variable in the GitHub repository or organization (e.g., under Settings > Secrets and variables > Actions > Variables).",
+          "Alternatively, modify the workflow to provide a default value or fail gracefully with a clearer message."
+        ],
+        "patch": "",
+        "verification_commands": [
+          "Check that DEPLOY_ENVIRONMENT variable is defined in the repository/org variables.",
+          "Re-run the workflow after setting the variable."
+        ],
+        "risks": [
+          "If DEPLOY_ENVIRONMENT is not defined, the deployment step will always fail."
+        ],
+        "missing_information": [
+          "No evidence of the actual value or existence of DEPLOY_ENVIRONMENT variable in the repository configuration."
+        ]
+      }
     },
     {
       "case_id": "github-actions-environment",
       "mode": "paritok",
       "success": false,
-      "original_tokens": null,
-      "compressed_tokens": null,
-      "tokens_saved": null,
+      "original_tokens": 0,
+      "compressed_tokens": 0,
+      "tokens_saved": 0,
       "compression_ratio": null,
       "prompt_tokens": null,
       "completion_tokens": null,
       "prompt_cache_hit_tokens": null,
       "prompt_cache_miss_tokens": null,
-      "latency_ms": 0,
+      "latency_ms": 17919,
       "root_cause_correct": false,
       "evidence_correct": false,
       "relevant_files_correct": false,
       "fix_direction_correct": false,
       "json_valid": false,
       "quality_score": 0,
-      "error": "PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent.",
-      "run_timestamp": "2026-07-26T06:07:05.921069Z",
+      "error": "ORIGINAL_TOKEN_MINIMUM_NOT_MET: The verified stats delta was below the fixed case minimum.",
+      "run_timestamp": "2026-07-26T06:38:34.210569Z",
       "model": "deepseek-v4-flash",
-      "pricing_snapshot_date": "2026-07-26",
+      "pricing_snapshot_date": "2026-07-25",
       "initial_messages_sha256": "12822b48886a0a53407974c122cbc566f554a3dc5cef3e682a3c6baf697b8cff",
       "json_schema_sha256": "863247c11d3c881222050eed880c8d6e8ff1837674bdf8609134becfc19c39d5",
       "score": {

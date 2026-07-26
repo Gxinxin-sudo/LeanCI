@@ -377,7 +377,12 @@ class BenchmarkRunner:
                 "original_tokens": delta.original_tokens,
                 "compressed_tokens": delta.compressed_tokens,
                 "tokens_saved": delta.saved_tokens,
-                "compression_ratio": delta.compression_ratio,
+                # A 0/0 window has no meaningful savings percentage. Keeping
+                # the verified counters while omitting the ratio prevents a
+                # failed row from being presented as "100% saved".
+                "compression_ratio": (
+                    delta.compression_ratio if delta.original_tokens > 0 else None
+                ),
             }
             if (
                 paritok_result is not None
@@ -673,9 +678,9 @@ def _markdown_report(artifact: BenchmarkArtifact) -> str:
         "",
         (
             "| Case | Mode | Success | Original | Compressed | Saved | Saved % | "
-            "Quality | Latency | Error |"
+            "Prompt | Completion | Quality | Latency | Error |"
         ),
-        "| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
+        ("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |"),
     ]
     for row in artifact.rows:
         saved_percent = (
@@ -689,7 +694,10 @@ def _markdown_report(artifact: BenchmarkArtifact) -> str:
             f"{row.original_tokens if row.original_tokens is not None else '—'} | "
             f"{row.compressed_tokens if row.compressed_tokens is not None else '—'} | "
             f"{row.tokens_saved if row.tokens_saved is not None else '—'} | "
-            f"{saved_percent} | {row.quality_score} | {row.latency_ms} ms | {error} |"
+            f"{saved_percent} | "
+            f"{row.prompt_tokens if row.prompt_tokens is not None else '—'} | "
+            f"{row.completion_tokens if row.completion_tokens is not None else '—'} | "
+            f"{row.quality_score} | {row.latency_ms} ms | {error} |"
         )
     lines.extend(
         [
@@ -702,6 +710,19 @@ def _markdown_report(artifact: BenchmarkArtifact) -> str:
     if failed:
         for row in failed:
             lines.append(f"- `{row.case_id}` / `{row.mode}`: {row.error}")
+            if row.error and row.error.startswith("DEEPSEEK_TIMEOUT"):
+                lines.append(
+                    "  - The isolated `/stats` delta was retained, but the upstream "
+                    "completion exceeded the fixed provider timeout. No response usage "
+                    "or analysis was invented."
+                )
+            elif row.error and row.error.startswith("ORIGINAL_TOKEN_MINIMUM_NOT_MET"):
+                lines.append(
+                    "  - The verified `/stats` window recorded "
+                    f"`{row.original_tokens}→{row.compressed_tokens}` tokens, below the "
+                    "fixed 5,000 original-Token acceptance gate. The returned analysis "
+                    "was discarded and scored zero."
+                )
     else:
         lines.append("- No API or schema failures occurred in this fixed run.")
     lines.extend(

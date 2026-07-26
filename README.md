@@ -236,10 +236,16 @@ disabled 和 JSON object 配置，并保存相同的 `initial_messages_sha256`�
 固定评分不使用 LLM judge：根因 40、证据 20、相关文件 15、修复方向 15、严格 JSON 10。
 失败行不删除，所有计划案例都进入平均值或失败计数。
 
-2026-07-26 本轮两次 hosted GPU 预检均返回 `PARITOK_GPU_UNAVAILABLE`，因此没有发送
-DeepSeek 请求。当前工件如实保留 10 个失败行，Token 字段为空、质量为 0，明确结论是：
-**当前结果不支持任何 Benchmark 或宣传表述**。待 hosted GPU 恢复后，必须逐例重跑并
-人工复核原始 `analysis`。
+2026-07-26 的真实验收先后完成一次独立 hosted GPU 预检和 Proxy 启动时的第二次复核，
+两次均返回 `gpu_available=true`。随后五例严格按 Baseline → Paritok 顺序运行，实际发送
+10 次模型请求，没有 JSON 修复、网络重试或命令超时。正式工件保留全部 10 行：5 个
+Baseline 成功，5 个 Paritok 失败；其中 Python 案例为 DeepSeek 上游超时，其余四例的
+`/stats` 原始 Token 差值低于固定的 5,000 Token 门槛。
+
+当前结果的 Baseline 平均质量为 `73.00/100`，Paritok 成功行数量为 0，因此平均 Token
+节省不可用，质量变化为 `-73.00` 分。**当前结果不支持“保持质量”“稳定可用”“平均节省
+多少 Token”或“降低实际账单”等宣传表述。** 不得通过降低门槛、修改样例或删除失败行
+改善结论；应先由 Paritok 侧确认异常 stats 计数与上游超时，再在新的费用授权下完整重跑。
 
 ## Token 和费用口径
 
@@ -310,9 +316,9 @@ npm test
 npm run build
 ```
 
-阶段五最近结果：后端 `99 passed, 2 skipped`；前端 `21 passed`；Ruff、格式、pip check、
-lint、TypeScript strict 和 Vite 生产构建通过。两个条件集成测试只有显式设置真实集成环境
-变量时才运行。真实五例双跑因 hosted GPU 两次预检失败而未发送模型请求；这不是通过项。
+阶段五最近结果：后端 `100 passed, 2 skipped`；前端 `21 passed`；Ruff、格式、pip check、
+lint、TypeScript strict、Vite 生产构建、结果完整性和密钥模式检查通过。两个条件集成测试
+只有显式设置真实集成环境变量时才运行；它们不应在没有单独费用授权时自动发送模型请求。
 
 ## 文档
 

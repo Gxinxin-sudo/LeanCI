@@ -1,22 +1,22 @@
 # LeanCI Benchmark Report
 
-- Generated: `2026-07-26T06:07:05.921069+00:00`
+- Generated: `2026-07-26T06:47:05.291041+00:00`
 - Model: `deepseek-v4-flash`
 - Finalized: `true`
-- Pricing snapshot: `2026-07-26`
+- Pricing snapshot: `2026-07-25`
 - Fixed request configuration: `max_tokens=4096`, thinking disabled, JSON object, zero network retries
 - Token metric policy: baseline compression fields are null; Paritok original/compressed/saved fields come only from isolated `/stats` deltas.
 
 ## Summary
 
-- Successful rows: **0/10**
-- Failed rows retained: **10**
+- Successful rows: **5/10**
+- Failed rows retained: **5**
 - Average Token savings: **unavailable**
-- Baseline average quality: **0.00/100**
+- Baseline average quality: **73.00/100**
 - Paritok average quality: **0.00/100**
-- Quality change: **+0.00 points**
+- Quality change: **-73.00 points**
 
-No benchmark or promotional claim is supported: all 10 planned rows failed before a valid model result was recorded. The failures remain visible.
+On these five fixed cases, the run observed no verified average Token savings and a -73.00-point deterministic quality change. All 5 failed rows remain included. This does not establish universal quality preservation, production reliability, or actual billing savings.
 
 ## Fixed quality rubric
 
@@ -32,31 +32,31 @@ The model never scores itself. Every row keeps `human_review.status=pending` so 
 
 ## Results
 
-| Case | Mode | Success | Original | Compressed | Saved | Saved % | Quality | Latency | Error |
-| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| python-pytest | baseline_uncompressed | false | — | — | — | — | 0 | 0 ms | PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent. |
-| python-pytest | paritok | false | — | — | — | — | 0 | 0 ms | PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent. |
-| typescript-build | baseline_uncompressed | false | — | — | — | — | 0 | 0 ms | PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent. |
-| typescript-build | paritok | false | — | — | — | — | 0 | 0 ms | PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent. |
-| docker-build | baseline_uncompressed | false | — | — | — | — | 0 | 0 ms | PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent. |
-| docker-build | paritok | false | — | — | — | — | 0 | 0 ms | PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent. |
-| dependency-resolution | baseline_uncompressed | false | — | — | — | — | 0 | 0 ms | PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent. |
-| dependency-resolution | paritok | false | — | — | — | — | 0 | 0 ms | PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent. |
-| github-actions-environment | baseline_uncompressed | false | — | — | — | — | 0 | 0 ms | PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent. |
-| github-actions-environment | paritok | false | — | — | — | — | 0 | 0 ms | PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent. |
+| Case | Mode | Success | Original | Compressed | Saved | Saved % | Prompt | Completion | Quality | Latency | Error |
+| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| python-pytest | baseline_uncompressed | true | — | — | — | — | 28579 | 713 | 65 | 6925 ms | — |
+| python-pytest | paritok | false | 10469 | 254 | 10215 | 97.57% | — | — | 0 | 62567 ms | DEEPSEEK_TIMEOUT: The DeepSeek request timed out. Check the network and try again. |
+| typescript-build | baseline_uncompressed | true | — | — | — | — | 22955 | 715 | 50 | 6883 ms | — |
+| typescript-build | paritok | false | 0 | 0 | 0 | — | — | — | 0 | 20031 ms | ORIGINAL_TOKEN_MINIMUM_NOT_MET: The verified stats delta was below the fixed case minimum. |
+| docker-build | baseline_uncompressed | true | — | — | — | — | 8959 | 472 | 100 | 5103 ms | — |
+| docker-build | paritok | false | 543 | 77 | 466 | 85.82% | — | — | 0 | 18073 ms | ORIGINAL_TOKEN_MINIMUM_NOT_MET: The verified stats delta was below the fixed case minimum. |
+| dependency-resolution | baseline_uncompressed | true | — | — | — | — | 19603 | 657 | 65 | 6607 ms | — |
+| dependency-resolution | paritok | false | 0 | 0 | 0 | — | — | — | 0 | 18861 ms | ORIGINAL_TOKEN_MINIMUM_NOT_MET: The verified stats delta was below the fixed case minimum. |
+| github-actions-environment | baseline_uncompressed | true | — | — | — | — | 20957 | 632 | 85 | 6798 ms | — |
+| github-actions-environment | paritok | false | 0 | 0 | 0 | — | — | — | 0 | 17919 ms | ORIGINAL_TOKEN_MINIMUM_NOT_MET: The verified stats delta was below the fixed case minimum. |
 
 ## Failures and review
 
-- `python-pytest` / `baseline_uncompressed`: PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent.
-- `python-pytest` / `paritok`: PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent.
-- `typescript-build` / `baseline_uncompressed`: PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent.
-- `typescript-build` / `paritok`: PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent.
-- `docker-build` / `baseline_uncompressed`: PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent.
-- `docker-build` / `paritok`: PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent.
-- `dependency-resolution` / `baseline_uncompressed`: PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent.
-- `dependency-resolution` / `paritok`: PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent.
-- `github-actions-environment` / `baseline_uncompressed`: PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent.
-- `github-actions-environment` / `paritok`: PREFLIGHT_FAILED: PARITOK_GPU_UNAVAILABLE: The Paritok hosted GPU was unavailable after the bounded preflight; no DeepSeek request was sent.
+- `python-pytest` / `paritok`: DEEPSEEK_TIMEOUT: The DeepSeek request timed out. Check the network and try again.
+  - The isolated `/stats` delta was retained, but the upstream completion exceeded the fixed provider timeout. No response usage or analysis was invented.
+- `typescript-build` / `paritok`: ORIGINAL_TOKEN_MINIMUM_NOT_MET: The verified stats delta was below the fixed case minimum.
+  - The verified `/stats` window recorded `0→0` tokens, below the fixed 5,000 original-Token acceptance gate. The returned analysis was discarded and scored zero.
+- `docker-build` / `paritok`: ORIGINAL_TOKEN_MINIMUM_NOT_MET: The verified stats delta was below the fixed case minimum.
+  - The verified `/stats` window recorded `543→77` tokens, below the fixed 5,000 original-Token acceptance gate. The returned analysis was discarded and scored zero.
+- `dependency-resolution` / `paritok`: ORIGINAL_TOKEN_MINIMUM_NOT_MET: The verified stats delta was below the fixed case minimum.
+  - The verified `/stats` window recorded `0→0` tokens, below the fixed 5,000 original-Token acceptance gate. The returned analysis was discarded and scored zero.
+- `github-actions-environment` / `paritok`: ORIGINAL_TOKEN_MINIMUM_NOT_MET: The verified stats delta was below the fixed case minimum.
+  - The verified `/stats` window recorded `0→0` tokens, below the fixed 5,000 original-Token acceptance gate. The returned analysis was discarded and scored zero.
 
 A quality score below 100 is not hidden and should be reviewed against the stored `analysis` object and the case's `ground_truth.json`.
 

@@ -94,8 +94,14 @@ class FakeProvider:
 
 
 class FakeParitokClient:
-    def __init__(self, *, mutate_during_baseline: bool = False) -> None:
+    def __init__(
+        self,
+        *,
+        mutate_during_baseline: bool = False,
+        zero_token_window: bool = False,
+    ) -> None:
         self.mutate_during_baseline = mutate_during_baseline
+        self.zero_token_window = zero_token_window
         self.stats_calls = 0
 
     async def health(self) -> SimpleNamespace:
@@ -112,6 +118,8 @@ class FakeParitokClient:
             requests, original, compressed = 11, 56_200, 5_320
         elif self.stats_calls == 2:
             requests, original, compressed = 10, 50_000, 5_000
+        elif self.zero_token_window:
+            requests, original, compressed = 11, 50_000, 5_000
         else:
             requests, original, compressed = 11, 56_200, 5_320
         return ParitokStatsSnapshot(
@@ -180,6 +188,28 @@ async def test_runner_keeps_both_failed_rows_when_baseline_stats_are_contaminate
     assert rows[0].quality_score == 0
     assert rows[1].success is False
     assert rows[1].quality_score == 0
+
+
+@pytest.mark.anyio
+async def test_zero_token_stats_window_never_claims_one_hundred_percent_savings() -> None:
+    settings = Settings(
+        _env_file=None,
+        deepseek_api_key="unit-test-only",
+        paritok_api_key="unit-test-only",
+    )
+    runner = FakeBenchmarkRunner(
+        settings,
+        FakeParitokClient(zero_token_window=True),
+    )
+
+    rows = await runner.run_case("typescript-build")
+
+    assert rows[1].success is False
+    assert rows[1].original_tokens == 0
+    assert rows[1].compressed_tokens == 0
+    assert rows[1].tokens_saved == 0
+    assert rows[1].compression_ratio is None
+    assert "ORIGINAL_TOKEN_MINIMUM_NOT_MET" in (rows[1].error or "")
 
 
 def test_partial_artifact_refuses_to_make_a_promotional_claim() -> None:

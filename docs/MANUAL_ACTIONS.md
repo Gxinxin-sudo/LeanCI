@@ -185,21 +185,12 @@ http://127.0.0.1:5173/?capture=docker-build
 - [ ] `[MANUAL]` 发布前复查截图和视频中没有 `.env`、终端环境变量、API Key、请求头或
   平台密钥页面。
 
-### 7. 阶段五真实 Benchmark（当前被 hosted GPU 阻塞）
+### 7. 阶段五真实 Benchmark（真实运行已完成，外部质量链路待确认）
 
-- [ ] 用本地编辑器确认 `.env` 中非敏感的 `PRICING_SNAPSHOT_DATE=2026-07-26`；
-  不要覆盖、复制或输出 `.env` 的其余内容或任何 Key。
-- [ ] 稍后只运行一次无费用预检：
-
-```powershell
-.\backend\.venv\Scripts\python.exe scripts\test_paritok_connection.py
-```
-
-2026-07-26 本轮两次预检均原样返回 `failed:PARITOK_GPU_UNAVAILABLE`，已达到重试上限，
-没有发送 DeepSeek 请求。若仍失败，停止操作，不连续轮询，也不要运行以下付费命令。
-
-- [ ] 仅在 hosted GPU 恢复、DeepSeek 余额充足后，逐条运行五例。每条预期 2 次模型调用，
-  JSON 修复硬上限 4 次，网络重试为 0：
+- [x] 2026-07-26 完成一次独立 hosted GPU 预检和 Proxy 启动时的第二次复核；两次均返回
+  `gpu_available=true`。
+- [x] 在明确费用授权下逐条运行五例。实际总计 10 次模型请求，JSON 修复 0 次、网络重试
+  0 次、命令超时 0 次：
 
 ```powershell
 .\backend\.venv\Scripts\python.exe scripts\run_benchmark.py --confirm-cost --case python-pytest
@@ -209,10 +200,25 @@ http://127.0.0.1:5173/?capture=docker-build
 .\backend\.venv\Scripts\python.exe scripts\run_benchmark.py --confirm-cost --case github-actions-environment
 ```
 
-- [ ] 检查 `benchmarks/results.json` 的 10 行都存在、两路初始消息哈希按案例一致、Paritok
-  Token 均来自 `/stats`、失败行没有被删除，并人工复核每行 `analysis` 与 ground truth。
-- [ ] 只有真实结果支持时，才更新宣传文案。当前固定工件为 10 个
-  `PREFLIGHT_FAILED` 行，明确不支持任何 Benchmark 或质量/压缩宣传。
+- [x] 已用严格 Pydantic 模型检查 `benchmarks/results.json` 的 10 行、每例两路消息与
+  Schema 哈希、Baseline null 规则、Paritok `/stats` 等式和失败保留规则。
+- [ ] 唯一需要人工协调的事项：向 Paritok 维护方提供以下脱敏信息，请其确认 Paritok
+  1.2.7 hosted 压缩与 `/stats` 语义；不要提供 `.env`、API Key、请求头或完整模型输出。
+
+  1. 说明环境为 Paritok 1.2.7、`use_gpu_server: true`、模型 `deepseek-v4-flash`。
+  2. 提供运行日期 `2026-07-26`、五个固定 `case_id` 和 `benchmarks/report.md` 中的安全错误。
+  3. 提供累计 stats：5 个 Proxy 请求，`input_tokens_original=11012`、
+     `input_tokens_compressed=331`、`tokens_saved=10681`。
+  4. 说明逐例差值：Python `10469→254` 后 DeepSeek 超时；TypeScript `0→0`、
+     Docker `543→77`、Dependency `0→0`、GitHub Actions `0→0`，后四例均未达到固定
+     `minimum_original_tokens=5000`。
+  5. 询问 0/低 Token 差值是否表示 hosted 路径跳过、缓存命中、统计缺失或已知缺陷，并
+     请求可核验的修复版本或官方解释。
+  6. 在维护方确认前停止付费重跑；收到修复或明确说明后，先做最多两次无费用预检，再由
+     用户重新授权完整五例费用，保持样例和门槛不变，最后人工复核 `analysis`。
+
+当前 5 个 Baseline 成功、5 个 Paritok 失败，平均 Token 节省不可用，质量变化为
+`-73.00` 分。不得宣传质量保持、稳定可用、固定百分比节省或实际账单降低。
 
 ## 发布阶段需要
 
