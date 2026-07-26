@@ -1,25 +1,59 @@
 {
-  "schema_version": 1,
-  "sample_id": "typescript-build",
-  "root_cause": "DEPLOY_REGION is string | undefined, but loadConfig promises AppConfig with a required string region.",
+  "schema_version": 2,
+  "case_id": "typescript-build",
+  "expected_root_cause": "DEPLOY_REGION is string | undefined, but loadConfig promises AppConfig with a required string region.",
+  "root_cause_term_groups": [
+    [
+      "deploy_region"
+    ],
+    [
+      "undefined"
+    ],
+    [
+      "string"
+    ]
+  ],
+  "expected_evidence": [
+    {
+      "source": "ci.log",
+      "term_groups": [
+        [
+          "ts2322"
+        ],
+        [
+          "string | undefined"
+        ]
+      ]
+    },
+    {
+      "source": "config.ts",
+      "term_groups": [
+        [
+          "process.env.deploy_region"
+        ]
+      ]
+    }
+  ],
   "expected_relevant_files": [
     "config.ts",
     "deploy.ts",
     "tsconfig.json"
   ],
-  "required_relevant_files": [
-    "config.ts"
-  ],
-  "required_answer_terms": [
-    "undefined",
-    "string"
-  ],
   "expected_fix_direction": [
     "Validate DEPLOY_REGION once at configuration startup.",
     "Throw a clear configuration error or provide an intentional default."
   ],
-  "expected_patch_contains": [
-    "const region = process.env.DEPLOY_REGION"
+  "fix_direction_term_groups": [
+    [
+      "validate",
+      "check",
+      "guard"
+    ],
+    [
+      "throw",
+      "error",
+      "default"
+    ]
   ],
   "minimum_original_tokens": 5000
 }

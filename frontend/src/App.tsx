@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
+import { BenchmarkPage } from './components/BenchmarkPage'
 import { ResultsPanel } from './components/ResultsPanel'
 import { TokenPanel } from './components/TokenPanel'
 import { analyzeLog, getHealth, getSample, getSampleCapture } from './lib/api'
@@ -48,6 +49,18 @@ const SAMPLE_CARDS = [
     kicker: 'buildkit',
     title: 'Docker build failure',
     description: 'An ignore rule silently removes package manifests from the build context.',
+  },
+  {
+    id: 'dependency-resolution',
+    kicker: 'npm ERESOLVE',
+    title: 'Dependency resolution failure',
+    description: 'A React 19 tree conflicts with a package that requires React 18.',
+  },
+  {
+    id: 'github-actions-environment',
+    kicker: 'actions env',
+    title: 'GitHub Actions environment failure',
+    description: 'An unset repository variable reaches a fail-fast environment check.',
   },
 ] as const
 
@@ -197,6 +210,7 @@ export function App() {
   const [healthState, setHealthState] = useState<HealthState>({ status: 'checking' })
   const [inputMessage, setInputMessage] = useState('')
   const captureMode = new URLSearchParams(window.location.search).has('capture')
+  const benchmarkMode = new URLSearchParams(window.location.search).get('view') === 'benchmark'
 
   const refreshHealth = async () => {
     setHealthState({ status: 'checking' })
@@ -211,6 +225,7 @@ export function App() {
   }
 
   useEffect(() => {
+    if (benchmarkMode) return
     let active = true
     void getHealth()
       .then((data) => {
@@ -227,9 +242,10 @@ export function App() {
     return () => {
       active = false
     }
-  }, [])
+  }, [benchmarkMode])
 
   useEffect(() => {
+    if (benchmarkMode) return
     const captureId = new URLSearchParams(window.location.search).get('capture')
     if (!captureId || !SAMPLE_CARDS.some((sample) => sample.id === captureId)) return
 
@@ -255,7 +271,7 @@ export function App() {
     return () => {
       active = false
     }
-  }, [])
+  }, [benchmarkMode])
 
   const handleLoadSample = async (sampleId: string) => {
     setSampleLoadingId(sampleId)
@@ -328,6 +344,31 @@ export function App() {
   const logBytes = utf8Bytes(logText)
   const activeResult = analysisState.status === 'success' ? analysisState.data : undefined
 
+  if (benchmarkMode) {
+    return (
+      <div className="app-shell">
+        <header className="topbar">
+          <a className="brand" href="/" aria-label="LeanCI home">
+            <BrandMark />
+            <span><strong>LeanCI</strong><small>Benchmark ledger</small></span>
+          </a>
+          <nav className="topbar-nav" aria-label="Primary navigation">
+            <a href="/">Workbench</a>
+            <a href="/?view=benchmark" aria-current="page">Benchmark</a>
+          </nav>
+          <span className="security-note">Fixed artifact · No paid action in browser</span>
+        </header>
+        <main id="top">
+          <BenchmarkPage />
+        </main>
+        <footer>
+          <span>LeanCI · Phase 05 benchmark</span>
+          <span>Baseline uncompressed ↔ Paritok verified compression</span>
+        </footer>
+      </div>
+    )
+  }
+
   return (
     <div className={`app-shell ${captureMode ? 'capture-mode' : ''}`}>
       <header className="topbar">
@@ -335,7 +376,10 @@ export function App() {
           <BrandMark />
           <span><strong>LeanCI</strong><small>Failure workbench</small></span>
         </a>
-        <p>Token-efficient CI diagnosis</p>
+        <nav className="topbar-nav" aria-label="Primary navigation">
+          <a href="/" aria-current="page">Workbench</a>
+          <a href="/?view=benchmark">Benchmark</a>
+        </nav>
         <span className="security-note">No code execution · No API keys shown</span>
       </header>
 
@@ -485,7 +529,7 @@ export function App() {
       </main>
 
       <footer>
-        <span>LeanCI · Phase 04 real MVP</span>
+        <span>LeanCI · Phase 05 benchmark-ready MVP</span>
         <span>FastAPI → local Paritok Proxy → hosted GPU → DeepSeek</span>
       </footer>
     </div>

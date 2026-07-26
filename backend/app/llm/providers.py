@@ -125,9 +125,17 @@ class _OpenAICompatibleDeepSeekProvider(LLMProvider):
         )
 
     async def analyze(self, untrusted_context: str) -> ProviderResult:
-        first_completion, request_attempts = await self._request(
-            self._build_analysis_messages(untrusted_context)
-        )
+        return await self.analyze_messages(self._build_analysis_messages(untrusted_context))
+
+    async def analyze_messages(self, messages: list[PromptMessage]) -> ProviderResult:
+        """Analyze an already-built fixed message list.
+
+        This is used only by the isolated benchmark so both routes receive the
+        byte-identical initial message payload. Application analysis continues
+        to call ``analyze`` and select its own fixed Paritok message builder.
+        """
+
+        first_completion, request_attempts = await self._request(messages)
         first_content = self._extract_content(first_completion)
         repair_completion: Any | None = None
 

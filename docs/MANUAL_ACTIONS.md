@@ -185,9 +185,38 @@ http://127.0.0.1:5173/?capture=docker-build
 - [ ] `[MANUAL]` 发布前复查截图和视频中没有 `.env`、终端环境变量、API Key、请求头或
   平台密钥页面。
 
+### 7. 阶段五真实 Benchmark（当前被 hosted GPU 阻塞）
+
+- [ ] 用本地编辑器确认 `.env` 中非敏感的 `PRICING_SNAPSHOT_DATE=2026-07-26`；
+  不要覆盖、复制或输出 `.env` 的其余内容或任何 Key。
+- [ ] 稍后只运行一次无费用预检：
+
+```powershell
+.\backend\.venv\Scripts\python.exe scripts\test_paritok_connection.py
+```
+
+2026-07-26 本轮两次预检均原样返回 `failed:PARITOK_GPU_UNAVAILABLE`，已达到重试上限，
+没有发送 DeepSeek 请求。若仍失败，停止操作，不连续轮询，也不要运行以下付费命令。
+
+- [ ] 仅在 hosted GPU 恢复、DeepSeek 余额充足后，逐条运行五例。每条预期 2 次模型调用，
+  JSON 修复硬上限 4 次，网络重试为 0：
+
+```powershell
+.\backend\.venv\Scripts\python.exe scripts\run_benchmark.py --confirm-cost --case python-pytest
+.\backend\.venv\Scripts\python.exe scripts\run_benchmark.py --confirm-cost --case typescript-build
+.\backend\.venv\Scripts\python.exe scripts\run_benchmark.py --confirm-cost --case docker-build
+.\backend\.venv\Scripts\python.exe scripts\run_benchmark.py --confirm-cost --case dependency-resolution
+.\backend\.venv\Scripts\python.exe scripts\run_benchmark.py --confirm-cost --case github-actions-environment
+```
+
+- [ ] 检查 `benchmarks/results.json` 的 10 行都存在、两路初始消息哈希按案例一致、Paritok
+  Token 均来自 `/stats`、失败行没有被删除，并人工复核每行 `analysis` 与 ground truth。
+- [ ] 只有真实结果支持时，才更新宣传文案。当前固定工件为 10 个
+  `PREFLIGHT_FAILED` 行，明确不支持任何 Benchmark 或质量/压缩宣传。
+
 ## 发布阶段需要
 
-### 7. 创建公开 GitHub 仓库
+### 8. 创建公开 GitHub 仓库
 
 - [ ] 登录 [GitHub](https://github.com/new)。
 - [ ] Repository name 填写 `LeanCI`。
@@ -203,7 +232,7 @@ git push -u origin main
 
 - [ ] 刷新 GitHub 页面，确认 `README.md`、`LICENSE` 和源代码可公开访问，且没有 `.env` 或密钥。
 
-### 8. 选择并配置 Docker 托管平台
+### 9. 选择并配置 Docker 托管平台
 
 - [ ] 在 Docker MVP 通过后选择支持单容器、平台 `PORT` 和环境变量的托管平台。
 - [ ] 在平台网页中添加 `DEEPSEEK_API_KEY`、`PARITOK_API_KEY` 和 README 列出的非敏感配置。
@@ -214,7 +243,7 @@ git push -u origin main
 
 具体平台与点击步骤将在选择平台后补充，本阶段不假定某一家服务。
 
-### 9. 准备并提交 Devpost 材料
+### 10. 准备并提交 Devpost 材料
 
 - [ ] 创建清晰的项目一句话说明和完整描述。
 - [ ] 录制日志输入、结构化诊断、Diff、Token 面板和 benchmark 的演示。

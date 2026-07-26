@@ -118,14 +118,20 @@
 - [x] 创建固定 Python pytest 示例及 `ground_truth.json`
 - [x] 创建固定 TypeScript Build 示例及 `ground_truth.json`
 - [x] 创建固定 Docker Build 示例及 `ground_truth.json`
-- [ ] 限制 live benchmark 只能使用内置示例
-- [ ] 要求 `confirm_cost=true` 并在 UI 提示两次 API 调用
-- [ ] 顺序执行压缩与未压缩 baseline
-- [ ] 为两路结果记录结构化有效性、延迟和配置价格估算
-- [ ] 确保 baseline 代码无法被 `/api/analyze` 调用
-- [ ] 导出带日期、模型和配置的固定 benchmark 结果
-- [ ] 测试重复运行、错误恢复、费用提示和 stats 隔离
-- [ ] 更新 README、架构和任务状态
+- [x] 创建固定依赖解析失败示例及严格 `ground_truth.json`
+- [x] 创建固定 GitHub Actions 环境失败示例及严格 `ground_truth.json`
+- [x] 限制 live benchmark 只能使用五个内置示例
+- [x] 要求 `--confirm-cost` 并明确每例预期 2 次、最多 4 次模型调用
+- [x] 固定顺序为未压缩 Baseline → Paritok，首轮消息哈希必须一致
+- [x] 为两路结果记录 JSON 有效性、质量分、使用量、延迟和 cache hit/miss 价格场景
+- [x] 确保 baseline 代码无法被 `/api/analyze` 调用
+- [x] 导出带日期、模型、配置和失败行的 `results.json`、`results.csv`、`report.md`
+- [x] 实现根因 40、证据 20、文件 15、修复方向 15、JSON 10 的确定性评分和人工复核字段
+- [x] 测试重复运行、错误恢复、费用提示、同提示、stats 隔离和失败保留
+- [x] 创建只读 Benchmark 前端页并展示平均 Token 节省、质量变化和全部失败
+- [x] 更新 README、架构和任务状态
+- [ ] `[MANUAL]` hosted GPU 恢复后依次完成五例真实双跑；2026-07-26 两次预检均返回
+  `PARITOK_GPU_UNAVAILABLE`，当前固定工件保留 10 个失败行且模型请求数为 0
 
 ## 阶段 6：Docker 与端到端验证
 

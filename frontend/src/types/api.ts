@@ -84,7 +84,7 @@ export interface HealthResponse {
 export interface SampleSummary {
   id: string
   title: string
-  category: 'Python' | 'TypeScript' | 'Docker'
+  category: 'Python' | 'TypeScript' | 'Docker' | 'Dependencies' | 'GitHub Actions'
   description: string
   log_bytes: number
   file_count: number
@@ -109,4 +109,85 @@ export interface ApiErrorEnvelope {
     message: string
     request_id: string
   }
+}
+
+export type BenchmarkMode = 'baseline_uncompressed' | 'paritok'
+
+export interface BenchmarkRow {
+  case_id: string
+  mode: BenchmarkMode
+  success: boolean
+  original_tokens: number | null
+  compressed_tokens: number | null
+  tokens_saved: number | null
+  compression_ratio: number | null
+  prompt_tokens: number | null
+  completion_tokens: number | null
+  prompt_cache_hit_tokens: number | null
+  prompt_cache_miss_tokens: number | null
+  latency_ms: number
+  root_cause_correct: boolean
+  evidence_correct: boolean
+  relevant_files_correct: boolean
+  fix_direction_correct: boolean
+  json_valid: boolean
+  quality_score: number
+  error: string | null
+  run_timestamp: string
+  model: 'deepseek-v4-flash'
+  pricing_snapshot_date: string
+  initial_messages_sha256: string
+  json_schema_sha256: string
+  human_review: {
+    status: 'pending' | 'confirmed' | 'overridden'
+    reviewer: string | null
+    notes: string | null
+  }
+  cost_estimate: {
+    input_if_all_cache_hit_usd: number | null
+    input_if_all_cache_miss_usd: number | null
+    input_from_reported_cache_split_usd: number | null
+    output_usd: number | null
+    saved_input_if_cache_hit_usd: number | null
+    saved_input_if_cache_miss_usd: number | null
+    disclaimer: string
+  }
+}
+
+export interface BenchmarkArtifact {
+  schema_version: 1
+  generated_at: string
+  finalized: boolean
+  case_ids: string[]
+  configuration: {
+    model: 'deepseek-v4-flash'
+    max_tokens: number
+    thinking: 'disabled'
+    response_format: 'json_object'
+    network_retries: 0
+    execution_order: 'baseline_uncompressed_then_paritok'
+    scoring_rule: '40+20+15+15+10'
+    token_metric_policy: string
+  }
+  pricing: {
+    snapshot_date: string
+    input_cache_hit_usd_per_m_tokens: number
+    input_cache_miss_usd_per_m_tokens: number
+    output_usd_per_m_tokens: number
+    note: string
+  }
+  summary: {
+    expected_cases: number
+    expected_rows: number
+    completed_rows: number
+    successful_rows: number
+    failed_rows: number
+    average_tokens_saved: number | null
+    average_token_savings_percent: number | null
+    baseline_average_quality: number
+    paritok_average_quality: number
+    quality_change_points: number
+    supported_claim: string
+  }
+  rows: BenchmarkRow[]
 }

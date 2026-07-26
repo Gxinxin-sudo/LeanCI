@@ -1,0 +1,67 @@
+{
+  "schema_version": 2,
+  "case_id": "github-actions-environment",
+  "expected_root_cause": "The workflow maps DEPLOY_ENV from the repository variable DEPLOY_ENVIRONMENT, but that variable is unset in this Actions context, so the validation script receives an empty value.",
+  "root_cause_term_groups": [
+    [
+      "deploy_environment"
+    ],
+    [
+      "unset",
+      "missing",
+      "empty",
+      "not defined"
+    ],
+    [
+      "deploy_env"
+    ]
+  ],
+  "expected_evidence": [
+    {
+      "source": "ci.log",
+      "term_groups": [
+        [
+          "deploy_env:"
+        ],
+        [
+          "deploy_env is required"
+        ]
+      ]
+    },
+    {
+      "source": "deploy.yml",
+      "term_groups": [
+        [
+          "vars.deploy_environment"
+        ]
+      ]
+    }
+  ],
+  "expected_relevant_files": [
+    "deploy.yml",
+    "validate_env.py"
+  ],
+  "expected_fix_direction": [
+    "Define DEPLOY_ENVIRONMENT at the repository or selected GitHub Environment scope before dispatching the workflow.",
+    "Keep the fail-fast validation and document the allowed values."
+  ],
+  "fix_direction_term_groups": [
+    [
+      "define",
+      "configure",
+      "set"
+    ],
+    [
+      "repository variable",
+      "environment variable",
+      "github environment",
+      "vars"
+    ],
+    [
+      "staging",
+      "production",
+      "allowed"
+    ]
+  ],
+  "minimum_original_tokens": 5000
+}

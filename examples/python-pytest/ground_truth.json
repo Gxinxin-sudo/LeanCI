@@ -1,25 +1,63 @@
 {
-  "schema_version": 1,
-  "sample_id": "python-pytest",
-  "root_cause": "Operator precedence subtracts one after exponentiation, so attempt 4 returns 15 instead of the configured 16-second cap.",
+  "schema_version": 2,
+  "case_id": "python-pytest",
+  "expected_root_cause": "Operator precedence subtracts one after exponentiation, so attempt 4 returns 15 instead of the configured 16-second cap.",
+  "root_cause_term_groups": [
+    [
+      "15"
+    ],
+    [
+      "16"
+    ],
+    [
+      "- 1",
+      "-1",
+      "subtract",
+      "precedence"
+    ]
+  ],
+  "expected_evidence": [
+    {
+      "source": "ci.log",
+      "term_groups": [
+        [
+          "assert 15 == 16",
+          "15 == 16"
+        ]
+      ]
+    },
+    {
+      "source": "test_retry.py",
+      "term_groups": [
+        [
+          "attempt=4"
+        ],
+        [
+          "== 16"
+        ]
+      ]
+    }
+  ],
   "expected_relevant_files": [
     "retry.py",
     "test_retry.py"
-  ],
-  "required_relevant_files": [
-    "retry.py",
-    "test_retry.py"
-  ],
-  "required_answer_terms": [
-    "delay_for",
-    "-1"
   ],
   "expected_fix_direction": [
     "Make the intended backoff formula explicit with parentheses.",
     "Keep the cap test and add boundary cases around the maximum delay."
   ],
-  "expected_patch_contains": [
-    "min(self.base_delay * (2**attempt), self.max_delay)"
+  "fix_direction_term_groups": [
+    [
+      "parenthes",
+      "formula",
+      "remove - 1",
+      "remove -1"
+    ],
+    [
+      "cap",
+      "maximum",
+      "boundary"
+    ]
   ],
   "minimum_original_tokens": 5000
 }

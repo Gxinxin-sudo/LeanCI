@@ -17,7 +17,7 @@ SAMPLES_ROOT = PROJECT_ROOT / "examples"
 class SampleDefinition:
     id: str
     title: str
-    category: Literal["Python", "TypeScript", "Docker"]
+    category: Literal["Python", "TypeScript", "Docker", "Dependencies", "GitHub Actions"]
     description: str
     directory: str
     files: tuple[str, ...]
@@ -47,6 +47,22 @@ SAMPLE_DEFINITIONS = (
         description="BuildKit cannot copy package manifests excluded by an over-broad ignore rule.",
         directory="docker-build",
         files=("Dockerfile", ".dockerignore", "package.json"),
+    ),
+    SampleDefinition(
+        id="dependency-resolution",
+        title="Dependency resolution failure",
+        category="Dependencies",
+        description="npm rejects a React 19 tree with a package that requires React 18.",
+        directory="dependency-resolution",
+        files=("package.json", "package-lock.json"),
+    ),
+    SampleDefinition(
+        id="github-actions-environment",
+        title="GitHub Actions environment failure",
+        category="GitHub Actions",
+        description="An unset repository variable reaches a fail-fast environment check.",
+        directory="github-actions-environment",
+        files=("deploy.yml", "validate_env.py"),
     ),
 )
 _SAMPLES_BY_ID = {sample.id: sample for sample in SAMPLE_DEFINITIONS}

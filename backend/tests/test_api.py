@@ -227,11 +227,29 @@ def test_bundled_sample_api_uses_fixed_ids() -> None:
         "python-pytest",
         "typescript-build",
         "docker-build",
+        "dependency-resolution",
+        "github-actions-environment",
     ]
     assert sample.status_code == 200
     assert sample.json()["log_bytes"] > 30_000
     assert len(sample.json()["files"]) == 3
     assert traversal.status_code in {404, 422}
+
+
+def test_benchmark_api_returns_every_fixed_case_and_both_modes() -> None:
+    client = make_client()
+
+    response = client.get("/api/benchmark/results")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["finalized"] is True
+    assert len(payload["rows"]) == 10
+    assert {(row["case_id"], row["mode"]) for row in payload["rows"]} == {
+        (case_id, mode)
+        for case_id in payload["case_ids"]
+        for mode in ("baseline_uncompressed", "paritok")
+    }
 
 
 def test_paritok_failure_is_returned_as_503_without_internal_details() -> None:

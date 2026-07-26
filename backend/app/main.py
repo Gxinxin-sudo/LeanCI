@@ -5,8 +5,11 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import ValidationError
 
 from app.analysis import AnalysisService
+from app.benchmark import load_results
+from app.benchmark_models import BenchmarkArtifact
 from app.body_limit import RequestBodyLimitMiddleware
 from app.config import Settings, get_settings
 from app.errors import AppError, attach_request_id, error_responses, register_error_handlers
@@ -112,6 +115,26 @@ def create_app(
                 status_code=404,
                 code="CAPTURE_NOT_FOUND",
                 message="No saved real-run capture exists for this sample.",
+            ) from exc
+
+    @application.get(
+        "/api/benchmark/results",
+        response_model=BenchmarkArtifact,
+    )
+    async def benchmark_results() -> BenchmarkArtifact:
+        try:
+            return load_results()
+        except FileNotFoundError as exc:
+            raise AppError(
+                status_code=404,
+                code="BENCHMARK_NOT_FOUND",
+                message="No fixed benchmark artifact has been generated yet.",
+            ) from exc
+        except (OSError, ValidationError) as exc:
+            raise AppError(
+                status_code=503,
+                code="BENCHMARK_INVALID",
+                message="The fixed benchmark artifact failed strict validation.",
             ) from exc
 
     @application.post(

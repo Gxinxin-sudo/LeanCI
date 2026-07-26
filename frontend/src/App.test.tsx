@@ -4,7 +4,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { App, MAX_LOG_CHARACTERS } from './App'
 import { mockAnalysis } from './test/mockAnalysis'
-import type { CapturedSampleResult, HealthResponse, SamplePayload } from './types/api'
+import type {
+  BenchmarkArtifact,
+  CapturedSampleResult,
+  HealthResponse,
+  SamplePayload,
+} from './types/api'
 
 const healthy: HealthResponse = {
   status: 'ok',
@@ -32,6 +37,87 @@ const sample: SamplePayload = {
   ],
 }
 
+const benchmark: BenchmarkArtifact = {
+  schema_version: 1,
+  generated_at: '2026-07-26T08:00:00Z',
+  finalized: true,
+  case_ids: [
+    'python-pytest',
+    'typescript-build',
+    'docker-build',
+    'dependency-resolution',
+    'github-actions-environment',
+  ],
+  configuration: {
+    model: 'deepseek-v4-flash',
+    max_tokens: 4096,
+    thinking: 'disabled',
+    response_format: 'json_object',
+    network_retries: 0,
+    execution_order: 'baseline_uncompressed_then_paritok',
+    scoring_rule: '40+20+15+15+10',
+    token_metric_policy: 'Paritok stats only.',
+  },
+  pricing: {
+    snapshot_date: '2026-07-26',
+    input_cache_hit_usd_per_m_tokens: 0.0028,
+    input_cache_miss_usd_per_m_tokens: 0.14,
+    output_usd_per_m_tokens: 0.28,
+    note: 'Configured estimate.',
+  },
+  summary: {
+    expected_cases: 5,
+    expected_rows: 10,
+    completed_rows: 10,
+    successful_rows: 9,
+    failed_rows: 1,
+    average_tokens_saved: 8_000,
+    average_token_savings_percent: 94.5,
+    baseline_average_quality: 90,
+    paritok_average_quality: 88,
+    quality_change_points: -2,
+    supported_claim: 'On these five fixed cases only.',
+  },
+  rows: [
+    {
+      case_id: 'python-pytest',
+      mode: 'paritok',
+      success: false,
+      original_tokens: 8_200,
+      compressed_tokens: 300,
+      tokens_saved: 7_900,
+      compression_ratio: 0.036585,
+      prompt_tokens: null,
+      completion_tokens: null,
+      prompt_cache_hit_tokens: null,
+      prompt_cache_miss_tokens: null,
+      latency_ms: 4_200,
+      root_cause_correct: false,
+      evidence_correct: false,
+      relevant_files_correct: false,
+      fix_direction_correct: false,
+      json_valid: false,
+      quality_score: 0,
+      error: 'LLM_OUTPUT_INVALID: strict JSON failed.',
+      run_timestamp: '2026-07-26T08:00:00Z',
+      model: 'deepseek-v4-flash',
+      pricing_snapshot_date: '2026-07-26',
+      initial_messages_sha256: 'a'.repeat(64),
+      json_schema_sha256: 'b'.repeat(64),
+      human_review: { status: 'pending', reviewer: null, notes: null },
+      cost_estimate: {
+        input_if_all_cache_hit_usd: null,
+        input_if_all_cache_miss_usd: null,
+        input_from_reported_cache_split_usd: null,
+        output_usd: null,
+        saved_input_if_cache_hit_usd: null,
+        saved_input_if_cache_miss_usd: null,
+        disclaimer: 'Configured estimate.',
+      },
+    },
+  ],
+}
+
 function jsonResponse(value: unknown, status = 200): Response {
   return new Response(JSON.stringify(value), {
     status,
@@ -46,7 +132,7 @@ afterEach(() => {
 })
 
 describe('LeanCI workbench', () => {
-  it('explains the value and exposes all three one-click samples', async () => {
+  it('explains the value and exposes all five one-click samples', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(healthy)))
     render(<App />)
 
@@ -55,6 +141,8 @@ describe('LeanCI workbench', () => {
     expect(screen.getByRole('button', { name: /Python pytest failure/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /TypeScript build failure/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Docker build failure/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Dependency resolution failure/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /GitHub Actions environment failure/i })).toBeInTheDocument()
     expect(screen.getByText('No code execution · No API keys shown')).toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: 'Paste CI failure log' })).toHaveAttribute(
       'maxlength',
@@ -181,7 +269,7 @@ describe('LeanCI workbench', () => {
     await user.click(screen.getByRole('button', { name: /Analyze failure/i }))
 
     expect(screen.getByRole('alert')).toHaveTextContent(
-      'Paste a CI log or load one of the three samples before analyzing.',
+      'Paste a CI log or load one of the five samples before analyzing.',
     )
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
@@ -198,5 +286,18 @@ describe('LeanCI workbench', () => {
       await screen.findByText(/only allowlisted source, config, log, and documentation/i),
     ).toBeInTheDocument()
     expect(screen.queryByText('context.zip', { selector: 'strong' })).not.toBeInTheDocument()
+  })
+
+  it('shows the fixed benchmark ledger without a paid browser action', async () => {
+    window.history.replaceState({}, '', '/?view=benchmark')
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse(benchmark)))
+
+    render(<App />)
+
+    expect(await screen.findByRole('heading', { name: 'Every row stays.' })).toBeInTheDocument()
+    expect(screen.getByText('94.50%')).toBeInTheDocument()
+    expect(screen.getByText('Failed · retained')).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('LLM_OUTPUT_INVALID')
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 })

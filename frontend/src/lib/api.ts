@@ -1,6 +1,7 @@
 import type {
   AnalysisResult,
   ApiErrorEnvelope,
+  BenchmarkArtifact,
   CapturedSampleResult,
   HealthResponse,
   SamplePayload,
@@ -62,6 +63,10 @@ export function getSample(sampleId: string): Promise<SamplePayload> {
 
 export function getSampleCapture(sampleId: string): Promise<CapturedSampleResult> {
   return requestJson<CapturedSampleResult>(`/captures/${encodeURIComponent(sampleId)}`)
+}
+
+export function getBenchmarkResults(): Promise<BenchmarkArtifact> {
+  return requestJson<BenchmarkArtifact>('/benchmark/results')
 }
 
 export function analyzeLog(

@@ -1,0 +1,73 @@
+{
+  "schema_version": 2,
+  "case_id": "dependency-resolution",
+  "expected_root_cause": "@legacy-grid/react 4.6.0 requires React ^18.2.0, while the root project pins React 19.2.0, so npm correctly rejects the peer tree.",
+  "root_cause_term_groups": [
+    [
+      "@legacy-grid/react"
+    ],
+    [
+      "^18.2.0",
+      "react 18"
+    ],
+    [
+      "19.2.0",
+      "react 19"
+    ],
+    [
+      "peer"
+    ]
+  ],
+  "expected_evidence": [
+    {
+      "source": "ci.log",
+      "term_groups": [
+        [
+          "eresolve"
+        ],
+        [
+          "peer react"
+        ],
+        [
+          "^18.2.0"
+        ]
+      ]
+    },
+    {
+      "source": "package.json",
+      "term_groups": [
+        [
+          "@legacy-grid/react"
+        ],
+        [
+          "19.2.0"
+        ]
+      ]
+    }
+  ],
+  "expected_relevant_files": [
+    "package.json",
+    "package-lock.json"
+  ],
+  "expected_fix_direction": [
+    "Upgrade @legacy-grid/react to a release that supports React 19, or intentionally align React and React DOM to 18.",
+    "Regenerate and review the lockfile; do not hide the conflict with --force."
+  ],
+  "fix_direction_term_groups": [
+    [
+      "upgrade",
+      "align",
+      "downgrade"
+    ],
+    [
+      "react 19",
+      "react 18",
+      "peer"
+    ],
+    [
+      "lockfile",
+      "package-lock"
+    ]
+  ],
+  "minimum_original_tokens": 5000
+}

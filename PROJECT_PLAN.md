@@ -38,7 +38,7 @@ LeanCI（Token-Efficient AI Debugging for Massive CI Logs）帮助开发者诊�
 阶段四实现更新（2026-07-26）：
 
 - 安全输入已扩展为 4 MiB 请求体、2 MiB 日志、最多 5 个 UTF-8 文本文件；
-- 三个固定长日志案例及 `ground_truth.json` 已内置，前端可一键加载；
+- 五个固定长日志案例及 `ground_truth.json` 已内置，前端可一键加载；
 - 深色开发者工作台已覆盖健康、忙碌、失败、重试、完整诊断、复制和下载报告；
 - Token 主指标仍只显示真实 `/stats` 差值；hosted GPU 不可用时 UI 明确降级且不发送分析；
 - 三个固定样例的真实 Original/Compressed Token 分别为 `23,906/332`、
@@ -54,7 +54,7 @@ LeanCI（Token-Efficient AI Debugging for Massive CI Logs）帮助开发者诊�
 2. 可选上传最多 5 个文本文件；
 3. 文件类型白名单；
 4. 文件与请求大小限制；
-5. 三个内置示例；
+5. 五个内置示例；
 6. Paritok 本地代理与 hosted GPU 健康检查；
 7. DeepSeek 严格结构化分析；
 8. 根因、可信度和日志证据展示；
@@ -132,9 +132,11 @@ LeanCI（Token-Efficient AI Debugging for Massive CI Logs）帮助开发者诊�
 
 ### 阶段 5：Benchmark 与示例
 
-- 建立 GitHub Actions/pytest、TypeScript Build、Docker Build 三个带预期根因的示例。
-- 实现用户显式确认后的顺序双跑、使用量和延迟记录、固定结果导出。
-- 质量门：baseline 隔离、双跑费用提示、结果 Schema、stats 不串扰和重复运行测试通过。
+- 建立 pytest、TypeScript、Docker、依赖解析、GitHub Actions 环境五个带预期根因的示例。
+- 实现用户显式确认后的 Baseline → Paritok 顺序双跑、使用量和延迟记录、确定性质量评分、
+  失败保留和固定 JSON/CSV/Markdown 导出。
+- 质量门：baseline 隔离、双跑费用提示、同提示哈希、结果 Schema、stats 不串扰、失败恢复
+  和重复运行测试通过；外部链路不可用时发布明确失败工件，不生成宣传结论。
 
 ### 阶段 6：Docker 与端到端验证
 

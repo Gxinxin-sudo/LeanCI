@@ -124,7 +124,7 @@ export async function readTextFiles(
 
 export function validateSubmission(logText: string, files: UploadedTextFile[]): void {
   if (!logText.trim()) {
-    throw new Error('Paste a CI log or load one of the three samples before analyzing.')
+    throw new Error('Paste a CI log or load one of the five samples before analyzing.')
   }
   validateText(logText, 'CI log', MAX_LOG_BYTES)
   if (files.length > MAX_UPLOAD_FILES) {

@@ -168,7 +168,7 @@ class AnalyzeRequest(StrictModel):
 class SampleSummary(StrictModel):
     id: str = Field(pattern=r"^[a-z0-9-]+$", max_length=80)
     title: str = Field(min_length=1, max_length=120)
-    category: Literal["Python", "TypeScript", "Docker"]
+    category: Literal["Python", "TypeScript", "Docker", "Dependencies", "GitHub Actions"]
     description: str = Field(min_length=1, max_length=300)
     log_bytes: int = Field(ge=1)
     file_count: int = Field(ge=1, le=MAX_UPLOAD_FILES)

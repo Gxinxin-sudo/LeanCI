@@ -36,7 +36,7 @@ flowchart LR
 ### React
 
 - 本地预检 2 MiB 日志和最多 5 个 UTF-8 文本文件；
-- 通过固定 ID 一次载入三个仓库内 Sample，不接受文件路径；
+- 通过固定 ID 一次载入五个仓库内 Sample，不接受文件路径；
 - 提交 JSON `log_text` 与内存中的 `files[{name, content}]`；
 - 展示结构化诊断、本次 Token 指标、累计统计、模型、耗时与路由健康状态；
 - 展示由 LeanCI 配置价格计算的估算值和免责声明；
@@ -239,7 +239,7 @@ DeepSeek 连接、429 和 5xx 采用有界重试；401/402 不重试。空内容
 
 ### 固定 Sample 与录屏状态
 
-- `GET /api/samples`：只返回三个固定 Sample 的元数据；
+- `GET /api/samples`：只返回五个固定 Sample 的元数据；
 - `GET /api/samples/{id}`：从映射好的仓库目录读取日志和相关文件；
 - `GET /api/captures/{id}`：读取真实三跑成功后保存的 `demo_result.json`；
 - 未知 ID 返回统一 404，调用者不能提供文件系统路径。
@@ -247,21 +247,37 @@ DeepSeek 连接、429 和 5xx 采用有界重试；401/402 不重试。空内容
 `ground_truth.json` 只供测试和显式演示采集脚本验证，不通过 Sample API 返回，也不会进入
 模型上下文。
 
-## 9. 隔离的 Direct 与未来 benchmark
+### `GET /api/benchmark/results`
+
+只读并严格验证仓库内 `benchmarks/results.json`，不运行模型、不接受案例、路径、Provider
+或 URL 参数。前端 Benchmark 页只消费这个固定工件。
+
+## 9. 隔离的 Direct 与 Benchmark
 
 `DirectDeepSeekProvider` 只能显式用于：
 
 - `connection_test`
 - `troubleshooting`
-- 未来 `benchmark_baseline`
+- `benchmark_baseline`
 
-Provider 工厂不提供 Direct 正式模式。未来 benchmark 必须：
+Provider 工厂不提供 Direct 正式模式。已实现 Benchmark：
 
-- 只接受内置示例；
-- 要求 `confirm_cost=true`；
-- 顺序运行 Paritok compressed 与 `baseline_uncompressed`；
-- 明确标记未压缩模式；
+- 只接受五个内置案例，CLI 不接受日志、路径、模型或 URL；
+- 要求 `--confirm-cost`，否则模型请求数为 0；
+- 固定顺序为 `baseline_uncompressed` → Paritok；
+- 两路用同一个已构建消息列表，保存 `initial_messages_sha256` 证明首轮输入一致；
+- 固定 `deepseek-v4-flash`、`max_tokens=4096`、thinking disabled、JSON object；
+- Benchmark 网络重试为 0，每路只允许现有的一次 JSON 修复；
+- baseline 前后 `/stats` 必须完全不变，否则丢弃结果；
+- Paritok 的 Token 字段只取隔离的 `/stats` 差值并验证请求数；
+- baseline 的 original/compressed/saved/ratio 保持 `null`，不以 DeepSeek usage 代替；
+- DeepSeek usage 只记录为独立的 prompt/completion/cache 字段；
+- 质量通过 ground truth 规则确定性评分，不让模型自评，并保留人工复核字段；
+- 任何 API、Schema、stats 或外部预检失败都保留为 0 分行，不删除案例；
 - 不复用 `/api/analyze` 的正式服务入口。
+
+单案例预期 2 次模型调用；两路均触发 JSON 修复时最多 4 次；五例完整运行预期 10 次、
+硬上限 20 次。为遵守命令时限，CLI 一次只运行一个案例。
 
 ## 10. 安全边界
 

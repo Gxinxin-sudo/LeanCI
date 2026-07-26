@@ -118,7 +118,7 @@ def validate_result(
         str(item).casefold() for item in truth.get("expected_relevant_files", [])
     }
     required_files = {
-        str(item).casefold() for item in truth.get("required_relevant_files", [])
+        str(item).casefold() for item in truth.get("expected_relevant_files", [])
     }
     actual_files = {
         Path(str(item)).name.casefold() for item in result.get("relevant_files", [])
@@ -136,10 +136,11 @@ def validate_result(
             str(result.get("patch", "")),
         ]
     ).casefold()
-    required_terms = [
-        str(item).casefold() for item in truth.get("required_answer_terms", [])
-    ]
-    if any(term not in answer_text for term in required_terms):
+    required_groups = truth.get("root_cause_term_groups", [])
+    if any(
+        not any(str(term).casefold() in answer_text for term in group)
+        for group in required_groups
+    ):
         raise ValueError("analysis omitted a required ground-truth root-cause term")
     return truth, matches
 
@@ -174,7 +175,7 @@ def capture_sample(client: httpx.Client, sample_id: str) -> dict[str, Any]:
         "capture_kind": "real_paritok_stats_delta",
         "screenshot_url": f"http://127.0.0.1:5173/?capture={sample_id}",
         "ground_truth_check": {
-            "expected_root_cause": truth["root_cause"],
+            "expected_root_cause": truth["expected_root_cause"],
             "matching_relevant_files": matching_files,
         },
         "stats_before": before,

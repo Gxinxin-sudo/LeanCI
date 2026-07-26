@@ -40,8 +40,8 @@ npm run dev
 浏览器打开 `http://127.0.0.1:5173`：
 
 1. 先确认 Formal route status 中 FastAPI、Paritok、Hosted GPU 均健康；
-2. 点击明显的 `Python pytest failure`、`TypeScript build failure` 或
-   `Docker build failure` Sample 卡片；
+2. 点击任一固定 Sample，包括 pytest、TypeScript、Docker、依赖解析和 GitHub Actions
+   环境失败；
 3. 日志和相关文件会一次载入，不克隆仓库，也不运行任何代码；
 4. 点击 `Analyze failure`；
 5. 成功后首先看到真实 `Tokens Saved`，再看到 Original/Compressed Tokens、压缩比例、
@@ -53,16 +53,19 @@ npm run dev
 若 hosted GPU 不可用，页面会显示具体公开错误并保持 fail closed；这不是成功，也不会出现
 替代 Token 数字。页面不会展示 API Key。
 
-## 三个固定案例
+## 五个固定案例
 
 | Sample | 长日志大小 | 明确根因 | 预期相关文件 |
 | --- | ---: | --- | --- |
 | Python pytest failure | 69.5 KiB | 重试退避公式的运算优先级使第 4 次结果为 15，而不是上限 16 | `retry.py`、`test_retry.py` |
 | TypeScript build failure | 73.9 KiB | `DEPLOY_REGION` 可能为 `undefined`，却被赋给必需的 `string` | `config.ts`、`deploy.ts` |
 | Docker build failure | 40.1 KiB | `.dockerignore` 的 `*.json` 从构建上下文排除了包清单 | `Dockerfile`、`.dockerignore` |
+| Dependency resolution failure | 63.6 KiB | React 19 与只接受 React 18 的 peer dependency 冲突 | `package.json`、`package-lock.json` |
+| GitHub Actions environment failure | 56.2 KiB | 仓库变量 `DEPLOY_ENVIRONMENT` 未设置，使 `DEPLOY_ENV` 为空 | `deploy.yml`、`validate_env.py` |
 
 每个 `examples/<id>/` 包含 `ci.log`、少量相关文本文件和 `ground_truth.json`。Ground truth
-不会提交给模型。输入固定，因此可重复运行；输出必须通过真实 Paritok `/stats` 证明。
+不会提交给模型。输入固定，因此可重复运行；前三例另保留阶段四真实演示 capture，五例都
+用于阶段五 Benchmark。
 
 ## 固定正式链路
 
@@ -200,6 +203,44 @@ Mock 或字符估算：
 [TypeScript 结果截图](artifacts/screenshots/typescript-build-result.png) 和
 [Docker 结果截图](artifacts/screenshots/docker-build-result.png)。
 
+## 公平、可复现的 Benchmark
+
+只读前端页：`http://127.0.0.1:5173/?view=benchmark`。浏览器只读取已保存工件，不提供
+付费按钮。
+
+每例固定执行 A `baseline_uncompressed`，再执行 B `paritok`。两路保持相同模型
+`deepseek-v4-flash`、首轮消息、系统/用户提示、案例内容、`max_tokens=4096`、thinking
+disabled 和 JSON object 配置，并保存相同的 `initial_messages_sha256`。正式
+`/api/analyze` 没有 baseline 或 mode 开关。
+
+在 Proxy 与 hosted GPU 均健康后，从仓库根目录逐例运行：
+
+```powershell
+.\backend\.venv\Scripts\python.exe scripts\run_benchmark.py --confirm-cost --case python-pytest
+.\backend\.venv\Scripts\python.exe scripts\run_benchmark.py --confirm-cost --case typescript-build
+.\backend\.venv\Scripts\python.exe scripts\run_benchmark.py --confirm-cost --case docker-build
+.\backend\.venv\Scripts\python.exe scripts\run_benchmark.py --confirm-cost --case dependency-resolution
+.\backend\.venv\Scripts\python.exe scripts\run_benchmark.py --confirm-cost --case github-actions-environment
+```
+
+每条命令预期 2 次模型请求；每路最多一次 JSON 修复，因此每条上限 4 次；网络重试为 0。
+完整五例预期 10 次，全部发生 JSON 修复时硬上限 20 次。不带 `--confirm-cost` 时请求数为
+0。一次只跑一个案例，既控制 120 秒命令时限，也便于在余额或上游异常时停止。
+
+输出：
+
+- `benchmarks/results.json`：包含模型分析、确定性评分和人工复核字段；
+- `benchmarks/results.csv`：包含要求的平面列；
+- `benchmarks/report.md`：完整结果、失败说明、费用口径和复现命令。
+
+固定评分不使用 LLM judge：根因 40、证据 20、相关文件 15、修复方向 15、严格 JSON 10。
+失败行不删除，所有计划案例都进入平均值或失败计数。
+
+2026-07-26 本轮两次 hosted GPU 预检均返回 `PARITOK_GPU_UNAVAILABLE`，因此没有发送
+DeepSeek 请求。当前工件如实保留 10 个失败行，Token 字段为空、质量为 0，明确结论是：
+**当前结果不支持任何 Benchmark 或宣传表述**。待 hosted GPU 恢复后，必须逐例重跑并
+人工复核原始 `analysis`。
+
 ## Token 和费用口径
 
 所有 Token 指标只来自同一锁内、本次请求前后 Paritok `/stats` 累计计数差值：
@@ -233,6 +274,7 @@ estimated_input_cost_saved_usd =
 | `GET` | `/api/samples` | 固定 Sample 元数据 |
 | `GET` | `/api/samples/{id}` | 固定日志与相关文本文件 |
 | `GET` | `/api/captures/{id}` | 保存的真实运行状态；不存在时 404 |
+| `GET` | `/api/benchmark/results` | 严格读取固定 Benchmark 工件；不触发模型请求 |
 | `POST` | `/api/analyze` | 唯一正式分析入口 |
 
 请求示例：
@@ -268,15 +310,17 @@ npm test
 npm run build
 ```
 
-阶段四最近结果：后端 `92 passed, 2 skipped`；前端 `20 passed`；Ruff、格式、pip check、
+阶段五最近结果：后端 `99 passed, 2 skipped`；前端 `21 passed`；Ruff、格式、pip check、
 lint、TypeScript strict 和 Vite 生产构建通过。两个条件集成测试只有显式设置真实集成环境
-变量时才运行。
+变量时才运行。真实五例双跑因 hosted GPU 两次预检失败而未发送模型请求；这不是通过项。
 
 ## 文档
 
 - [项目计划](PROJECT_PLAN.md)
 - [任务清单](TASKS.md)
 - [固定演示案例](examples/README.md)
+- [Benchmark 说明](benchmarks/README.md)
+- [固定 Benchmark 报告](benchmarks/report.md)
 - [架构设计](docs/ARCHITECTURE.md)
 - [Windows Paritok 设置](docs/PARITOK_SETUP_WINDOWS.md)
 - [Paritok 验证](docs/PARITOK_VERIFICATION.md)
