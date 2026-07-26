@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { reportMarkdown } from '../lib/report'
 import type { AnalysisResult, EvidenceItem } from '../types/api'
 
 interface ResultsPanelProps {
@@ -18,81 +19,6 @@ function locationLabel(item: EvidenceItem) {
   return item.line_end && item.line_end !== item.line_start
     ? `${item.source}:${item.line_start}–${item.line_end}`
     : `${item.source}:${item.line_start}`
-}
-
-function reportMarkdown(result: AnalysisResult): string {
-  const evidence = result.evidence
-    .map(
-      (item) =>
-        `- **${locationLabel(item)}** — ${item.explanation}\n\n  \`\`\`\n${item.excerpt}\n  \`\`\``,
-    )
-    .join('\n')
-  const list = (items: string[]) => items.map((item) => `- ${item}`).join('\n') || '- None'
-  const stats = result.compression_stats
-  const telemetry =
-    stats.available
-      ? [
-          `- Original Tokens: ${stats.original_tokens}`,
-          `- Compressed Tokens: ${stats.compressed_tokens}`,
-          `- Tokens Saved: ${stats.saved_tokens}`,
-          `- Compression Ratio: ${(stats.compression_ratio * 100).toFixed(1)}%`,
-          `- Estimated DeepSeek Input Cost Saved: $${stats.cost_estimate.estimated_input_cost_saved_usd.toFixed(8)}`,
-          `- Paritok Status: Verified`,
-          `- DeepSeek Model: ${stats.model}`,
-          `- Analysis Time: ${result.analysis_time_ms} ms`,
-          `- Pricing snapshot: ${stats.cost_estimate.pricing_snapshot_date}`,
-          `- Disclaimer: ${stats.cost_estimate.disclaimer}`,
-        ].join('\n')
-      : '- Token metrics unavailable; no values were inferred.'
-
-  return `# LeanCI diagnostic report
-
-## Summary
-
-${result.summary}
-
-## Root Cause
-
-${result.root_cause}
-
-## Confidence
-
-${Math.round(result.confidence * 100)}%
-
-## Evidence
-
-${evidence || '- None'}
-
-## Relevant Files
-
-${list(result.relevant_files)}
-
-## Recommended Changes
-
-${list(result.recommended_changes)}
-
-## Patch
-
-\`\`\`diff
-${result.patch}
-\`\`\`
-
-## Verification Commands
-
-${list(result.verification_commands)}
-
-## Risks
-
-${list(result.risks)}
-
-## Missing Information
-
-${list(result.missing_information)}
-
-## Token telemetry
-
-${telemetry}
-`
 }
 
 async function copyText(value: string): Promise<void> {
@@ -215,8 +141,11 @@ function SuccessState({ result }: { result: AnalysisResult }) {
     const anchor = document.createElement('a')
     anchor.href = url
     anchor.download = 'leanci-report.md'
+    anchor.hidden = true
+    document.body.append(anchor)
     anchor.click()
-    URL.revokeObjectURL(url)
+    anchor.remove()
+    window.setTimeout(() => URL.revokeObjectURL(url), 0)
     setCopyStatus('Report downloaded')
   }
 

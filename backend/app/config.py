@@ -5,8 +5,9 @@ from decimal import Decimal
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
+from urllib.parse import urlsplit
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.models import MAX_LOG_CHARACTERS
@@ -52,6 +53,7 @@ class Settings(BaseSettings):
     deepseek_timeout_seconds: float = Field(default=60.0, gt=0, le=600)
     deepseek_max_network_retries: int = Field(default=2, ge=0, le=5)
     deepseek_retry_base_delay_seconds: float = Field(default=0.25, ge=0, le=5)
+    analysis_timeout_seconds: float = Field(default=110.0, gt=0, le=115)
     paritok_api_key: SecretStr | None = None
     paritok_proxy_base_url: Literal["http://127.0.0.1:8080/v1"] = PARITOK_PROXY_BASE_URL
     paritok_health_url: Literal["http://127.0.0.1:8080/health"] = PARITOK_HEALTH_URL
@@ -65,6 +67,11 @@ class Settings(BaseSettings):
     paritok_gpu_status_timeout_seconds: float = Field(default=10.0, gt=0, le=30)
     paritok_chunk_target_tokens: int = Field(default=12_000, ge=512, le=49_000)
     analysis_concurrency: int = Field(default=1, ge=1, le=1)
+    api_rate_limit_requests: int = Field(default=120, ge=10, le=10_000)
+    analyze_rate_limit_requests: int = Field(default=5, ge=1, le=100)
+    rate_limit_window_seconds: int = Field(default=60, ge=10, le=3_600)
+    rate_limit_max_buckets: int = Field(default=4_096, ge=128, le=100_000)
+    cors_allowed_origins: str = "http://127.0.0.1:5173,http://localhost:5173"
     deepseek_input_cache_miss_usd_per_m: Decimal = Field(
         default=Decimal("0.14"),
         ge=0,
@@ -87,6 +94,38 @@ class Settings(BaseSettings):
     @property
     def paritok_api_key_configured(self) -> bool:
         return self._secret_is_present(self.paritok_api_key)
+
+    @field_validator("cors_allowed_origins")
+    @classmethod
+    def validate_cors_allowed_origins(cls, value: str) -> str:
+        origins: list[str] = []
+        for raw_origin in value.split(","):
+            origin = raw_origin.strip().rstrip("/")
+            if not origin or origin == "*":
+                raise ValueError("CORS origins must be explicit http(s) origins")
+            parsed = urlsplit(origin)
+            try:
+                port = parsed.port
+            except ValueError as exc:
+                raise ValueError("CORS origin contains an invalid port") from exc
+            if (
+                parsed.scheme not in {"http", "https"}
+                or parsed.hostname is None
+                or parsed.username is not None
+                or parsed.password is not None
+                or parsed.path
+                or parsed.query
+                or parsed.fragment
+                or (port is not None and not 1 <= port <= 65_535)
+            ):
+                raise ValueError("CORS origins must not contain credentials, paths, or wildcards")
+            if origin not in origins:
+                origins.append(origin)
+        return ",".join(origins)
+
+    @property
+    def cors_origins(self) -> list[str]:
+        return self.cors_allowed_origins.split(",")
 
 
 @lru_cache

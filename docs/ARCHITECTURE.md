@@ -194,10 +194,11 @@ estimated_input_cost_saved_usd =
 | 本地 `/stats` | 3 秒 | 503，且不返回 Token 指标 |
 | hosted GPU `/test` | 10 秒 | 503 |
 | DeepSeek completion | 60 秒 | 504 |
+| 完整正式分析 | 110 秒 | 504，且不接受迟到结果 |
 
 DeepSeek 连接、429 和 5xx 采用有界重试；401/402 不重试。空内容、无效 JSON 或严格 schema
 失败只允许一次修复请求。修复请求仍经过同一个 Paritok Proxy，并计入本次
-`proxy_requests`。
+`proxy_requests`。前端分析请求上限为 115 秒；客户端超时会明确提示未接受结果并允许重试。
 
 ## 8. 当前 API
 
@@ -291,12 +292,22 @@ Provider 工厂不提供 Direct 正式模式。已实现 Benchmark：
 | SSRF/上游覆盖 | URL 为代码常量和严格 Literal，不接受请求覆盖 |
 | 绕过 Paritok | 正式 Provider 工厂只返回 Paritok；失败不回退 |
 | 提示注入 | 不可信 tool 结果、固定系统提示、严格结果 schema |
-| 恶意上传 | 双端预检；服务端字节限制、白名单、UTF-8、控制字符和文件名/路径校验 |
-| 任意文件读取 | Sample ID 到固定目录的常量映射；API 不接受路径 |
-| 模型建议被执行 | 只返回文本；API 没有执行端点 |
+| 恶意上传 | 双端预检；服务端整体/单项限制、JSON MIME/编码、白名单、UTF-8、控制字符和文件名/路径校验 |
+| 任意文件读取 | Sample ID 到固定目录的常量映射和 resolved-root 校验；API 不接受路径 |
+| 模型建议被执行 | API 没有执行端点；Patch/命令只以 React 文本和转义后的 Markdown 展示 |
 | stats 伪造/串扰 | 单 worker、异步锁、严格快照 delta、请求数匹配 |
-| 错误信息泄漏 | 稳定错误码；不返回上游正文、请求头、堆栈或内部路径 |
+| 错误/日志信息泄漏 | 稳定错误码；日志只用固定字段；不返回或记录上游正文、请求头、正文、堆栈或内部路径 |
 | 未知模型费用误导 | 丢弃 Paritok 美元字段；使用带日期的项目价格估算 |
+| 请求滥用和付费队列 | 单活动分析、超限立即 429、内存滑动窗口、桶上限和完整分析超时 |
+| 跨站和浏览器缓存 | 显式 CORS 白名单、无 credentials、no-store、CSP/防嵌入/nosniff 等 API 响应头 |
+| Request ID 伪造 | 服务端生成 128-bit 随机 ID，忽略客户端同名 Header |
+
+访问日志只记录 `request_id`、HTTP 方法、固定路由标签、状态码和耗时；不记录原始路径、
+查询串、Header、正文、上传内容或模型内容。更完整的攻击面、验证和残余风险见
+[`THREAT_MODEL.md`](THREAT_MODEL.md)。
+
+隐私口径是“LeanCI 不把内容永久写入应用存储”，不是“内容只留在本机”。正式请求会经过
+Paritok 和 DeepSeek；运营方还需复核服务商、反向代理和托管平台的日志/保留政策。
 
 ## 11. 部署约束
 
@@ -305,6 +316,8 @@ Windows 本地运行使用三个终端。未来单容器部署必须：
 - FastAPI 监听平台 `PORT`；
 - Paritok 只监听容器 localhost `127.0.0.1:8080`；
 - FastAPI 保持单 worker；
+- 生产 `CORS_ALLOWED_ORIGINS` 使用精确前端 Origin，不允许 `*`；
+- 公网入口用可信 TLS 网关实施一致的请求体/超时限制、客户端身份、分布式速率和费用配额；
 - 用固定进程管理器监管两个进程；
 - 任一进程退出时终止另一个并让容器失败；
 - 只公开 FastAPI 端口，不公开 8080；

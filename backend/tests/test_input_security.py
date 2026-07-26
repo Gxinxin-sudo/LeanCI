@@ -25,6 +25,9 @@ def test_rejects_more_than_five_files() -> None:
         "C:\\secret.txt",
         "archive.zip",
         "bundle.tar.gz",
+        "image.png",
+        "report.pdf",
+        "fake.py.exe",
         "run.exe",
         "script.ps1",
         "script.sh",
@@ -53,6 +56,37 @@ def test_normalizes_safe_filename_and_accepts_docker_inputs() -> None:
         "Dockerfile",
         ".dockerignore",
     ]
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "..／secret.txt",
+        "C：secret.txt",
+        "CON.txt",
+        "nul.log",
+        "name\u202etxt.exe",
+    ],
+)
+def test_rejects_unicode_path_confusables_reserved_names_and_bidi_controls(
+    name: str,
+) -> None:
+    with pytest.raises(ValidationError):
+        AnalyzeRequest(
+            log_text="failed",
+            files=[{"name": name, "content": "safe text"}],
+        )
+
+
+def test_rejects_duplicate_names_after_safe_normalization() -> None:
+    with pytest.raises(ValidationError):
+        AnalyzeRequest(
+            log_text="failed",
+            files=[
+                {"name": "retry config.py", "content": "first"},
+                {"name": "retry?config.py", "content": "second"},
+            ],
+        )
 
 
 @pytest.mark.parametrize("content", ["binary\x00data", "bell\x07data"])

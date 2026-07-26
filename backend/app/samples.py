@@ -90,14 +90,21 @@ def _sample_root(definition: SampleDefinition) -> Path:
     return root
 
 
+def _sample_asset_path(root: Path, relative_path: str) -> Path:
+    path = (root / relative_path).resolve()
+    if not path.is_relative_to(root):
+        raise RuntimeError("Bundled sample asset escaped its fixed sample directory.")
+    return path
+
+
 def load_sample(sample_id: str) -> SamplePayload:
     definition = _definition(sample_id)
     root = _sample_root(definition)
-    log_text = (root / "ci.log").read_text(encoding="utf-8")
+    log_text = _sample_asset_path(root, "ci.log").read_text(encoding="utf-8")
     files = [
         UploadedTextFile(
             name=Path(relative_path).name,
-            content=(root / relative_path).read_text(encoding="utf-8"),
+            content=_sample_asset_path(root, relative_path).read_text(encoding="utf-8"),
         )
         for relative_path in definition.files
     ]
@@ -125,7 +132,8 @@ def load_ground_truth(sample_id: str) -> dict[str, object]:
     """Load a fixed evaluation asset for tests and the explicit demo runner only."""
 
     definition = _definition(sample_id)
-    path = _sample_root(definition) / "ground_truth.json"
+    root = _sample_root(definition)
+    path = _sample_asset_path(root, "ground_truth.json")
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
         raise ValueError("ground_truth.json must contain an object")
@@ -136,7 +144,8 @@ def load_sample_capture(sample_id: str) -> CapturedSampleResult:
     """Load a saved real-run response for screenshots, never as live telemetry."""
 
     definition = _definition(sample_id)
-    path = _sample_root(definition) / "demo_result.json"
+    root = _sample_root(definition)
+    path = _sample_asset_path(root, "demo_result.json")
     if not path.is_file():
         raise SampleCaptureNotFoundError(sample_id)
     return CapturedSampleResult.model_validate_json(path.read_text(encoding="utf-8"))

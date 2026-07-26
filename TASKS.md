@@ -151,7 +151,27 @@
 - [x] 按最初阶段五清单完成最终冻结审计；新增发布工件回归测试，锁定五例双路完整性、
   公平性哈希、必需字段、状态/Token 语义、平均值分母、质量配对和费用免责声明
 
-## 阶段 6：Docker 与端到端验证
+## 阶段 6：安全审计、产品验收与 Docker
+
+### 安全与产品验收（2026-07-26）
+
+- [x] 盘点所有 API Key 读取/展开位置；确认公开状态只返回是否配置
+- [x] 扫描当前 tracked/unignored 文件和全部 11 个 Git Commit；未发现真实密钥模式
+- [x] 强化 `.gitignore`，覆盖环境文件、私钥/证书、凭据文件、调试响应和运行时 trace
+- [x] 限制安全日志字段，验证不记录 Header、请求正文、原始路径或上传内容
+- [x] 验证异常不返回环境变量、密钥、请求头、堆栈或绝对路径
+- [x] 回归上传大小、数量、UTF-8、扩展名、文件名清理、规范化重复、路径穿越和伪装类型
+- [x] `/api/analyze` 只接受未压缩 UTF-8 `application/json`，整体请求上限覆盖流式请求
+- [x] 回归提示词注入、日志伪系统指令、模型命令和 Patch 均保持不可信文本
+- [x] 增加 110 秒整体分析超时、单分析并发拒绝和基础滑动窗口速率限制
+- [x] 增加服务端请求 ID、API 安全响应头和显式可配置 CORS 白名单
+- [x] 增加用户隐私提示，明确 LeanCI 不永久保存上传内容且会发送到 Paritok/DeepSeek
+- [x] 创建 `SECURITY.md`、`docs/THREAT_MODEL.md` 和安全回归测试
+- [x] 运行 Python/Node 运行时与完整依赖审计；修复本地 pip 已知漏洞并移除未使用依赖
+- [x] 在隔离 Mock 环境验收首次理解、Sample、按钮状态、恢复、只读 Benchmark、真实 capture
+  展示、空白页、Console、移动端、报告下载和 Patch 复制；未调用正式模型
+- [ ] `[MANUAL]` 公网前配置生产 CORS、可信反向代理/分布式限流与预算、数据保留政策
+- [ ] `[MANUAL]` 公开 GitHub 仓库建立后启用 private vulnerability reporting
 
 - [ ] `[MANUAL]` 安装并启动 Docker Desktop
 - [ ] 创建前端构建 + Python 运行时的多阶段 Dockerfile
@@ -165,12 +185,13 @@
 - [ ] 扫描镜像与构建上下文中的密钥
 - [ ] 更新 README、架构和任务状态
 
-## 阶段 7：安全、开源与 Devpost
+## 阶段 7：开源发布与 Devpost
 
-- [ ] 创建 `SECURITY.md` 和 `CONTRIBUTING.md`
-- [ ] 完成全量 pytest、ruff、前端测试、类型检查和构建
+- [x] 创建 `SECURITY.md`
+- [ ] 创建 `CONTRIBUTING.md`
+- [x] 完成阶段六全量 pytest、ruff、前端测试、类型检查和构建
 - [ ] 完成 Docker 端到端测试
-- [ ] 完成密钥、依赖和错误响应安全检查
+- [x] 完成密钥、依赖和错误响应安全检查
 - [ ] 完善 README 快速开始、部署、Benchmark 和截图
 - [ ] `[MANUAL]` 注册/加入 Devpost 项目并确认官方规则
 - [ ] `[MANUAL]` 创建 DeepSeek API Key 并确保余额可用

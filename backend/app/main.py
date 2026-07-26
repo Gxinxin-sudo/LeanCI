@@ -1,5 +1,6 @@
 """FastAPI application entry point with a fail-closed Paritok analysis path."""
 
+import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -12,7 +13,7 @@ from app.benchmark import load_results
 from app.benchmark_models import BenchmarkArtifact
 from app.body_limit import RequestBodyLimitMiddleware
 from app.config import Settings, get_settings
-from app.errors import AppError, attach_request_id, error_responses, register_error_handlers
+from app.errors import AppError, error_responses, register_error_handlers
 from app.models import (
     MAX_REQUEST_BYTES,
     AnalysisResult,
@@ -30,6 +31,12 @@ from app.samples import (
     list_samples,
     load_sample,
     load_sample_capture,
+)
+from app.security import (
+    AnalysisConcurrencyLimitMiddleware,
+    JsonRequestPolicyMiddleware,
+    RateLimitMiddleware,
+    RequestSecurityMiddleware,
 )
 
 
@@ -55,24 +62,37 @@ def create_app(
     application = FastAPI(
         title=active_settings.app_name,
         version="0.1.0",
+        debug=False,
         description=(
             "LeanCI formal analysis API. Requests fail closed unless the local "
             "Paritok Proxy and hosted GPU are verified."
         ),
         lifespan=lifespan,
     )
-    application.middleware("http")(attach_request_id)
     application.add_middleware(
         RequestBodyLimitMiddleware,
         max_body_bytes=MAX_REQUEST_BYTES,
     )
+    application.add_middleware(JsonRequestPolicyMiddleware)
+    application.add_middleware(
+        AnalysisConcurrencyLimitMiddleware,
+        maximum=active_settings.analysis_concurrency,
+    )
+    application.add_middleware(
+        RateLimitMiddleware,
+        api_limit=active_settings.api_rate_limit_requests,
+        analyze_limit=active_settings.analyze_rate_limit_requests,
+        window_seconds=active_settings.rate_limit_window_seconds,
+        max_buckets=active_settings.rate_limit_max_buckets,
+    )
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],
+        allow_origins=active_settings.cors_origins,
         allow_credentials=False,
         allow_methods=["GET", "POST"],
         allow_headers=["Content-Type"],
     )
+    application.add_middleware(RequestSecurityMiddleware)
     register_error_handlers(application)
 
     @application.get("/api/health", response_model=HealthResponse)
@@ -155,7 +175,18 @@ def create_app(
                 code="LOG_TOO_LARGE",
                 message="The CI log exceeds the configured character limit.",
             )
-        return await analysis_service.analyze(payload.to_untrusted_context())
+        try:
+            async with asyncio.timeout(active_settings.analysis_timeout_seconds):
+                return await analysis_service.analyze(payload.to_untrusted_context())
+        except TimeoutError as exc:
+            raise AppError(
+                status_code=504,
+                code="ANALYSIS_TIMEOUT",
+                message=(
+                    "Analysis exceeded the bounded processing time. No result was accepted; "
+                    "check the route status before retrying."
+                ),
+            ) from exc
 
     return application
 

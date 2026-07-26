@@ -188,7 +188,13 @@ describe('LeanCI workbench', () => {
     expect(screen.getByRole('button', { name: /Docker build failure/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Dependency resolution failure/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /GitHub Actions environment failure/i })).toBeInTheDocument()
-    expect(screen.getByText('No code execution · No API keys shown')).toBeInTheDocument()
+    expect(
+      screen.getByText('No code execution · Uploads not stored by LeanCI'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Privacy & control')).toBeInTheDocument()
+    expect(
+      screen.getByText(/does not permanently store pasted logs or uploaded files/i),
+    ).toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: 'Paste CI failure log' })).toHaveAttribute(
       'maxlength',
       String(MAX_LOG_CHARACTERS),
@@ -238,10 +244,20 @@ describe('LeanCI workbench', () => {
     await user.click(screen.getByRole('button', { name: /Analyze failure/i }))
 
     expect(screen.getByText('Compressing context, then tracing evidence…')).toBeInTheDocument()
+    expect(
+      screen.getByRole('textbox', { name: 'Paste CI failure log' }),
+    ).toBeDisabled()
+    expect(screen.getByLabelText('Add text files')).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: /Docker build failure/i }),
+    ).toBeDisabled()
 
     resolveAnalysis?.(jsonResponse(mockAnalysis))
 
     expect(await screen.findByText(mockAnalysis.summary)).toBeInTheDocument()
+    expect(
+      screen.getByRole('textbox', { name: 'Paste CI failure log' }),
+    ).toBeEnabled()
     expect(screen.getByText(mockAnalysis.root_cause)).toBeInTheDocument()
     expect(screen.getByText('94%')).toBeInTheDocument()
     expect(screen.getByText('Tokens Saved')).toBeInTheDocument()
@@ -281,12 +297,16 @@ describe('LeanCI workbench', () => {
 
   it('shows a specific route error and allows retry', async () => {
     const user = userEvent.setup()
+    let analysisAttempts = 0
     vi.stubGlobal(
       'fetch',
       vi.fn((input: RequestInfo | URL) => {
         const url = String(input)
         if (url.endsWith('/health')) return Promise.resolve(jsonResponse(healthy))
-        return Promise.reject(new Error('Network unavailable.'))
+        analysisAttempts += 1
+        return analysisAttempts === 1
+          ? Promise.reject(new Error('Network unavailable.'))
+          : Promise.resolve(jsonResponse(mockAnalysis))
       }),
     )
 
@@ -302,7 +322,9 @@ describe('LeanCI workbench', () => {
         'LeanCI API is unreachable. Start FastAPI on port 8000, then retry.',
       )
     })
-    expect(screen.getByRole('button', { name: 'Retry analysis' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Retry analysis' }))
+    expect(await screen.findByText(mockAnalysis.summary)).toBeInTheDocument()
+    expect(analysisAttempts).toBe(2)
   })
 
   it('rejects an empty log before making an analysis request', async () => {

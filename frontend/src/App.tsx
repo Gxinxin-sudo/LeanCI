@@ -124,10 +124,12 @@ function HealthStrip({
 
 function SampleRail({
   activeId,
+  disabled,
   loadingId,
   onLoad,
 }: {
   activeId: string | null
+  disabled: boolean
   loadingId: string | null
   onLoad: (sampleId: string) => void
 }) {
@@ -147,7 +149,7 @@ function SampleRail({
               className={`sample-card ${active ? 'sample-card-active' : ''}`}
               type="button"
               key={sample.id}
-              disabled={loadingId !== null}
+              disabled={disabled || loadingId !== null}
               onClick={() => onLoad(sample.id)}
             >
               <span>{sample.kicker}</span>
@@ -163,9 +165,11 @@ function SampleRail({
 }
 
 function UploadedFiles({
+  disabled,
   files,
   onRemove,
 }: {
+  disabled: boolean
   files: UploadedTextFile[]
   onRemove: (index: number) => void
 }) {
@@ -187,7 +191,12 @@ function UploadedFiles({
                 <strong>{file.name}</strong>
                 <small>{formatBytes(utf8Bytes(file.content))} · UTF-8 text</small>
               </span>
-              <button type="button" onClick={() => onRemove(index)} aria-label={`Remove ${file.name}`}>
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={() => onRemove(index)}
+                aria-label={`Remove ${file.name}`}
+              >
                 Remove
               </button>
             </li>
@@ -343,6 +352,7 @@ export function App() {
 
   const logBytes = utf8Bytes(logText)
   const activeResult = analysisState.status === 'success' ? analysisState.data : undefined
+  const analysisLoading = analysisState.status === 'loading'
 
   if (benchmarkMode) {
     return (
@@ -380,7 +390,7 @@ export function App() {
           <a href="/" aria-current="page">Workbench</a>
           <a href="/?view=benchmark">Benchmark</a>
         </nav>
-        <span className="security-note">No code execution · No API keys shown</span>
+        <span className="security-note">No code execution · Uploads not stored by LeanCI</span>
       </header>
 
       <main id="top">
@@ -425,6 +435,7 @@ export function App() {
         <HealthStrip health={healthState} onRefresh={() => void refreshHealth()} />
         <SampleRail
           activeId={activeSampleId}
+          disabled={analysisLoading}
           loadingId={sampleLoadingId}
           onLoad={(sampleId) => void handleLoadSample(sampleId)}
         />
@@ -448,7 +459,12 @@ export function App() {
                   <h2>CI failure log</h2>
                 </div>
                 {(logText || files.length > 0) && (
-                  <button type="button" className="text-action text-action-danger" onClick={clearInput}>
+                  <button
+                    type="button"
+                    className="text-action text-action-danger"
+                    disabled={analysisLoading}
+                    onClick={clearInput}
+                  >
                     Clear all
                   </button>
                 )}
@@ -459,6 +475,7 @@ export function App() {
                 maxLength={MAX_LOG_CHARACTERS}
                 placeholder="$ Paste the complete failing CI log, or load a sample above…"
                 spellCheck={false}
+                disabled={analysisLoading}
                 value={logText}
                 onChange={(event) => {
                   setLogText(event.target.value)
@@ -475,6 +492,7 @@ export function App() {
               </div>
 
               <UploadedFiles
+                disabled={analysisLoading}
                 files={files}
                 onRemove={(index) => {
                   setFiles((current) => current.filter((_, itemIndex) => itemIndex !== index))
@@ -483,12 +501,19 @@ export function App() {
               />
 
               <div className="file-controls">
-                <label className="secondary-action" htmlFor="related-files">Add text files</label>
+                <label
+                  className="secondary-action"
+                  htmlFor="related-files"
+                  aria-disabled={analysisLoading}
+                >
+                  Add text files
+                </label>
                 <input
                   ref={fileInputRef}
                   id="related-files"
                   type="file"
                   accept={FILE_ACCEPT}
+                  disabled={analysisLoading}
                   multiple
                   onChange={(event) => void handleFileSelection(event.target.files)}
                 />
@@ -502,7 +527,7 @@ export function App() {
               <button
                 className="primary-action"
                 type="button"
-                disabled={analysisState.status === 'loading'}
+                disabled={analysisLoading}
                 onClick={() => void handleAnalyze()}
               >
                 {analysisState.status === 'loading' ? (
@@ -511,10 +536,19 @@ export function App() {
                   <>Analyze failure <span aria-hidden="true">↗</span></>
                 )}
               </button>
-              <p className="form-footnote">
-                Suggestions, patches, and commands are returned as inert text. LeanCI never
-                runs them.
-              </p>
+              <div className="privacy-notice">
+                <strong>Privacy &amp; control</strong>
+                <p>
+                  LeanCI does not permanently store pasted logs or uploaded files. It
+                  processes them in memory and sends them through Paritok and DeepSeek for
+                  analysis, so do not include secrets. Provider retention policies still
+                  apply.
+                </p>
+                <p>
+                  Suggestions, patches, and commands are inert text for human review.
+                  LeanCI never runs or applies them.
+                </p>
+              </div>
             </div>
 
             <TokenPanel

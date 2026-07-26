@@ -1,6 +1,5 @@
 """Unified, non-sensitive API error responses."""
 
-from collections.abc import Awaitable, Callable
 from typing import Any
 from uuid import uuid4
 
@@ -8,7 +7,6 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from starlette.responses import Response
 
 from app.models import ErrorResponse
 
@@ -100,18 +98,6 @@ def register_error_handlers(app: FastAPI) -> None:
             code="INTERNAL_ERROR",
             message="The service could not complete the request.",
         )
-
-
-async def attach_request_id(
-    request: Request,
-    call_next: Callable[[Request], Awaitable[Response]],
-) -> Response:
-    """Attach an opaque request ID without exposing internal state."""
-
-    request.state.request_id = uuid4().hex
-    response = await call_next(request)
-    response.headers.setdefault("X-Request-ID", request.state.request_id)
-    return response
 
 
 def error_responses() -> dict[int | str, dict[str, Any]]:

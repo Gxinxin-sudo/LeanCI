@@ -30,8 +30,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               The workbench could not render.
             </h1>
             <p className="mt-3 max-w-md text-sm leading-6 text-muted">
-              Reload the page. If the problem continues, check the browser console and the
-              frontend test suite.
+              Reload the page. If the problem continues, record the browser version and the
+              last action, then report the issue without including CI logs or secrets.
             </p>
             <button
               className="mt-6 border border-signal bg-signal px-4 py-2 font-mono text-xs font-bold uppercase tracking-[0.14em] text-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-signal"

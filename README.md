@@ -7,6 +7,10 @@ LeanCI 是一个可录制演示的真实 CI 故障诊断 MVP：把长日志和�
 `deepseek-v4-flash` 返回严格结构化诊断。正式分析不可绕过 Paritok；链路或 `/stats`
 证明不可用时会明确失败，不会回退到 Mock，也不会显示推测的 Token。
 
+隐私边界：LeanCI 自身不把粘贴日志或上传文件永久保存到应用存储，服务端只在内存中处理；
+正式分析会把内容发送给 Paritok 和 DeepSeek，因此仍受两家服务及托管平台的保留政策约束。
+请勿提交密钥、个人数据或未经授权的私有源码。模型给出的命令和 Patch 永远只作为文本展示。
+
 ## 评委最快使用方式
 
 准备三个 PowerShell 终端，全部从仓库根目录
@@ -86,9 +90,13 @@ React
 - Paritok、hosted GPU 或 stats 不可用时返回安全 503；
 - DeepSeek JSON 空内容或无效 Schema 最多修复一次，修复仍经过 Paritok；
 - 分析期间使用进程内锁，Uvicorn 必须保持一个 worker；
+- 同时只接受一个正式分析，额外请求立即返回可重试错误而不进入付费队列；
+- 整体分析默认 110 秒超时；API 有内存速率限制、服务端请求 ID 和安全响应头；
+- 浏览器来源必须匹配 `CORS_ALLOWED_ORIGINS` 的显式白名单，不支持通配符；
 - 日志、文件、模型 Patch 和命令都不会被服务器执行。
 
-完整信任边界见 [架构设计](docs/ARCHITECTURE.md)。
+完整信任边界见 [架构设计](docs/ARCHITECTURE.md) 和
+[威胁模型](docs/THREAT_MODEL.md)。
 
 ## 安全输入限制
 
@@ -310,6 +318,8 @@ estimated_input_cost_saved_usd =
 
 错误响应只包含稳定错误码、公开消息和 request ID。页面不会只显示
 `Internal Server Error`，也不会暴露环境变量、请求头、密钥、上游正文、堆栈或绝对路径。
+访问日志只包含 request ID、方法、固定路由标签、状态和耗时，不记录 Header、请求体、查询串、
+原始路径或上传内容。
 
 ## 质量检查
 
@@ -319,17 +329,23 @@ cd "C:\Users\xin'xin\Desktop\LeanCI"
 .\backend\.venv\Scripts\python.exe -m ruff format --check backend scripts
 .\backend\.venv\Scripts\python.exe -m pytest backend\tests
 .\backend\.venv\Scripts\python.exe -m pip check
+.\backend\.venv\Scripts\python.exe scripts\scan_secrets.py
+.\backend\.venv\Scripts\python.exe -m pip_audit -r backend\requirements.txt
 
 cd frontend
+npm audit --omit=dev --audit-level=high
+npm audit --audit-level=high
 npm run lint
 npm run typecheck
 npm test
 npm run build
 ```
 
-阶段五最终冻结审计结果：后端 `110 passed, 2 skipped`；前端 `21 passed`；Ruff、格式、pip check、
-lint、TypeScript strict、Vite 生产构建、结果完整性和密钥模式检查通过。两个条件集成测试
-只有显式设置真实集成环境变量时才运行；它们不应在没有单独费用授权时自动发送模型请求。
+阶段六安全与产品验收已增加输入/异常/日志/CORS/限流/并发/超时/提示注入/文本执行边界回归，
+并用隔离 Mock 后端检查桌面、390 px 移动端、复制 Patch 和报告下载；该验收不会发送正式模型
+请求。阶段五真实 Token/Benchmark 工件保持冻结。最新精确测试计数以当前 Git Commit 和 CI
+输出为准。两个条件集成测试只有显式设置真实集成环境变量时才运行；没有单独费用授权时不得
+自动发送模型请求。
 
 ## 文档
 
@@ -339,6 +355,8 @@ lint、TypeScript strict、Vite 生产构建、结果完整性和密钥模式检
 - [Benchmark 说明](benchmarks/README.md)
 - [固定 Benchmark 报告](benchmarks/report.md)
 - [架构设计](docs/ARCHITECTURE.md)
+- [安全政策](SECURITY.md)
+- [威胁模型](docs/THREAT_MODEL.md)
 - [Windows Paritok 设置](docs/PARITOK_SETUP_WINDOWS.md)
 - [Paritok 验证](docs/PARITOK_VERIFICATION.md)
 - [人工操作清单](docs/MANUAL_ACTIONS.md)

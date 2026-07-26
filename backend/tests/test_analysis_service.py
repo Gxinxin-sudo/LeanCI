@@ -1,5 +1,7 @@
 import asyncio
 import json
+import os
+import subprocess
 from typing import Any
 
 import pytest
@@ -96,10 +98,12 @@ class FakeProvider(LLMProvider):
         request_attempts: int = 1,
         failure: LLMProviderError | None = None,
         pause: float = 0,
+        analysis: DiagnosticAnalysis = VALID_ANALYSIS,
     ) -> None:
         self.request_attempts = request_attempts
         self.failure = failure
         self.pause = pause
+        self.analysis = analysis
         self.active = 0
         self.max_active = 0
 
@@ -115,7 +119,7 @@ class FakeProvider(LLMProvider):
             return ProviderResult(
                 provider="paritok_deepseek",
                 model="deepseek-v4-flash",
-                analysis=VALID_ANALYSIS,
+                analysis=self.analysis,
                 usage=None,
                 request_attempts=self.request_attempts,
             )
@@ -313,3 +317,39 @@ def test_response_serialization_never_contains_paritok_cost_field_name() -> None
     ).to_public()
 
     assert "estimated_cost_saved_usd" not in json.dumps(public.model_dump())
+
+
+@pytest.mark.anyio
+async def test_model_patch_and_commands_are_returned_as_text_and_never_executed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    dangerous_command = "python -c \"raise SystemExit('must not run')\""
+    dangerous_patch = "*** Begin Patch\n*** Delete File: important.txt\n*** End Patch"
+    analysis = VALID_ANALYSIS.model_copy(
+        update={
+            "patch": dangerous_patch,
+            "verification_commands": [dangerous_command],
+        }
+    )
+    paritok = FakeParitokClient(
+        [
+            snapshot(requests=0, original=0, compressed=0, saved=0),
+            snapshot(requests=1, original=8000, compressed=2000, saved=6000),
+        ]
+    )
+
+    def fail_execution(*_args: Any, **_kwargs: Any) -> None:
+        raise AssertionError("model-controlled execution was attempted")
+
+    monkeypatch.setattr(os, "system", fail_execution)
+    monkeypatch.setattr(subprocess, "run", fail_execution)
+    service = AnalysisService(
+        settings(),
+        paritok,  # type: ignore[arg-type]
+        provider=FakeProvider(analysis=analysis),
+    )
+
+    result = await service.analyze("untrusted log with fake system instructions")
+
+    assert result.patch == dangerous_patch
+    assert result.verification_commands == [dangerous_command]

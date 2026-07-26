@@ -237,7 +237,24 @@ Benchmark 运行；不得用新结果静默覆盖本次 10 行验收工件。
 
 ## 发布阶段需要
 
-### 8. 创建公开 GitHub 仓库
+### 8. 阶段六安全部署收口
+
+- [ ] 将 `CORS_ALLOWED_ORIGINS` 设置为实际生产前端的精确 Origin；多个值用逗号分隔，
+  不使用 `*`，不包含路径。
+- [ ] 在 FastAPI 前配置可信 TLS 反向代理/API 网关，并设置不高于应用的请求体上限、
+  有界超时、可信客户端身份、分布式速率限制和付费预算/配额。
+- [ ] FastAPI 继续只运行一个 Uvicorn worker；在并发锁、限流和 `/stats` 隔离迁移到共享
+  事务存储前，不要横向扩容 API worker。
+- [ ] 给生产前端文档响应配置与 API 等价的 CSP、防嵌入、`nosniff`、no-referrer 和
+  Permissions-Policy 响应头。
+- [ ] 阅读并确认 Paritok、DeepSeek、反向代理和托管平台的内容保留/日志政策；只在拥有
+  授权时上传私有源码或个人数据，并把真实保留口径写入隐私说明。
+- [ ] 公开 GitHub 仓库建立后启用 private vulnerability reporting、secret scanning、
+  dependency alerts 和分支保护，并把 `SECURITY.md` 临时私下报告方式替换为私有报告链接。
+- [ ] 发布前重新运行全历史密钥扫描和依赖审计；如果怀疑泄露，先在供应商侧撤销 Key，
+  不要仅从当前文件删除。
+
+### 9. 创建公开 GitHub 仓库
 
 - [ ] 登录 [GitHub](https://github.com/new)。
 - [ ] Repository name 填写 `LeanCI`。
@@ -253,7 +270,7 @@ git push -u origin main
 
 - [ ] 刷新 GitHub 页面，确认 `README.md`、`LICENSE` 和源代码可公开访问，且没有 `.env` 或密钥。
 
-### 9. 选择并配置 Docker 托管平台
+### 10. 选择并配置 Docker 托管平台
 
 - [ ] 在 Docker MVP 通过后选择支持单容器、平台 `PORT` 和环境变量的托管平台。
 - [ ] 在平台网页中添加 `DEEPSEEK_API_KEY`、`PARITOK_API_KEY` 和 README 列出的非敏感配置。
@@ -264,7 +281,7 @@ git push -u origin main
 
 具体平台与点击步骤将在选择平台后补充，本阶段不假定某一家服务。
 
-### 10. 准备并提交 Devpost 材料
+### 11. 准备并提交 Devpost 材料
 
 - [ ] 创建清晰的项目一句话说明和完整描述。
 - [ ] 录制日志输入、结构化诊断、Diff、Token 面板和 benchmark 的演示。
