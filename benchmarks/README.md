@@ -15,8 +15,10 @@ JSON object 配置和案例内容，`initial_messages_sha256` 必须一致。唯
 
 Baseline 不经过 Paritok，因此 `original_tokens`、`compressed_tokens`、`tokens_saved`
 和 `compression_ratio` 必须为 `null`，不能用 DeepSeek usage 或字符数冒充。Paritok
-这些字段只来自本例请求前后 `/stats` 差值。`prompt_tokens` 和 `completion_tokens`
-单独保存上游 usage，不作为压缩证明。
+这些字段只在本例请求前后 `/stats` 差值证明实际发生压缩时保存。官方 trace 已确认的
+`below_refusal_threshold` 低收益透传标为 `compression_skipped`，这些 Token 字段和
+质量字段均为 `null`（不适用）。`prompt_tokens` 和 `completion_tokens` 单独保存上游
+usage，不作为压缩证明。
 
 质量分不由模型产生：
 
@@ -27,7 +29,7 @@ Baseline 不经过 Paritok，因此 `original_tokens`、`compressed_tokens`、`t
 - 严格 JSON 完整 10。
 
 确定性规则与 `ground_truth.json` 比对；所有行另保留 `human_review` 字段。失败行得 0 分
-并保留，报告不会过滤或只展示最好案例。
+并保留，正常跳过行不评分，报告不会过滤或只展示最好案例。
 
 ## 运行
 
@@ -48,7 +50,11 @@ JSON 都需修复时最多 20 次。
 
 ## 当前固定工件
 
-2026-07-26 的两次 bounded hosted GPU 预检均返回
-`failed:PARITOK_GPU_UNAVAILABLE`。因此当前 `results.*` 和 `report.md` 如实保留 10 个
-`PREFLIGHT_FAILED` 行，模型请求数为 0，所有 Token 指标为空，结论为“不支持任何 Benchmark
-或宣传表述”。hosted GPU 恢复后必须按上面五条命令逐例覆盖这些失败行。
+2026-07-26 真实运行发出 10 次模型请求，0 次 JSON 修复、0 次网络重试和 0 次命令超时。
+工件保留全部 10 行：5 个 Baseline 成功，3 个 Paritok 行因官方
+`below_refusal_threshold` 正常跳过，2 个 Paritok 行有有效压缩差值。Python 行同时保留
+DeepSeek 上游超时；Docker 行保留实际压缩块未达到 5,000 Token 验收门槛的失败。
+
+只在 2 个实际压缩行上计算出的平均 Token 节省率为 `91.70%`。skipped 行不进入 Token
+或质量平均值；没有成功 Paritok 分析可比较，因此质量变化为不适用。该结果不能外推为
+五例整体平均、普遍质量保持、生产稳定性或实际账单节省。

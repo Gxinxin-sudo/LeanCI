@@ -234,18 +234,29 @@ disabled 和 JSON object 配置，并保存相同的 `initial_messages_sha256`�
 - `benchmarks/report.md`：完整结果、失败说明、费用口径和复现命令。
 
 固定评分不使用 LLM judge：根因 40、证据 20、相关文件 15、修复方向 15、严格 JSON 10。
-失败行不删除，所有计划案例都进入平均值或失败计数。
+失败行和正常跳过行都不删除。只有成功且有严格分析结果的行进入质量平均值；只有本次
+`/stats` 差值证明实际发生压缩的 Paritok 行进入 Token 平均值。
 
 2026-07-26 的真实验收先后完成一次独立 hosted GPU 预检和 Proxy 启动时的第二次复核，
 两次均返回 `gpu_available=true`。随后五例严格按 Baseline → Paritok 顺序运行，实际发送
 10 次模型请求，没有 JSON 修复、网络重试或命令超时。正式工件保留全部 10 行：5 个
-Baseline 成功，5 个 Paritok 失败；其中 Python 案例为 DeepSeek 上游超时，其余四例的
-`/stats` 原始 Token 差值低于固定的 5,000 Token 门槛。
+Baseline 成功；3 个 Paritok 行是正常低收益跳过；2 个 Paritok 行记录了有效压缩差值，
+但仍分别因 Python 的 DeepSeek 上游超时和 Docker 压缩块未达到 5,000 Token 验收门槛而
+保留为失败。5,000 门槛只检查实际发生压缩的块；五个固定案例的原始 CI 证据保持超过
+5,000 Token。
 
-当前结果的 Baseline 平均质量为 `73.00/100`，Paritok 成功行数量为 0，因此平均 Token
-节省不可用，质量变化为 `-73.00` 分。**当前结果不支持“保持质量”“稳定可用”“平均节省
-多少 Token”或“降低实际账单”等宣传表述。** 不得通过降低门槛、修改样例或删除失败行
-改善结论；应先由 Paritok 侧确认异常 stats 计数与上游超时，再在新的费用授权下完整重跑。
+当前仅可陈述：在 **2 个实际发生压缩且 `/stats` 差值有效的行**中，平均 Token 节省率为
+`91.70%`。3 个正常跳过行不参与 Token 或质量平均值；Paritok 没有成功分析行，因此质量
+变化为“不适用”，不能写成 `0` 分或 `-73` 分。**当前结果不支持“所有案例都压缩”“平均
+五例节省 91.70%”“保持质量”“稳定可用”或“降低实际账单”等宣传表述。**
+
+Paritok 官方随后确认：hosted `/stats` 的 `0→0` 表示该请求被 `SKIPPED/passthrough`，
+不是缓存命中或 stats Bug；跳过请求只增加 `total_requests`。一次不调用 DeepSeek 的官方
+trace 诊断进一步确认消息仍是匹配的 OpenAI tool history，三个原 `0→0` 案例的全部工具块
+均以 `below_refusal_threshold` 跳过。这是 Paritok 的预期低收益保护，不是 GPU 不可用、
+缓存命中、stats Bug 或正式消息格式错误。Benchmark 将这三个固定、trace 已确认的行标为
+`compression_skipped`，Token/质量为“不适用”；未知输入的正式 FastAPI 仍对无法证明压缩
+的 `0→0` fail closed。trace 默认关闭，文件仅保留在 Git 忽略的本地 runtime 目录。
 
 ## Token 和费用口径
 
@@ -316,7 +327,7 @@ npm test
 npm run build
 ```
 
-阶段五最近结果：后端 `100 passed, 2 skipped`；前端 `21 passed`；Ruff、格式、pip check、
+阶段五最近结果：后端 `106 passed, 2 skipped`；前端 `21 passed`；Ruff、格式、pip check、
 lint、TypeScript strict、Vite 生产构建、结果完整性和密钥模式检查通过。两个条件集成测试
 只有显式设置真实集成环境变量时才运行；它们不应在没有单独费用授权时自动发送模型请求。
 

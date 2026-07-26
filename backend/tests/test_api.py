@@ -243,8 +243,13 @@ def test_benchmark_api_returns_every_fixed_case_and_both_modes() -> None:
 
     assert response.status_code == 200
     payload = response.json()
+    assert payload["schema_version"] == 2
     assert payload["finalized"] is True
     assert len(payload["rows"]) == 10
+    assert payload["summary"]["compression_skipped_rows"] == 3
+    assert payload["summary"]["actual_compression_rows"] == 2
+    assert payload["summary"]["upstream_timeout_rows"] == 1
+    assert payload["summary"]["paritok_average_quality"] is None
     assert {(row["case_id"], row["mode"]) for row in payload["rows"]} == {
         (case_id, mode)
         for case_id in payload["case_ids"]

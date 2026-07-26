@@ -189,6 +189,15 @@ class AnalysisService:
                 raise _paritok_error_to_app_error(exc) from exc
 
             self._validate_proxy_proof(provider_result, delta.proxy_requests)
+            if delta.original_tokens == 0:
+                raise AppError(
+                    status_code=503,
+                    code="PARITOK_COMPRESSION_SKIPPED",
+                    message=(
+                        "Paritok skipped or passed through every eligible evidence block; "
+                        "the model result was discarded and no Token metrics were fabricated."
+                    ),
+                )
             estimated_cost = self._estimate_input_cost(delta.saved_tokens)
 
             return AnalysisResult(

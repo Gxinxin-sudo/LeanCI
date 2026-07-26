@@ -6,6 +6,7 @@ import pytest
 from app.benchmark import BenchmarkRunner, build_artifact, score_analysis
 from app.benchmark_models import BenchmarkGroundTruth
 from app.config import Settings
+from app.llm.providers import LLMProviderError
 from app.models import DiagnosticAnalysis, ProviderResult, ProviderUsage
 from app.paritok import ParitokStatsSnapshot
 from app.samples import load_ground_truth
@@ -204,12 +205,98 @@ async def test_zero_token_stats_window_never_claims_one_hundred_percent_savings(
 
     rows = await runner.run_case("typescript-build")
 
-    assert rows[1].success is False
-    assert rows[1].original_tokens == 0
-    assert rows[1].compressed_tokens == 0
-    assert rows[1].tokens_saved == 0
+    assert rows[1].status == "compression_skipped"
+    assert rows[1].success is None
+    assert rows[1].compression_skip_reason == "below_refusal_threshold"
+    assert rows[1].original_tokens is None
+    assert rows[1].compressed_tokens is None
+    assert rows[1].tokens_saved is None
     assert rows[1].compression_ratio is None
-    assert "ORIGINAL_TOKEN_MINIMUM_NOT_MET" in (rows[1].error or "")
+    assert rows[1].quality_score is None
+    assert rows[1].score is None
+    assert rows[1].error is None
+
+
+class TimeoutProvider(FakeProvider):
+    async def analyze_messages(
+        self,
+        messages: list[dict[str, Any]],
+    ) -> ProviderResult:
+        self.message_hash_inputs.append(messages)
+        raise LLMProviderError(
+            code="DEEPSEEK_TIMEOUT",
+            message="The DeepSeek request timed out.",
+        )
+
+
+@pytest.mark.anyio
+async def test_timeout_remains_an_upstream_failure_with_valid_stats_delta() -> None:
+    settings = Settings(
+        _env_file=None,
+        deepseek_api_key="unit-test-only",
+        paritok_api_key="unit-test-only",
+    )
+    runner = FakeBenchmarkRunner(settings, FakeParitokClient())
+    runner.paritok = TimeoutProvider("paritok_deepseek")
+
+    rows = await runner.run_case("python-pytest")
+
+    assert rows[1].status == "failed"
+    assert rows[1].success is False
+    assert rows[1].original_tokens == 6_200
+    assert rows[1].compressed_tokens == 320
+    assert rows[1].tokens_saved == 5_880
+    assert rows[1].quality_score == 0
+    assert (rows[1].error or "").startswith("DEEPSEEK_TIMEOUT")
+    artifact = build_artifact(settings, rows)
+    assert artifact.summary.actual_compression_rows == 1
+    assert artifact.summary.upstream_timeout_rows == 1
+    assert artifact.summary.average_token_savings_percent == 94.84
+
+
+@pytest.mark.anyio
+async def test_unverified_zero_token_window_remains_fail_closed() -> None:
+    settings = Settings(
+        _env_file=None,
+        deepseek_api_key="unit-test-only",
+        paritok_api_key="unit-test-only",
+    )
+    runner = FakeBenchmarkRunner(
+        settings,
+        FakeParitokClient(zero_token_window=True),
+    )
+
+    rows = await runner.run_case("python-pytest")
+
+    assert rows[1].status == "failed"
+    assert rows[1].compression_skip_reason is None
+    assert rows[1].original_tokens is None
+    assert (rows[1].error or "").startswith("PARITOK_COMPRESSION_SKIP_UNVERIFIED")
+
+
+@pytest.mark.anyio
+async def test_summary_averages_exclude_normal_compression_skips() -> None:
+    settings = Settings(
+        _env_file=None,
+        deepseek_api_key="unit-test-only",
+        paritok_api_key="unit-test-only",
+    )
+    runner = FakeBenchmarkRunner(
+        settings,
+        FakeParitokClient(zero_token_window=True),
+    )
+
+    rows = await runner.run_case("typescript-build")
+    artifact = build_artifact(settings, rows)
+
+    assert artifact.summary.successful_rows == 1
+    assert artifact.summary.compression_skipped_rows == 1
+    assert artifact.summary.failed_rows == 0
+    assert artifact.summary.actual_compression_rows == 0
+    assert artifact.summary.baseline_average_quality == 100
+    assert artifact.summary.paritok_average_quality is None
+    assert artifact.summary.quality_change_points is None
+    assert artifact.summary.average_token_savings_percent is None
 
 
 def test_partial_artifact_refuses_to_make_a_promotional_claim() -> None:

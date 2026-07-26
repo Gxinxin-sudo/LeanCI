@@ -185,7 +185,7 @@ http://127.0.0.1:5173/?capture=docker-build
 - [ ] `[MANUAL]` 发布前复查截图和视频中没有 `.env`、终端环境变量、API Key、请求头或
   平台密钥页面。
 
-### 7. 阶段五真实 Benchmark（真实运行已完成，外部质量链路待确认）
+### 7. 阶段五真实 Benchmark（官方 skip 语义已确认并正确收口）
 
 - [x] 2026-07-26 完成一次独立 hosted GPU 预检和 Proxy 启动时的第二次复核；两次均返回
   `gpu_available=true`。
@@ -202,23 +202,32 @@ http://127.0.0.1:5173/?capture=docker-build
 
 - [x] 已用严格 Pydantic 模型检查 `benchmarks/results.json` 的 10 行、每例两路消息与
   Schema 哈希、Baseline null 规则、Paritok `/stats` 等式和失败保留规则。
-- [ ] 唯一需要人工协调的事项：向 Paritok 维护方提供以下脱敏信息，请其确认 Paritok
-  1.2.7 hosted 压缩与 `/stats` 语义；不要提供 `.env`、API Key、请求头或完整模型输出。
+- [x] Paritok 官方已确认：`/stats` 的 `0→0` 表示该请求被 `SKIPPED/passthrough`，不是
+  缓存命中或 stats Bug；跳过请求会增加 `total_requests`，但不计入 original/compressed。
+- [x] 已临时启用本地官方 trace，并用进程内假上游硬拦截 DeepSeek。第二次有效探测得到
+  以下脱敏摘要；本地 trace 已恢复为 disabled，JSONL 被 Git 忽略且不得提交、打印或截图：
 
-  1. 说明环境为 Paritok 1.2.7、`use_gpu_server: true`、模型 `deepseek-v4-flash`。
-  2. 提供运行日期 `2026-07-26`、五个固定 `case_id` 和 `benchmarks/report.md` 中的安全错误。
-  3. 提供累计 stats：5 个 Proxy 请求，`input_tokens_original=11012`、
-     `input_tokens_compressed=331`、`tokens_saved=10681`。
-  4. 说明逐例差值：Python `10469→254` 后 DeepSeek 超时；TypeScript `0→0`、
-     Docker `543→77`、Dependency `0→0`、GitHub Actions `0→0`，后四例均未达到固定
-     `minimum_original_tokens=5000`。
-  5. 询问 0/低 Token 差值是否表示 hosted 路径跳过、缓存命中、统计缺失或已知缺陷，并
-     请求可核验的修复版本或官方解释。
-  6. 在维护方确认前停止付费重跑；收到修复或明确说明后，先做最多两次无费用预检，再由
-     用户重新授权完整五例费用，保持样例和门槛不变，最后人工复核 `analysis`。
+  1. `python-pytest`：`13288` Token 块以 `below_refusal_threshold` 跳过；
+     `10469→254` Token 块成功压缩。
+  2. `typescript-build`：`10600` 与 `9692` Token 块均以
+     `below_refusal_threshold` 跳过。
+  3. `docker-build`：`7682` Token 块以 `below_refusal_threshold` 跳过；
+     `543→77` Token 块成功压缩。
+  4. `dependency-resolution`：`11424` 与 `7438` Token 块均以
+     `below_refusal_threshold` 跳过。
+  5. `github-actions-environment`：`13860` 与 `6356` Token 块均以
+     `below_refusal_threshold` 跳过。
 
-当前 5 个 Baseline 成功、5 个 Paritok 失败，平均 Token 节省不可用，质量变化为
-`-73.00` 分。不得宣传质量保持、稳定可用、固定百分比节省或实际账单降低。
+- [x] 默认 trace 已关闭；`artifacts/runtime/compress_trace.jsonl` 仅用于本地诊断并被
+  Git 忽略。不要提交、打印、截图或复制其完整内容。
+- [x] 已离线迁移既有真实工件，没有发出新模型请求：5 个 Baseline 成功，3 个 Paritok
+  行因 `below_refusal_threshold` 正常跳过，2 个 Paritok 行存在有效压缩差值。
+- [x] Python 的 `DEEPSEEK_TIMEOUT` 独立保留；Docker 的 `543→77` 虽实际压缩，但没有
+  达到只适用于实际压缩块的 5,000 Token 验收门槛。两行均未被删除或悄悄重跑。
+
+当前只可宣传“2 个实际压缩行的平均 Token 节省率为 `91.70%`，3 个低收益案例按设计
+passthrough”。不得宣传这是五例整体平均、所有输入都会压缩、质量保持、生产稳定性或
+实际账单降低。Paritok 没有成功分析行，因此质量变化必须显示为“不适用”。
 
 ## 发布阶段需要
 

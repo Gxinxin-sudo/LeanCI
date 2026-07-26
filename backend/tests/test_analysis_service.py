@@ -176,6 +176,24 @@ async def test_proxy_request_count_must_match_provider_attempts() -> None:
 
 
 @pytest.mark.anyio
+async def test_formal_analysis_fails_closed_when_paritok_skips_all_evidence() -> None:
+    paritok = FakeParitokClient(
+        [
+            snapshot(requests=10, original=1000, compressed=400, saved=600),
+            snapshot(requests=11, original=1000, compressed=400, saved=600),
+        ]
+    )
+    service = AnalysisService(settings(), paritok, provider=FakeProvider())  # type: ignore[arg-type]
+
+    with pytest.raises(AppError) as captured:
+        await service.analyze("untrusted")
+
+    assert captured.value.status_code == 503
+    assert captured.value.code == "PARITOK_COMPRESSION_SKIPPED"
+    assert "discarded" in captured.value.message
+
+
+@pytest.mark.anyio
 async def test_stats_failure_discards_analysis_and_returns_503() -> None:
     error = ParitokClientError(
         code="PARITOK_STATS_UNAVAILABLE",

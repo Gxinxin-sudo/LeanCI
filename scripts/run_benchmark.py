@@ -44,20 +44,25 @@ async def run_case(case_id: str) -> int:
     write_artifacts(artifact)
     emit(
         {
-            "status": "completed"
-            if all(row.success for row in case_rows)
-            else "completed_with_failure",
+            "status": (
+                "completed"
+                if all(row.status != "failed" for row in case_rows)
+                else "completed_with_failure"
+            ),
             "case_id": case_id,
             "rows_written": len(case_rows),
-            "successful_rows": sum(row.success for row in case_rows),
-            "failed_rows": sum(not row.success for row in case_rows),
+            "successful_rows": sum(row.status == "success" for row in case_rows),
+            "compression_skipped_rows": sum(
+                row.status == "compression_skipped" for row in case_rows
+            ),
+            "failed_rows": sum(row.status == "failed" for row in case_rows),
             "finalized": artifact.finalized,
             "expected_model_api_requests": 2,
             "maximum_model_api_requests_with_json_repairs": 4,
             "network_retries": 0,
         }
     )
-    return 0 if all(row.success for row in case_rows) else 1
+    return 0 if all(row.status != "failed" for row in case_rows) else 1
 
 
 def main() -> int:

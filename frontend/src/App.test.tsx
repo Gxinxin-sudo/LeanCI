@@ -38,7 +38,7 @@ const sample: SamplePayload = {
 }
 
 const benchmark: BenchmarkArtifact = {
-  schema_version: 1,
+  schema_version: 2,
   generated_at: '2026-07-26T08:00:00Z',
   finalized: true,
   case_ids: [
@@ -69,8 +69,11 @@ const benchmark: BenchmarkArtifact = {
     expected_cases: 5,
     expected_rows: 10,
     completed_rows: 10,
-    successful_rows: 9,
+    successful_rows: 8,
+    compression_skipped_rows: 1,
     failed_rows: 1,
+    actual_compression_rows: 1,
+    upstream_timeout_rows: 0,
     average_tokens_saved: 8_000,
     average_token_savings_percent: 94.5,
     baseline_average_quality: 90,
@@ -82,7 +85,9 @@ const benchmark: BenchmarkArtifact = {
     {
       case_id: 'python-pytest',
       mode: 'paritok',
+      status: 'failed',
       success: false,
+      compression_skip_reason: null,
       original_tokens: 8_200,
       compressed_tokens: 300,
       tokens_saved: 7_900,
@@ -104,6 +109,44 @@ const benchmark: BenchmarkArtifact = {
       pricing_snapshot_date: '2026-07-26',
       initial_messages_sha256: 'a'.repeat(64),
       json_schema_sha256: 'b'.repeat(64),
+      human_review: { status: 'pending', reviewer: null, notes: null },
+      cost_estimate: {
+        input_if_all_cache_hit_usd: null,
+        input_if_all_cache_miss_usd: null,
+        input_from_reported_cache_split_usd: null,
+        output_usd: null,
+        saved_input_if_cache_hit_usd: null,
+        saved_input_if_cache_miss_usd: null,
+        disclaimer: 'Configured estimate.',
+      },
+    },
+    {
+      case_id: 'typescript-build',
+      mode: 'paritok',
+      status: 'compression_skipped',
+      success: null,
+      compression_skip_reason: 'below_refusal_threshold',
+      original_tokens: null,
+      compressed_tokens: null,
+      tokens_saved: null,
+      compression_ratio: null,
+      prompt_tokens: null,
+      completion_tokens: null,
+      prompt_cache_hit_tokens: null,
+      prompt_cache_miss_tokens: null,
+      latency_ms: 1_200,
+      root_cause_correct: null,
+      evidence_correct: null,
+      relevant_files_correct: null,
+      fix_direction_correct: null,
+      json_valid: null,
+      quality_score: null,
+      error: null,
+      run_timestamp: '2026-07-26T08:01:00Z',
+      model: 'deepseek-v4-flash',
+      pricing_snapshot_date: '2026-07-26',
+      initial_messages_sha256: 'c'.repeat(64),
+      json_schema_sha256: 'd'.repeat(64),
       human_review: { status: 'pending', reviewer: null, notes: null },
       cost_estimate: {
         input_if_all_cache_hit_usd: null,
@@ -297,6 +340,8 @@ describe('LeanCI workbench', () => {
     expect(await screen.findByRole('heading', { name: 'Every row stays.' })).toBeInTheDocument()
     expect(screen.getByText('94.50%')).toBeInTheDocument()
     expect(screen.getByText('Failed · retained')).toBeInTheDocument()
+    expect(screen.getByText('Compression skipped · expected low benefit')).toBeInTheDocument()
+    expect(screen.getByText('Normal passthrough · below_refusal_threshold')).toBeInTheDocument()
     expect(screen.getByRole('alert')).toHaveTextContent('LLM_OUTPUT_INVALID')
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })

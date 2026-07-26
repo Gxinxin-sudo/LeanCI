@@ -40,6 +40,7 @@ compress_trace.jsonl
 *.trace.jsonl
 *.log
 !examples/**/ci.log
+/artifacts/runtime/compress_trace.jsonl
 
 # Paritok / local proxy state
 .paritok-bak

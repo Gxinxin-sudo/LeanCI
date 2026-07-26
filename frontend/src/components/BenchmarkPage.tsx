@@ -17,20 +17,23 @@ const CASE_LABELS: Record<string, string> = {
 }
 
 function formatInteger(value: number | null): string {
-  return value === null ? '—' : value.toLocaleString('en-US')
+  return value === null ? 'N/A' : value.toLocaleString('en-US')
 }
 
 function formatMoney(value: number | null): string {
-  return value === null ? '—' : `$${value.toFixed(8)}`
+  return value === null ? 'N/A' : `$${value.toFixed(8)}`
 }
 
 function savedPercent(row: BenchmarkRow): string {
   return row.compression_ratio === null
-    ? '—'
+    ? 'N/A'
     : `${((1 - row.compression_ratio) * 100).toFixed(2)}%`
 }
 
 function QualityChecks({ row }: { row: BenchmarkRow }) {
+  if (row.quality_score === null) {
+    return <div className="quality-checks quality-na">Not scored — compression skipped</div>
+  }
   const checks = [
     ['Root', row.root_cause_correct, 40],
     ['Evidence', row.evidence_correct, 20],
@@ -85,15 +88,42 @@ function BenchmarkLedger({ artifact }: { artifact: BenchmarkArtifact }) {
             </header>
             <div className="ledger-pair">
               {rows.map((row) => (
-                <div className={`ledger-row ${row.success ? '' : 'ledger-row-failed'}`} key={row.mode}>
+                <div
+                  className={`ledger-row ${
+                    row.status === 'failed'
+                      ? 'ledger-row-failed'
+                      : row.status === 'compression_skipped'
+                        ? 'ledger-row-skipped'
+                        : ''
+                  }`}
+                  key={row.mode}
+                >
                   <div className="ledger-route">
                     <strong>
                       {row.mode === 'baseline_uncompressed' ? 'A · Baseline' : 'B · Paritok'}
                     </strong>
-                    <span className={row.success ? 'result-ok' : 'result-failed'}>
-                      {row.success ? 'Completed' : 'Failed · retained'}
+                    <span
+                      className={
+                        row.status === 'failed'
+                          ? 'result-failed'
+                          : row.status === 'compression_skipped'
+                            ? 'result-skipped'
+                            : 'result-ok'
+                      }
+                    >
+                      {row.status === 'success'
+                        ? 'Completed'
+                        : row.status === 'compression_skipped'
+                          ? 'Compression skipped · expected low benefit'
+                          : 'Failed · retained'}
                     </span>
-                    <small>{row.mode === 'baseline_uncompressed' ? 'Uncompressed mode' : 'Verified /stats delta'}</small>
+                    <small>
+                      {row.mode === 'baseline_uncompressed'
+                        ? 'Uncompressed mode'
+                        : row.status === 'compression_skipped'
+                          ? `Normal passthrough · ${row.compression_skip_reason}`
+                          : 'Verified /stats delta'}
+                    </small>
                   </div>
                   <dl className="ledger-token-grid">
                     <div><dt>Original</dt><dd>{formatInteger(row.original_tokens)}</dd></div>
@@ -104,7 +134,10 @@ function BenchmarkLedger({ artifact }: { artifact: BenchmarkArtifact }) {
                     <div><dt>Completion</dt><dd>{formatInteger(row.completion_tokens)}</dd></div>
                   </dl>
                   <div className="ledger-quality">
-                    <strong>{row.quality_score}<small>/100</small></strong>
+                    <strong>
+                      {row.quality_score === null ? 'N/A' : row.quality_score}
+                      {row.quality_score !== null && <small>/100</small>}
+                    </strong>
                     <QualityChecks row={row} />
                   </div>
                   <div className="ledger-meta">
@@ -129,6 +162,8 @@ function BenchmarkLedger({ artifact }: { artifact: BenchmarkArtifact }) {
 function BenchmarkContent({ artifact }: { artifact: BenchmarkArtifact }) {
   const savings = artifact.summary.average_token_savings_percent
   const change = artifact.summary.quality_change_points
+  const baselineQuality = artifact.summary.baseline_average_quality
+  const paritokQuality = artifact.summary.paritok_average_quality
   return (
     <>
       <section className="benchmark-hero">
@@ -149,18 +184,26 @@ function BenchmarkContent({ artifact }: { artifact: BenchmarkArtifact }) {
       <section className="benchmark-readout" aria-label="Benchmark summary">
         <div>
           <span>Average Token savings</span>
-          <strong>{savings === null ? '—' : `${savings.toFixed(2)}%`}</strong>
-          <small>Successful verified Paritok rows only</small>
+          <strong>{savings === null ? 'N/A' : `${savings.toFixed(2)}%`}</strong>
+          <small>{artifact.summary.actual_compression_rows} actual compression rows only</small>
         </div>
         <div>
           <span>Quality change</span>
-          <strong>{change > 0 ? '+' : ''}{change.toFixed(2)}</strong>
-          <small>{artifact.summary.baseline_average_quality.toFixed(2)} baseline → {artifact.summary.paritok_average_quality.toFixed(2)} Paritok</small>
+          <strong>{change === null ? 'N/A' : `${change > 0 ? '+' : ''}${change.toFixed(2)}`}</strong>
+          <small>
+            {baselineQuality === null ? 'N/A' : baselineQuality.toFixed(2)} baseline →{' '}
+            {paritokQuality === null ? 'N/A' : paritokQuality.toFixed(2)} Paritok
+          </small>
+        </div>
+        <div>
+          <span>Normal low-benefit skips</span>
+          <strong>{artifact.summary.compression_skipped_rows}</strong>
+          <small>Expected Paritok behavior · excluded from averages</small>
         </div>
         <div className={artifact.summary.failed_rows > 0 ? 'readout-failed' : ''}>
           <span>Failed rows retained</span>
           <strong>{artifact.summary.failed_rows}</strong>
-          <small>{artifact.summary.successful_rows}/{artifact.summary.expected_rows} rows completed</small>
+          <small>{artifact.summary.upstream_timeout_rows} upstream timeout</small>
         </div>
       </section>
 

@@ -213,3 +213,4 @@ def test_repository_yaml_matches_the_installed_paritok_1_2_7_schema() -> None:
     assert config.compression.max_tokens == 50_000
     assert config.tool_discovery.strategy == "passthrough"
     assert config.trace.enabled is False
+    assert config.trace.path == "artifacts/runtime/compress_trace.jsonl"

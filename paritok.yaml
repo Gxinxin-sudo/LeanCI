@@ -32,7 +32,7 @@ tool_discovery:
 
 trace:
   enabled: false
-  path: compress_trace.jsonl
+  path: artifacts/runtime/compress_trace.jsonl
 
 codex:
   enabled: false

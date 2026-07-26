@@ -6,7 +6,7 @@ import csv
 import hashlib
 import io
 import json
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import PurePosixPath
 from time import perf_counter
@@ -40,6 +40,17 @@ RESULTS_JSON_PATH = BENCHMARKS_ROOT / "results.json"
 RESULTS_CSV_PATH = BENCHMARKS_ROOT / "results.csv"
 REPORT_PATH = BENCHMARKS_ROOT / "report.md"
 CASE_IDS = tuple(definition.id for definition in SAMPLE_DEFINITIONS)
+# The official local trace diagnosis on 2026-07-26 proved that both evidence
+# tool blocks for these fixed cases were skipped as below_refusal_threshold.
+# A future 0->0 window is only classified as an expected low-benefit skip for
+# these unchanged case IDs. Other 0->0 windows remain fail-closed.
+TRACE_VERIFIED_LOW_BENEFIT_CASE_IDS = frozenset(
+    {
+        "typescript-build",
+        "dependency-resolution",
+        "github-actions-environment",
+    }
+)
 _USD_QUANTUM = Decimal("0.00000001")
 
 
@@ -206,15 +217,24 @@ def _row(
     compressed_tokens: int | None = None,
     tokens_saved: int | None = None,
     compression_ratio: float | None = None,
+    compression_skip_reason: str | None = None,
 ) -> BenchmarkRow:
-    success = result is not None and error is None
-    analysis = result.analysis if success else None
-    score = score_analysis(analysis, ground_truth, json_valid=success)
+    compression_skipped = compression_skip_reason is not None
+    success = None if compression_skipped else result is not None and error is None
+    status = "compression_skipped" if compression_skipped else ("success" if success else "failed")
+    analysis = result.analysis if success is True else None
+    score = (
+        None
+        if compression_skipped
+        else score_analysis(analysis, ground_truth, json_valid=success is True)
+    )
     usage = result.usage if result is not None else None
     return BenchmarkRow(
         case_id=case_id,
         mode=mode,
+        status=status,
         success=success,
+        compression_skip_reason=compression_skip_reason,
         original_tokens=original_tokens,
         compressed_tokens=compressed_tokens,
         tokens_saved=tokens_saved,
@@ -224,12 +244,12 @@ def _row(
         prompt_cache_hit_tokens=usage.prompt_cache_hit_tokens if usage else None,
         prompt_cache_miss_tokens=usage.prompt_cache_miss_tokens if usage else None,
         latency_ms=round((perf_counter() - started_at) * 1000),
-        root_cause_correct=score.root_cause_correct,
-        evidence_correct=score.evidence_correct,
-        relevant_files_correct=score.relevant_files_correct,
-        fix_direction_correct=score.fix_direction_correct,
-        json_valid=score.json_valid,
-        quality_score=score.quality_score,
+        root_cause_correct=score.root_cause_correct if score else None,
+        evidence_correct=score.evidence_correct if score else None,
+        relevant_files_correct=score.relevant_files_correct if score else None,
+        fix_direction_correct=score.fix_direction_correct if score else None,
+        json_valid=score.json_valid if score else None,
+        quality_score=score.quality_score if score else None,
         error=error,
         run_timestamp=datetime.now(UTC),
         model=settings.deepseek_model,
@@ -359,6 +379,7 @@ class BenchmarkRunner:
         paritok_started = perf_counter()
         paritok_result: ProviderResult | None = None
         paritok_error: str | None = None
+        compression_skip_reason: str | None = None
         stats_values: dict[str, int | float | None] = {
             "original_tokens": None,
             "compressed_tokens": None,
@@ -373,17 +394,21 @@ class BenchmarkRunner:
             paritok_stats_after = await self.paritok_client.stats()
             await self.paritok_client.hosted_gpu()
             delta = calculate_stats_delta(baseline_stats_after, paritok_stats_after)
-            stats_values = {
-                "original_tokens": delta.original_tokens,
-                "compressed_tokens": delta.compressed_tokens,
-                "tokens_saved": delta.saved_tokens,
-                # A 0/0 window has no meaningful savings percentage. Keeping
-                # the verified counters while omitting the ratio prevents a
-                # failed row from being presented as "100% saved".
-                "compression_ratio": (
-                    delta.compression_ratio if delta.original_tokens > 0 else None
-                ),
-            }
+            stats_values = (
+                {
+                    "original_tokens": delta.original_tokens,
+                    "compressed_tokens": delta.compressed_tokens,
+                    "tokens_saved": delta.saved_tokens,
+                    "compression_ratio": delta.compression_ratio,
+                }
+                if delta.original_tokens > 0
+                else {
+                    "original_tokens": None,
+                    "compressed_tokens": None,
+                    "tokens_saved": None,
+                    "compression_ratio": None,
+                }
+            )
             if (
                 paritok_result is not None
                 and delta.proxy_requests != paritok_result.request_attempts
@@ -393,7 +418,25 @@ class BenchmarkRunner:
                     "PARITOK_ROUTE_NOT_VERIFIED: The stats request delta did not match "
                     "the benchmark provider attempts."
                 )
-            if delta.original_tokens < ground_truth.minimum_original_tokens:
+            if paritok_result is not None and paritok_error is None and delta.original_tokens == 0:
+                stats_values = {
+                    "original_tokens": None,
+                    "compressed_tokens": None,
+                    "tokens_saved": None,
+                    "compression_ratio": None,
+                }
+                if case_id in TRACE_VERIFIED_LOW_BENEFIT_CASE_IDS:
+                    compression_skip_reason = "below_refusal_threshold"
+                else:
+                    paritok_result = None
+                    paritok_error = (
+                        "PARITOK_COMPRESSION_SKIP_UNVERIFIED: /stats recorded 0->0, "
+                        "but no fixed trace diagnosis proves a low-benefit skip."
+                    )
+            elif (
+                delta.original_tokens > 0
+                and delta.original_tokens < ground_truth.minimum_original_tokens
+            ):
                 paritok_result = None
                 paritok_error = (
                     "ORIGINAL_TOKEN_MINIMUM_NOT_MET: The verified stats delta was below "
@@ -413,6 +456,7 @@ class BenchmarkRunner:
             result=paritok_result,
             ground_truth=ground_truth,
             error=paritok_error,
+            compression_skip_reason=compression_skip_reason,
             **stats_values,
         )
         return [baseline_row, paritok_row]
@@ -428,64 +472,81 @@ def build_artifact(settings: Settings, rows: list[BenchmarkRow]) -> BenchmarkArt
     )
     expected_rows = len(CASE_IDS) * 2
     finalized = len(ordered_rows) == expected_rows
-    successful_paritok = [
+    compressed_paritok = [
         row
         for row in ordered_rows
         if row.mode == "paritok"
-        and row.success
         and row.tokens_saved is not None
         and row.compression_ratio is not None
     ]
 
-    def average_quality(mode: str) -> float:
-        mode_rows = [row for row in ordered_rows if row.mode == mode]
+    def average_quality(mode: str) -> float | None:
+        mode_rows = [
+            row
+            for row in ordered_rows
+            if row.mode == mode and row.status == "success" and row.quality_score is not None
+        ]
         if not mode_rows:
-            return 0.0
-        return round(sum(row.quality_score for row in mode_rows) / len(mode_rows), 2)
+            return None
+        return round(
+            sum(row.quality_score for row in mode_rows if row.quality_score is not None)
+            / len(mode_rows),
+            2,
+        )
 
     baseline_quality = average_quality("baseline_uncompressed")
     paritok_quality = average_quality("paritok")
     average_saved = (
         round(
-            sum(row.tokens_saved or 0 for row in successful_paritok) / len(successful_paritok),
+            sum(row.tokens_saved or 0 for row in compressed_paritok) / len(compressed_paritok),
             2,
         )
-        if successful_paritok
+        if compressed_paritok
         else None
     )
     average_savings_percent = (
         round(
-            sum((1 - (row.compression_ratio or 0)) * 100 for row in successful_paritok)
-            / len(successful_paritok),
+            sum((1 - (row.compression_ratio or 0)) * 100 for row in compressed_paritok)
+            / len(compressed_paritok),
             2,
         )
-        if successful_paritok
+        if compressed_paritok
         else None
     )
-    failures = sum(not row.success for row in ordered_rows)
-    successful_rows = sum(row.success for row in ordered_rows)
+    failures = sum(row.status == "failed" for row in ordered_rows)
+    successful_rows = sum(row.status == "success" for row in ordered_rows)
+    skipped_rows = sum(row.status == "compression_skipped" for row in ordered_rows)
+    upstream_timeouts = sum(
+        bool(row.error and row.error.startswith("DEEPSEEK_TIMEOUT")) for row in ordered_rows
+    )
+    quality_change = (
+        round(paritok_quality - baseline_quality, 2)
+        if paritok_quality is not None and baseline_quality is not None
+        else None
+    )
     if not finalized:
         supported_claim = "Benchmark incomplete; no promotional claim is supported."
-    elif successful_rows == 0:
-        supported_claim = (
-            f"No benchmark or promotional claim is supported: all {failures} planned rows "
-            "failed before a valid model result was recorded. The failures remain visible."
-        )
     else:
         compression_text = (
-            f"{average_savings_percent:.2f}% average Token savings"
+            f"{average_savings_percent:.2f}% average Token savings across "
+            f"{len(compressed_paritok)} rows where compression actually occurred"
             if average_savings_percent is not None
             else "no verified average Token savings"
         )
+        quality_text = (
+            f"a {quality_change:+.2f}-point deterministic quality change"
+            if quality_change is not None
+            else "no comparable Paritok quality average"
+        )
         supported_claim = (
-            f"On these five fixed cases, the run observed {compression_text} and a "
-            f"{paritok_quality - baseline_quality:+.2f}-point deterministic quality change. "
-            f"All {failures} failed rows remain included. This does not establish universal "
+            f"On these five fixed cases, the run observed {compression_text} and "
+            f"{quality_text}; {skipped_rows} low-benefit compression skips and "
+            f"{failures} failed rows remain included. This does not establish universal "
             "quality preservation, production reliability, or actual billing savings."
         )
 
     return BenchmarkArtifact(
-        schema_version=1,
+        schema_version=2,
         generated_at=datetime.now(UTC),
         finalized=finalized,
         case_ids=list(CASE_IDS),
@@ -498,8 +559,8 @@ def build_artifact(settings: Settings, rows: list[BenchmarkRow]) -> BenchmarkArt
             execution_order="baseline_uncompressed_then_paritok",
             scoring_rule="40+20+15+15+10",
             token_metric_policy=(
-                "Paritok original/compressed/saved metrics only from per-request /stats "
-                "deltas; baseline values are null."
+                "Paritok Token metrics only for actual compression from per-request /stats "
+                "deltas; baseline and compression_skipped values are null."
             ),
         ),
         pricing=BenchmarkPricing(
@@ -513,12 +574,15 @@ def build_artifact(settings: Settings, rows: list[BenchmarkRow]) -> BenchmarkArt
             expected_rows=expected_rows,
             completed_rows=len(ordered_rows),
             successful_rows=successful_rows,
+            compression_skipped_rows=skipped_rows,
             failed_rows=failures,
+            actual_compression_rows=len(compressed_paritok),
+            upstream_timeout_rows=upstream_timeouts,
             average_tokens_saved=average_saved,
             average_token_savings_percent=average_savings_percent,
             baseline_average_quality=baseline_quality,
             paritok_average_quality=paritok_quality,
-            quality_change_points=round(paritok_quality - baseline_quality, 2),
+            quality_change_points=quality_change,
             supported_claim=supported_claim,
         ),
         rows=ordered_rows,
@@ -526,7 +590,77 @@ def build_artifact(settings: Settings, rows: list[BenchmarkRow]) -> BenchmarkArt
 
 
 def load_results() -> BenchmarkArtifact:
-    return BenchmarkArtifact.model_validate_json(RESULTS_JSON_PATH.read_text(encoding="utf-8"))
+    source = RESULTS_JSON_PATH.read_text(encoding="utf-8")
+    payload = json.loads(source)
+    if payload.get("schema_version") == 1:
+        return migrate_v1_artifact(payload)
+    return BenchmarkArtifact.model_validate_json(source)
+
+
+def migrate_v1_artifact(payload: dict[str, Any]) -> BenchmarkArtifact:
+    """Reclassify the saved acceptance run without issuing any model request."""
+
+    if payload.get("schema_version") != 1:
+        raise ValueError("only schema_version=1 benchmark artifacts can be migrated")
+    migrated_rows: list[BenchmarkRow] = []
+    for source_row in payload.get("rows", []):
+        row = dict(source_row)
+        row["run_timestamp"] = datetime.fromisoformat(row["run_timestamp"])
+        is_verified_skip = (
+            row.get("mode") == "paritok"
+            and row.get("case_id") in TRACE_VERIFIED_LOW_BENEFIT_CASE_IDS
+            and row.get("original_tokens") == 0
+            and row.get("compressed_tokens") == 0
+        )
+        if is_verified_skip:
+            row.update(
+                {
+                    "status": "compression_skipped",
+                    "success": None,
+                    "compression_skip_reason": "below_refusal_threshold",
+                    "original_tokens": None,
+                    "compressed_tokens": None,
+                    "tokens_saved": None,
+                    "compression_ratio": None,
+                    "root_cause_correct": None,
+                    "evidence_correct": None,
+                    "relevant_files_correct": None,
+                    "fix_direction_correct": None,
+                    "json_valid": None,
+                    "quality_score": None,
+                    "error": None,
+                    "score": None,
+                    "analysis": None,
+                }
+            )
+            cost_estimate = dict(row["cost_estimate"])
+            cost_estimate["saved_input_if_cache_hit_usd"] = None
+            cost_estimate["saved_input_if_cache_miss_usd"] = None
+            row["cost_estimate"] = cost_estimate
+        else:
+            row["status"] = "success" if row.get("success") is True else "failed"
+            row["compression_skip_reason"] = None
+        migrated_rows.append(BenchmarkRow.model_validate(row))
+
+    configuration = payload["configuration"]
+    pricing = payload["pricing"]
+    settings = Settings(
+        _env_file=None,
+        deepseek_model=configuration["model"],
+        deepseek_max_output_tokens=configuration["max_tokens"],
+        pricing_snapshot_date=date.fromisoformat(pricing["snapshot_date"]),
+        deepseek_input_cache_hit_usd_per_m=Decimal(
+            str(pricing["input_cache_hit_usd_per_m_tokens"])
+        ),
+        deepseek_input_cache_miss_usd_per_m=Decimal(
+            str(pricing["input_cache_miss_usd_per_m_tokens"])
+        ),
+        deepseek_output_usd_per_m=Decimal(str(pricing["output_usd_per_m_tokens"])),
+    )
+    artifact = build_artifact(settings, migrated_rows)
+    return artifact.model_copy(
+        update={"generated_at": datetime.fromisoformat(payload["generated_at"])}
+    )
 
 
 def merge_case_rows(
@@ -589,7 +723,9 @@ def _csv_text(artifact: BenchmarkArtifact) -> str:
     fieldnames = [
         "case_id",
         "mode",
+        "status",
         "success",
+        "compression_skip_reason",
         "original_tokens",
         "compressed_tokens",
         "tokens_saved",
@@ -642,22 +778,38 @@ def _markdown_report(artifact: BenchmarkArtifact) -> str:
             "JSON object, zero network retries"
         ),
         (
-            "- Token metric policy: baseline compression fields are null; Paritok "
-            "original/compressed/saved fields come only from isolated `/stats` deltas."
+            "- Token metric policy: baseline and `compression_skipped` fields are null; "
+            "Paritok Token fields exist only when isolated `/stats` proves compression."
         ),
         "",
         "## Summary",
         "",
         f"- Successful rows: **{summary.successful_rows}/{summary.expected_rows}**",
+        f"- Normal low-benefit compression skips: **{summary.compression_skipped_rows}**",
         f"- Failed rows retained: **{summary.failed_rows}**",
+        f"- Rows with actual compression proof: **{summary.actual_compression_rows}**",
+        f"- Upstream DeepSeek timeouts: **{summary.upstream_timeout_rows}**",
         (
-            f"- Average Token savings: **{summary.average_token_savings_percent:.2f}%**"
+            f"- Average Token savings across actual compression rows only: "
+            f"**{summary.average_token_savings_percent:.2f}%**"
             if summary.average_token_savings_percent is not None
-            else "- Average Token savings: **unavailable**"
+            else "- Average Token savings across actual compression rows only: **unavailable**"
         ),
-        f"- Baseline average quality: **{summary.baseline_average_quality:.2f}/100**",
-        f"- Paritok average quality: **{summary.paritok_average_quality:.2f}/100**",
-        f"- Quality change: **{summary.quality_change_points:+.2f} points**",
+        (
+            f"- Baseline average quality: **{summary.baseline_average_quality:.2f}/100**"
+            if summary.baseline_average_quality is not None
+            else "- Baseline average quality: **not applicable**"
+        ),
+        (
+            f"- Paritok average quality: **{summary.paritok_average_quality:.2f}/100**"
+            if summary.paritok_average_quality is not None
+            else "- Paritok average quality: **not applicable**"
+        ),
+        (
+            f"- Quality change: **{summary.quality_change_points:+.2f} points**"
+            if summary.quality_change_points is not None
+            else "- Quality change: **not applicable**"
+        ),
         "",
         summary.supported_claim,
         "",
@@ -677,7 +829,7 @@ def _markdown_report(artifact: BenchmarkArtifact) -> str:
         "## Results",
         "",
         (
-            "| Case | Mode | Success | Original | Compressed | Saved | Saved % | "
+            "| Case | Mode | Status | Original | Compressed | Saved | Saved % | "
             "Prompt | Completion | Quality | Latency | Error |"
         ),
         ("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |"),
@@ -690,14 +842,15 @@ def _markdown_report(artifact: BenchmarkArtifact) -> str:
         )
         error = (row.error or "—").replace("|", "\\|")
         lines.append(
-            f"| {row.case_id} | {row.mode} | {str(row.success).lower()} | "
+            f"| {row.case_id} | {row.mode} | {row.status} | "
             f"{row.original_tokens if row.original_tokens is not None else '—'} | "
             f"{row.compressed_tokens if row.compressed_tokens is not None else '—'} | "
             f"{row.tokens_saved if row.tokens_saved is not None else '—'} | "
             f"{saved_percent} | "
             f"{row.prompt_tokens if row.prompt_tokens is not None else '—'} | "
             f"{row.completion_tokens if row.completion_tokens is not None else '—'} | "
-            f"{row.quality_score} | {row.latency_ms} ms | {error} |"
+            f"{row.quality_score if row.quality_score is not None else 'N/A'} | "
+            f"{row.latency_ms} ms | {error} |"
         )
     lines.extend(
         [
@@ -706,7 +859,19 @@ def _markdown_report(artifact: BenchmarkArtifact) -> str:
             "",
         ]
     )
-    failed = [row for row in artifact.rows if not row.success]
+    skipped = [row for row in artifact.rows if row.status == "compression_skipped"]
+    if skipped:
+        lines.append(
+            "- Expected low-benefit skips (normal Paritok behavior, not an outage, "
+            "cache hit, or stats defect):"
+        )
+        for row in skipped:
+            lines.append(
+                f"  - `{row.case_id}` / `{row.mode}`: "
+                f"`compression_skipped` (`{row.compression_skip_reason}`); Token savings, "
+                "compression ratio, and quality are not applicable."
+            )
+    failed = [row for row in artifact.rows if row.status == "failed"]
     if failed:
         for row in failed:
             lines.append(f"- `{row.case_id}` / `{row.mode}`: {row.error}")

@@ -131,9 +131,18 @@
 - [x] 创建只读 Benchmark 前端页并展示平均 Token 节省、质量变化和全部失败
 - [x] 更新 README、架构和任务状态
 - [x] 在明确费用授权后依次完成五例真实双跑；2026-07-26 两次 hosted 检查成功，实际
-  发送 10 次模型请求、0 次 JSON 修复、0 次网络重试，固定工件保留 5 个成功行和 5 个失败行
-- [ ] `[MANUAL]` 将脱敏后的 Paritok 1.2.7 stats 差值与超时信息交给 Paritok 维护方确认；
-  在其解释或修复前不得降低 5,000 Token 门槛、修改样例或再次付费重跑
+  发送 10 次模型请求、0 次 JSON 修复、0 次网络重试，固定工件保留全部 10 行
+- [x] `[MANUAL]` Paritok 官方确认 `/stats` 的 `0→0` 是 `SKIPPED/passthrough`，不是缓存
+  命中或 stats Bug；跳过请求只增加 `total_requests`
+- [x] 临时启用且隔离官方 trace，以无 DeepSeek 假上游完成五例 tool-message 诊断；三个
+  原 `0→0` 案例的确切 reason 均为 `below_refusal_threshold`
+- [x] 将三个 trace 已确认的低收益 `0→0` Benchmark 行标记为 `compression_skipped`，
+  Token/质量均为不适用；未知正式分析仍 fail closed，且不伪造 Token
+- [x] 仅对实际压缩且 `/stats` delta 有效的行计算 Token 平均值；5,000 门槛只适用于
+  实际压缩块，正常跳过不计为 0% 节省或质量 0
+- [x] 保留 Python DeepSeek timeout 和 Docker 5,000 Token 验收失败；报告与前端排除
+  skipped 行后，质量变化正确显示为不适用
+- [x] trace 默认关闭且诊断 JSONL 保持 Git 忽略；不提交 trace 内容
 
 ## 阶段 6：Docker 与端到端验证
 

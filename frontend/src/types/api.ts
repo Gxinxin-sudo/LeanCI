@@ -112,11 +112,14 @@ export interface ApiErrorEnvelope {
 }
 
 export type BenchmarkMode = 'baseline_uncompressed' | 'paritok'
+export type BenchmarkStatus = 'success' | 'compression_skipped' | 'failed'
 
 export interface BenchmarkRow {
   case_id: string
   mode: BenchmarkMode
-  success: boolean
+  status: BenchmarkStatus
+  success: boolean | null
+  compression_skip_reason: 'below_refusal_threshold' | null
   original_tokens: number | null
   compressed_tokens: number | null
   tokens_saved: number | null
@@ -126,12 +129,12 @@ export interface BenchmarkRow {
   prompt_cache_hit_tokens: number | null
   prompt_cache_miss_tokens: number | null
   latency_ms: number
-  root_cause_correct: boolean
-  evidence_correct: boolean
-  relevant_files_correct: boolean
-  fix_direction_correct: boolean
-  json_valid: boolean
-  quality_score: number
+  root_cause_correct: boolean | null
+  evidence_correct: boolean | null
+  relevant_files_correct: boolean | null
+  fix_direction_correct: boolean | null
+  json_valid: boolean | null
+  quality_score: number | null
   error: string | null
   run_timestamp: string
   model: 'deepseek-v4-flash'
@@ -155,7 +158,7 @@ export interface BenchmarkRow {
 }
 
 export interface BenchmarkArtifact {
-  schema_version: 1
+  schema_version: 2
   generated_at: string
   finalized: boolean
   case_ids: string[]
@@ -181,12 +184,15 @@ export interface BenchmarkArtifact {
     expected_rows: number
     completed_rows: number
     successful_rows: number
+    compression_skipped_rows: number
     failed_rows: number
+    actual_compression_rows: number
+    upstream_timeout_rows: number
     average_tokens_saved: number | null
     average_token_savings_percent: number | null
-    baseline_average_quality: number
-    paritok_average_quality: number
-    quality_change_points: number
+    baseline_average_quality: number | null
+    paritok_average_quality: number | null
+    quality_change_points: number | null
     supported_claim: string
   }
   rows: BenchmarkRow[]
