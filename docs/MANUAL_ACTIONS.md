@@ -252,16 +252,23 @@ $env:LEANCI_DOCKER_CLI = (Get-Command docker).Source
   `deepseek_called=false`、Proxy/API 退出联动均为非零容器状态。首次下载可能超过两分钟，
   应让 Docker BuildKit 自然完成；不要把任何密钥传给 `docker build`。完整说明见
   [`DOCKER.md`](DOCKER.md)。
-- [ ] 将 `CORS_ALLOWED_ORIGINS` 设置为实际生产前端的精确 Origin；多个值用逗号分隔，
-  不使用 `*`，不包含路径。
-- [ ] 在 FastAPI 前配置可信 TLS 反向代理/API 网关，并设置不高于应用的请求体上限、
-  有界超时、可信客户端身份、分布式速率限制和付费预算/配额。
+- [ ] 按 [`PRODUCTION_DEPLOYMENT.md`](PRODUCTION_DEPLOYMENT.md) 配置生产环境变量：
+  `ENVIRONMENT=production`、精确 HTTPS `CORS_ALLOWED_ORIGINS`、
+  `TRUSTED_PROXY_CIDRS`、新的 `PROXY_AUTH_SHARED_SECRET`、
+  `DISTRIBUTED_RATE_LIMIT_REQUIRED=true` 和已审批的
+  `DAILY_ANALYSIS_REQUEST_BUDGET`。不得将共享密钥写入前端、Git 或日志。
+- [ ] 在 FastAPI 前配置可信 TLS + OIDC 反向代理/API 网关：它必须先移除浏览器提供的
+  `X-LeanCI-Proxy-Auth` / `X-LeanCI-Principal`，认证成功后才重新写入；容器端口和 8080
+  均不得直接公网暴露。同步配置 4 MiB body、≤115 秒上游超时、按主体和 IP 的 Redis
+  分布式限流，以及 UTC 日原子请求预算；Redis/网关故障必须拒绝分析，不能回退为本地内存。
 - [ ] FastAPI 继续只运行一个 Uvicorn worker；在并发锁、限流和 `/stats` 隔离迁移到共享
   事务存储前，不要横向扩容 API worker。
 - [ ] 给生产前端文档响应配置与 API 等价的 CSP、防嵌入、`nosniff`、no-referrer 和
   Permissions-Policy 响应头。
-- [ ] 阅读并确认 Paritok、DeepSeek、反向代理和托管平台的内容保留/日志政策；只在拥有
-  授权时上传私有源码或个人数据，并把真实保留口径写入隐私说明。
+- [ ] 逐项落实 `PRODUCTION_DEPLOYMENT.md` 的数据保留表：关闭 body/header/model-output
+  日志，网关元数据最长 24 小时，Redis 计数键设置 TTL，平台 trace/backup 最长 7 天；阅读并
+  确认 Paritok、DeepSeek、反向代理和托管平台的内容保留政策。只在拥有授权时上传私有源码或
+  个人数据，并把真实保留口径写入隐私说明。
 - [ ] 公开 GitHub 仓库建立后启用 private vulnerability reporting、secret scanning、
   dependency alerts 和分支保护，并把 `SECURITY.md` 临时私下报告方式替换为私有报告链接。
 - [ ] 发布前重新运行全历史密钥扫描和依赖审计；如果怀疑泄露，先在供应商侧撤销 Key，

@@ -39,6 +39,7 @@ from app.security import (
     JsonRequestPolicyMiddleware,
     RateLimitMiddleware,
     RequestSecurityMiddleware,
+    TrustedProxyAuthenticationMiddleware,
 )
 
 
@@ -97,6 +98,18 @@ def create_app(
         allow_credentials=False,
         allow_methods=["GET", "POST"],
         allow_headers=["Content-Type"],
+    )
+    application.add_middleware(
+        TrustedProxyAuthenticationMiddleware,
+        required=active_settings.environment == "production",
+        trusted_proxy_networks=active_settings.trusted_proxy_networks,
+        shared_secret=(
+            active_settings.proxy_auth_shared_secret.get_secret_value()
+            if active_settings.proxy_auth_shared_secret is not None
+            else None
+        ),
+        auth_header=active_settings.proxy_auth_header,
+        principal_header=active_settings.proxy_principal_header,
     )
     application.add_middleware(RequestSecurityMiddleware)
     register_error_handlers(application)

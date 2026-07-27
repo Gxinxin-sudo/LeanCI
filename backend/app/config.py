@@ -1,13 +1,15 @@
 """Application configuration loaded from environment variables."""
 
+import re
 from datetime import date
 from decimal import Decimal
 from functools import lru_cache
+from ipaddress import ip_network
 from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.models import MAX_LOG_CHARACTERS
@@ -39,7 +41,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "LeanCI API"
-    environment: str = "development"
+    environment: Literal["development", "production"] = "development"
     max_log_characters: int = Field(
         default=MAX_LOG_CHARACTERS,
         ge=1,
@@ -72,6 +74,15 @@ class Settings(BaseSettings):
     rate_limit_window_seconds: int = Field(default=60, ge=10, le=3_600)
     rate_limit_max_buckets: int = Field(default=4_096, ge=128, le=100_000)
     cors_allowed_origins: str = "http://127.0.0.1:5173,http://localhost:5173"
+    # Production analysis authentication is delegated to a TLS/OIDC gateway.  The
+    # gateway must remove client-supplied copies of these headers and add its own.
+    trusted_proxy_cidrs: str = ""
+    proxy_auth_shared_secret: SecretStr | None = None
+    proxy_auth_header: str = "x-leanci-proxy-auth"
+    proxy_principal_header: str = "x-leanci-principal"
+    data_retention_hours: int = Field(default=24, ge=1, le=720)
+    distributed_rate_limit_required: bool = False
+    daily_analysis_request_budget: int = Field(default=0, ge=0, le=1_000_000)
     deepseek_input_cache_miss_usd_per_m: Decimal = Field(
         default=Decimal("0.14"),
         ge=0,
@@ -94,6 +105,10 @@ class Settings(BaseSettings):
     @property
     def paritok_api_key_configured(self) -> bool:
         return self._secret_is_present(self.paritok_api_key)
+
+    @property
+    def proxy_auth_configured(self) -> bool:
+        return self._secret_is_present(self.proxy_auth_shared_secret)
 
     @field_validator("cors_allowed_origins")
     @classmethod
@@ -123,9 +138,41 @@ class Settings(BaseSettings):
                 origins.append(origin)
         return ",".join(origins)
 
+    @field_validator("proxy_auth_header", "proxy_principal_header")
+    @classmethod
+    def validate_internal_header_name(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if not re.fullmatch(r"[a-z0-9-]{1,64}", normalized):
+            raise ValueError("internal authentication header names must be ASCII HTTP token names")
+        return normalized
+
     @property
     def cors_origins(self) -> list[str]:
         return self.cors_allowed_origins.split(",")
+
+    @property
+    def trusted_proxy_networks(self) -> tuple[object, ...]:
+        return tuple(
+            ip_network(value.strip(), strict=False)
+            for value in self.trusted_proxy_cidrs.split(",")
+            if value.strip()
+        )
+
+    @model_validator(mode="after")
+    def validate_production_boundary(self) -> "Settings":
+        if self.environment != "production":
+            return self
+        if any(urlsplit(origin).scheme != "https" for origin in self.cors_origins):
+            raise ValueError("production CORS origins must use HTTPS")
+        if not self.trusted_proxy_networks:
+            raise ValueError("production requires TRUSTED_PROXY_CIDRS")
+        if not self.proxy_auth_configured:
+            raise ValueError("production requires PROXY_AUTH_SHARED_SECRET")
+        if not self.distributed_rate_limit_required:
+            raise ValueError("production requires DISTRIBUTED_RATE_LIMIT_REQUIRED=true")
+        if self.daily_analysis_request_budget < 1:
+            raise ValueError("production requires DAILY_ANALYSIS_REQUEST_BUDGET >= 1")
+        return self
 
 
 @lru_cache

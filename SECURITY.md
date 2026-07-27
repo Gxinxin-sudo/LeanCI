@@ -43,8 +43,10 @@ LeanCI's formal analysis boundary is intentionally narrow:
 - API responses receive a server-generated request ID, no-store and browser security headers.
   Errors use stable public messages and do not return headers, environment variables, stack traces,
   upstream bodies, or internal paths.
-- CORS uses an explicit allowlist. A bounded in-memory rate limiter and a single active-analysis
-  limit reject excess requests instead of building an unbounded paid-work queue.
+- CORS uses an explicit allowlist. Development uses a bounded in-memory rate limiter and a single
+  active-analysis limit; production startup requires an explicit TLS/OIDC trusted-gateway boundary,
+  a non-zero daily request budget and declared distributed enforcement. The gateway must enforce
+  shared rate/budget counters fail-closed before paid work.
 - Access logs contain only request ID, method, a fixed route label, status, and duration. They do not
   log request headers, query strings, request bodies, uploaded content, or raw paths.
 - Token metrics come only from the current request's verified Paritok `/stats` delta. LeanCI does
@@ -66,6 +68,10 @@ authorized to send it to both providers.
 Downloaded reports and clipboard contents are created in the user's browser and remain under the
 user's control. Local debug artifacts and browser-smoke artifacts are Git-ignored, but operators
 must still protect or remove them according to their own retention policy.
+
+The mandatory production boundary, exact environment variables, counter retention, proxy logging,
+provider retention review, and release checks are in
+[`docs/PRODUCTION_DEPLOYMENT.md`](docs/PRODUCTION_DEPLOYMENT.md).
 
 ## Safe testing
 

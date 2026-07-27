@@ -6,8 +6,11 @@ import asyncio
 import json
 import logging
 import math
+import re
+import secrets
 from collections import deque
 from dataclasses import dataclass
+from ipaddress import ip_address
 from time import monotonic, perf_counter
 from typing import Any
 from uuid import uuid4
@@ -42,6 +45,7 @@ _FRONTEND_SECURITY_HEADERS = {
     "X-Frame-Options": "DENY",
     "X-Permitted-Cross-Domain-Policies": "none",
 }
+_PRINCIPAL_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,127}$")
 
 
 def _request_id(scope: Scope) -> str:
@@ -240,6 +244,73 @@ class JsonRequestPolicyMiddleware:
         )
 
 
+class TrustedProxyAuthenticationMiddleware:
+    """Require an authenticated principal supplied by the trusted TLS gateway.
+
+    This deliberately has no browser-facing API-key mode: a SPA cannot keep a
+    reusable secret.  The public gateway authenticates the browser, strips both
+    internal headers from the client request, and injects fresh values only after
+    authentication.  Direct container exposure therefore fails closed.
+    """
+
+    def __init__(
+        self,
+        app: ASGIApp,
+        *,
+        required: bool,
+        trusted_proxy_networks: tuple[object, ...],
+        shared_secret: str | None,
+        auth_header: str,
+        principal_header: str,
+    ) -> None:
+        self.app = app
+        self.required = required
+        self.trusted_proxy_networks = trusted_proxy_networks
+        self.shared_secret = shared_secret
+        self.auth_header = auth_header.encode("ascii")
+        self.principal_header = principal_header.encode("ascii")
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        is_analysis = (
+            scope["type"] == "http"
+            and scope.get("method") == "POST"
+            and scope.get("path") == "/api/analyze"
+        )
+        if not is_analysis or not self.required:
+            await self.app(scope, receive, send)
+            return
+
+        client = scope.get("client")
+        client_host = client[0] if isinstance(client, tuple) and client else ""
+        try:
+            is_trusted_proxy = bool(client_host) and any(
+                ip_address(client_host) in network for network in self.trusted_proxy_networks
+            )
+        except ValueError:
+            is_trusted_proxy = False
+        credentials = _header_values(scope, self.auth_header)
+        principals = _header_values(scope, self.principal_header)
+        principal = principals[0] if len(principals) == 1 else ""
+        if (
+            not is_trusted_proxy
+            or len(credentials) != 1
+            or self.shared_secret is None
+            or not secrets.compare_digest(credentials[0], self.shared_secret)
+            or not _PRINCIPAL_PATTERN.fullmatch(principal)
+        ):
+            await _send_json_error(
+                send,
+                scope,
+                status_code=401,
+                code="AUTHENTICATION_REQUIRED",
+                message="A trusted gateway-authenticated identity is required for analysis.",
+            )
+            return
+        state: dict[str, Any] = scope.setdefault("state", {})
+        state["principal"] = principal
+        await self.app(scope, receive, send)
+
+
 @dataclass(frozen=True)
 class _RateLimitDecision:
     allowed: bool
@@ -306,6 +377,9 @@ class RateLimitMiddleware:
 
     @staticmethod
     def _client_identity(scope: Scope) -> str:
+        state = scope.get("state")
+        if isinstance(state, dict) and isinstance(state.get("principal"), str):
+            return f"principal:{state['principal']}"
         client = scope.get("client")
         if isinstance(client, tuple) and client:
             return str(client[0])

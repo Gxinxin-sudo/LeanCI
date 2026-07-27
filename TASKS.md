@@ -170,7 +170,8 @@
 - [x] 运行 Python/Node 运行时与完整依赖审计；修复本地 pip 已知漏洞并移除未使用依赖
 - [x] 在隔离 Mock 环境验收首次理解、Sample、按钮状态、恢复、只读 Benchmark、真实 capture
   展示、空白页、Console、移动端、报告下载和 Patch 复制；未调用正式模型
-- [ ] `[MANUAL]` 公网前配置生产 CORS、可信反向代理/分布式限流与预算、数据保留政策
+- [ ] `[MANUAL]` 公网前按 `docs/PRODUCTION_DEPLOYMENT.md` 配置生产 CORS、TLS/OIDC
+  可信网关、Redis 分布式限流和日请求预算、数据保留策略，并完成 release verification
 - [ ] `[MANUAL]` 公开 GitHub 仓库建立后启用 private vulnerability reporting
 
 - [x] `[MANUAL]` 安装并启动 Docker Desktop；已验证 Engine、Compose 和 `hello-world`

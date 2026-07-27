@@ -10,7 +10,7 @@ from pydantic import ValidationError
 
 from app.config import Settings
 from app.main import create_app
-from app.security import AnalysisConcurrencyLimitMiddleware
+from app.security import AnalysisConcurrencyLimitMiddleware, TrustedProxyAuthenticationMiddleware
 from tests.test_api import FakeAnalysisService
 
 
@@ -150,6 +150,78 @@ def test_cors_uses_an_explicit_allowlist_without_credentials() -> None:
 def test_cors_configuration_rejects_wildcards_paths_and_credentials(origins: str) -> None:
     with pytest.raises(ValidationError):
         Settings(_env_file=None, cors_allowed_origins=origins)
+
+
+def test_production_configuration_requires_a_complete_gateway_boundary() -> None:
+    with pytest.raises(ValidationError):
+        Settings(
+            _env_file=None,
+            environment="production",
+            cors_allowed_origins="https://app.example.com",
+        )
+
+    settings = Settings(
+        _env_file=None,
+        environment="production",
+        cors_allowed_origins="https://app.example.com",
+        trusted_proxy_cidrs="10.0.0.0/8",
+        proxy_auth_shared_secret="test-only-internal-secret",
+        distributed_rate_limit_required=True,
+        daily_analysis_request_budget=25,
+    )
+    assert settings.proxy_auth_configured is True
+    assert str(settings.trusted_proxy_networks[0]) == "10.0.0.0/8"
+
+
+@pytest.mark.anyio
+async def test_trusted_proxy_authentication_rejects_direct_or_spoofed_analysis() -> None:
+    sent: list[dict[str, Any]] = []
+
+    async def downstream(
+        scope: dict[str, Any],
+        _receive: Callable[[], Awaitable[dict[str, Any]]],
+        send: Callable[[dict[str, Any]], Awaitable[None]],
+    ) -> None:
+        assert scope["state"]["principal"] == "user:123"
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b"ok"})
+
+    async def receive() -> dict[str, Any]:
+        return {"type": "http.request", "body": b"", "more_body": False}
+
+    async def send(message: dict[str, Any]) -> None:
+        sent.append(message)
+
+    middleware = TrustedProxyAuthenticationMiddleware(
+        downstream,
+        required=True,
+        trusted_proxy_networks=Settings(
+            _env_file=None,
+            trusted_proxy_cidrs="10.0.0.0/8",
+        ).trusted_proxy_networks,
+        shared_secret="test-only-internal-secret",
+        auth_header="x-leanci-proxy-auth",
+        principal_header="x-leanci-principal",
+    )
+    scope = {
+        "type": "http",
+        "method": "POST",
+        "path": "/api/analyze",
+        "headers": [
+            (b"x-leanci-proxy-auth", b"test-only-internal-secret"),
+            (b"x-leanci-principal", b"user:123"),
+        ],
+        "state": {},
+        "client": ("203.0.113.10", 443),
+    }
+    await middleware(scope, receive, send)  # type: ignore[arg-type]
+    assert sent[0]["status"] == 401
+    assert b"AUTHENTICATION_REQUIRED" in sent[1]["body"]
+
+    sent.clear()
+    scope["client"] = ("10.1.2.3", 443)
+    await middleware(scope, receive, send)  # type: ignore[arg-type]
+    assert sent[0]["status"] == 200
 
 
 def test_analysis_rate_limit_is_bounded_and_returns_retry_metadata() -> None:
@@ -292,7 +364,15 @@ def test_production_disables_interactive_api_documentation(tmp_path: Path) -> No
     (tmp_path / "index.html").write_text("<!doctype html><title>LeanCI</title>", encoding="utf-8")
     client = TestClient(
         create_app(
-            Settings(_env_file=None, environment="production"),
+            Settings(
+                _env_file=None,
+                environment="production",
+                cors_allowed_origins="https://app.example.com",
+                trusted_proxy_cidrs="10.0.0.0/8",
+                proxy_auth_shared_secret="test-only-internal-secret",
+                distributed_rate_limit_required=True,
+                daily_analysis_request_budget=25,
+            ),
             analysis_service=FakeAnalysisService(),
             frontend_dist=tmp_path,
         )

@@ -93,6 +93,9 @@ React
 - 同时只接受一个正式分析，额外请求立即返回可重试错误而不进入付费队列；
 - 整体分析默认 110 秒超时；API 有内存速率限制、服务端请求 ID 和安全响应头；
 - 浏览器来源必须匹配 `CORS_ALLOWED_ORIGINS` 的显式白名单，不支持通配符；
+- 生产环境必须经 TLS/OIDC 可信网关认证；分析请求只有来自
+  `TRUSTED_PROXY_CIDRS` 且携带网关注入身份时才会被 FastAPI 接受；
+- 多实例限流和 UTC 日请求预算必须在网关/Redis 共享存储中原子执行，故障拒绝分析；
 - 日志、文件、模型 Patch 和命令都不会被服务器执行。
 
 完整信任边界见 [架构设计](docs/ARCHITECTURE.md) 和
@@ -375,6 +378,7 @@ npm run build
 - [安全政策](SECURITY.md)
 - [威胁模型](docs/THREAT_MODEL.md)
 - [Docker 构建与验证](docs/DOCKER.md)
+- [生产安全部署手册](docs/PRODUCTION_DEPLOYMENT.md)
 - [Windows Paritok 设置](docs/PARITOK_SETUP_WINDOWS.md)
 - [Paritok 验证](docs/PARITOK_VERIFICATION.md)
 - [人工操作清单](docs/MANUAL_ACTIONS.md)
