@@ -1,5 +1,7 @@
 import json
 from collections.abc import Awaitable, Callable
+from hashlib import sha256
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
@@ -94,6 +96,7 @@ def make_direct_provider(
     *,
     max_network_retries: int = 2,
     sleep: Callable[[float], Awaitable[None]] = no_sleep,
+    debug_response_dir: Path | None = None,
 ) -> tuple[DirectDeepSeekProvider, FakeClient]:
     client = FakeClient(responses)
     provider = DirectDeepSeekProvider(
@@ -102,6 +105,7 @@ def make_direct_provider(
         base_url="https://api.deepseek.com",
         max_network_retries=max_network_retries,
         retry_base_delay_seconds=0,
+        debug_response_dir=debug_response_dir,
         client=client,
         sleep=sleep,
     )
@@ -172,6 +176,34 @@ async def test_invalid_output_gets_exactly_one_repair_attempt(
     assert result.request_attempts == 2
     repair_prompt = client.completions.calls[1]["messages"][1]["content"]
     assert "<UNTRUSTED_PREVIOUS_OUTPUT>" in repair_prompt
+
+
+@pytest.mark.anyio
+async def test_invalid_output_debug_record_never_saves_model_content(
+    tmp_path: Path,
+) -> None:
+    invalid_content = "private-token-value {not-json"
+    provider, _client = make_direct_provider(
+        [
+            make_completion(invalid_content),
+            make_completion(json.dumps(VALID_ANALYSIS)),
+        ],
+        debug_response_dir=tmp_path,
+    )
+
+    await provider.analyze("private uploaded evidence")
+
+    records = list(tmp_path.glob("invalid-*.json"))
+    assert len(records) == 1
+    serialized = records[0].read_text(encoding="utf-8")
+    payload = json.loads(serialized)
+    assert invalid_content not in serialized
+    assert "private uploaded evidence" not in serialized
+    assert payload["content_saved"] is False
+    assert payload["attempt"] == "initial"
+    assert payload["reason"] == "model content failed strict validation"
+    assert payload["content_sha256"] == sha256(invalid_content.encode()).hexdigest()
+    assert payload["content_characters"] == len(invalid_content)
 
 
 @pytest.mark.anyio

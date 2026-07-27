@@ -41,8 +41,10 @@ docker compose version
 docker build --progress=plain --tag leanci:phase7 .
 ```
 
-构建使用多阶段 Dockerfile，并通过 BuildKit pip 缓存保存已下载的依赖。首次构建需要下载
-Node/Python 基础镜像和 Python 包，在较慢网络下可能明显超过两分钟；不要把任何密钥作为
+构建使用多阶段 Dockerfile，并通过 BuildKit pip 缓存保存已下载的依赖。镜像从 PyTorch
+官方 CPU 索引固定安装 `torch==2.13.0+cpu`，再安装完整
+`paritok[proxy]==1.2.7`；这避免 CPU-only Proxy 容器拉取 526.6 MB accelerator wheel，
+但 191.8 MB CPU wheel 在较慢网络下仍可能明显超过两分钟。不要把任何密钥作为
 `--build-arg` 传入。
 
 ## 无费用容器冒烟测试
@@ -124,30 +126,20 @@ TLS 网关、身份/滥用控制、分布式限流和费用配额、精确 CORS 
 
 ### 阶段七镜像的当前状态
 
-2026-07-27 当前会话已重新启动 Docker Desktop PID `37156`，Engine 29.6.2
-`linux/amd64` 和 Compose 5.3.1 在 30 秒健康检查内可用，Compose 配置有效且固定测试容器名
-均未占用。`paritok[proxy]==1.2.7` 官方元数据会额外安装 `numpy`、
-`sentence-transformers` 及其完整 ML 依赖链。
+2026-07-27 再验证时，Docker Engine 29.6.2 `linux/amd64` 正常、无运行容器，
+`docker build --check .` 在 2.9 秒内完成且无警告。嵌套 pytest/ruff/mypy 缓存已改为递归
+排除，显式 124 项、1.18 MB 的无凭据 tar 上下文也得到相同行为，因此仓库内容不是最终
+阻塞点。
 
-前两次 `leanci:phase7` 构建客户端达到 120 秒上限时，执行工具只终止了父会话，实际留下
-Docker CLI PID `47448`、`40624`。随后使用明确 PID 和 Git 忽略的
-`runtime/phase7-build-controlled.*.log` 做了一次受控诊断；PID `28152` 的日志证明 pip
-正在下载完整 extra：
+Docker CLI 父进程到达工具时限后，`docker-buildx.exe` 子进程会继续后台下载并让历史暂时
+显示 `Running/0 steps`；本轮已逐个核对并终止明确 PID，未按名称批量停止。终态 BuildKit
+日志证明前端层已完成，依赖层在下载官方 `torch-2.13.0+cpu` 的 191.8 MB Linux wheel 时被
+120 秒边界取消。相比此前 526.6 MB accelerator wheel，Dockerfile 已采用更小的固定 CPU
+wheel，但当前网络仍不足以在自动化时限内完成。最终仍只有 `leanci:phase6`，
+`docker image inspect leanci:phase7` 不存在。
 
-- `numpy` 16.7 MB 用时约 21 秒；
-- `transformers` 11.6 MB 用时约 22 秒；
-- `scipy` 35.3 MB 用时约 88 秒；
-- 随后开始下载 `torch-2.13.0` 的 526.6 MB Linux wheel。
-
-当前网络速度仅约 0.2–1.2 MB/s，因此完整 extra 不可能在本项目的 120 秒 Agent 构建上限内
-完成。三个明确 Docker build PID 已逐一核对命令行后终止；没有按名称批量停止进程，没有
-清理 BuildKit 缓存。Docker Desktop `buildx history` 仍显示三个 `Running` 记录，但删除时
-均返回 `lease ... not found`，且对应客户端 PID 已不存在；这些是无 lease 的历史幽灵记录，
-不是可接受的完成证据。最终 `docker image inspect leanci:phase7` 仍返回不存在。
-
-因此本轮没有运行 phase7 `docker_smoke.py` 或三个真实容器样例，也没有可报告的 phase7
-容器 PID、端口、stats 或退出状态。阶段六 `leanci:phase6` 的历史成功不能替代当前镜像
-证据。后续人工继续时必须从本节“构建”命令重新开始，并在 Docker Desktop 的 Builds 页面
-观察完整日志。不要同时启动第二个 build；成功 inspect 新镜像后依次运行无费用 smoke 和
-三个单例脚本。不得省略 `[proxy]` extra、使用假 wheel、把超时或阶段六结果改写为阶段七
-成功。
+因此没有运行 phase7 `docker_smoke.py` 或三个真实容器样例，也没有 phase7 容器 PID、端口、
+stats 或退出状态；本轮没有调用 DeepSeek。阶段六历史成功不能替代当前镜像证据。后续人工
+继续时应在 Docker Desktop Builds 页面让单一构建自然完成，不要从受 120 秒限制的自动化
+会话并行重跑。只有命令返回 0 且 image inspect 成功后，才能依次运行无费用 smoke 和三个
+单例脚本。不得省略 `[proxy]` extra、使用假 wheel 或把阶段六结果改写为阶段七成功。

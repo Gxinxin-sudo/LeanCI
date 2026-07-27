@@ -78,8 +78,9 @@ LeanCI（Token-Efficient AI Debugging for Massive CI Logs）帮助开发者诊�
   `PORT` healthcheck、entrypoint 启动/退出日志和三例容器 stats 对账脚本已实现；
 - 根目录 Railway 配置、Railway 逐步部署手册和 Render fallback 手册已创建；所有平台
   Key 仍只允许以运行时 Secret 注入，`.env` 不进入 build context；
-- 本地受控构建确认 `[proxy]` extra 会下载 526.6 MB Torch wheel，当前网络无法在 120 秒
-  Agent 上限内完成；构建客户端已清理，phase7 镜像/smoke/三例仍需人工长构建后验证；
+- 本地受控构建已把 `[proxy]` extra 的 526.6 MB accelerator wheel 替换为 PyTorch 官方
+  固定 191.8 MB CPU wheel；当前网络仍无法在 120 秒 Agent 上限内完成。Docker/buildx
+  客户端已逐个清理，phase7 镜像/smoke/三例仍需人工长构建后验证；
 - 一个直接公开的平台容器无法替代阶段六要求的 OIDC 可信网关和分布式限流/日预算；平台
   部署、公开域名、生产分析、回滚和三例远端验收保持 `[MANUAL]`，不得预先声称成功。
 

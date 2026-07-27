@@ -158,6 +158,10 @@ PRICING_SNAPSHOT_DATE=2026-07-26
 
 固定 URL 和完整非敏感环境示例见 [.env.example](.env.example)。
 
+开发期如需关联 DeepSeek 空内容/无效 JSON，可显式设置
+`SAVE_INVALID_RESPONSE_DEBUG=true`。该功能只在 `runtime/` 内保存错误分类、finish reason、
+长度和正文 SHA-256，不保存模型正文、日志或上传内容；生产配置会拒绝启用。
+
 ## 健康检查
 
 ```powershell
@@ -292,6 +296,10 @@ estimated_input_cost_saved_usd =
 ```
 
 金额是配置估算，不是实际账单。
+2026-07-27 发布复核再次检查了
+[DeepSeek 官方价格页](https://api-docs.deepseek.com/quick_start/pricing)，上述
+cache hit `$0.0028/M`、cache miss `$0.14/M`、output `$0.28/M` 未变化；冻结工件仍保留
+其实际运行时的 `2026-07-26` 快照日期。
 
 ## API
 
@@ -335,7 +343,9 @@ $env:LEANCI_DOCKER_CLI = (Get-Command docker).Source
 .\backend\.venv\Scripts\python.exe scripts\docker_smoke.py
 ```
 
-首次构建需要下载基础镜像和 Python 依赖，慢速网络下可能超过两分钟。冒烟脚本使用测试专用
+镜像先从 PyTorch 官方 CPU 索引固定安装 `torch==2.13.0+cpu`，再解析完整
+`paritok[proxy]==1.2.7`，避免 CPU-only Proxy 镜像下载 526.6 MB accelerator wheel。
+CPU wheel 本身约 191.8 MB，首次构建在慢速网络下仍可能超过两分钟。冒烟脚本使用测试专用
 假凭据，不读取 `.env`、不调用 DeepSeek；它验证无密钥失败、静态站点/API、联合
 `/api/health`、内部 `/stats`、镜像密钥边界和任一子进程退出时的容器联动失败。完整构建、
 Compose 与故障排查步骤见
@@ -399,6 +409,7 @@ npm run build
 
 - [项目计划](PROJECT_PLAN.md)
 - [任务清单](TASKS.md)
+- [贡献指南](CONTRIBUTING.md)
 - [固定演示案例](examples/README.md)
 - [Benchmark 说明](benchmarks/README.md)
 - [固定 Benchmark 报告](benchmarks/report.md)

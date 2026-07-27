@@ -56,6 +56,8 @@ class Settings(BaseSettings):
     deepseek_max_network_retries: int = Field(default=2, ge=0, le=5)
     deepseek_retry_base_delay_seconds: float = Field(default=0.25, ge=0, le=5)
     analysis_timeout_seconds: float = Field(default=110.0, gt=0, le=115)
+    save_invalid_response_debug: bool = False
+    debug_response_dir: Path = Path("runtime/debug_responses")
     paritok_api_key: SecretStr | None = None
     paritok_proxy_base_url: Literal["http://127.0.0.1:8080/v1"] = PARITOK_PROXY_BASE_URL
     paritok_health_url: Literal["http://127.0.0.1:8080/health"] = PARITOK_HEALTH_URL
@@ -146,6 +148,15 @@ class Settings(BaseSettings):
             raise ValueError("internal authentication header names must be ASCII HTTP token names")
         return normalized
 
+    @field_validator("debug_response_dir")
+    @classmethod
+    def validate_debug_response_dir(cls, value: Path) -> Path:
+        runtime_root = (PROJECT_ROOT / "runtime").resolve()
+        candidate = value.resolve() if value.is_absolute() else (PROJECT_ROOT / value).resolve()
+        if not candidate.is_relative_to(runtime_root):
+            raise ValueError("debug response directory must stay inside runtime")
+        return candidate
+
     @property
     def cors_origins(self) -> list[str]:
         return self.cors_allowed_origins.split(",")
@@ -162,6 +173,8 @@ class Settings(BaseSettings):
     def validate_production_boundary(self) -> "Settings":
         if self.environment != "production":
             return self
+        if self.save_invalid_response_debug:
+            raise ValueError("production cannot save invalid response diagnostics")
         if any(urlsplit(origin).scheme != "https" for origin in self.cors_origins):
             raise ValueError("production CORS origins must use HTTPS")
         if not self.trusted_proxy_networks:

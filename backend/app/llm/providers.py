@@ -4,12 +4,14 @@ import asyncio
 from abc import ABC, abstractmethod
 from collections.abc import Awaitable, Callable, Mapping
 from enum import StrEnum
+from pathlib import Path
 from typing import Any, Literal, Protocol, cast
 
 from openai import APIConnectionError, APIStatusError, APITimeoutError, AsyncOpenAI
 from pydantic import SecretStr, ValidationError
 
 from app.config import DEFAULT_DEEPSEEK_MODEL, Settings
+from app.llm.debug_records import InvalidAttempt, save_invalid_response_record
 from app.llm.prompts import (
     PromptMessage,
     build_analysis_messages,
@@ -94,6 +96,7 @@ class _OpenAICompatibleDeepSeekProvider(LLMProvider):
         max_network_retries: int = 2,
         retry_base_delay_seconds: float = 0.25,
         chunk_target_tokens: int = 40_000,
+        debug_response_dir: Path | None = None,
         client: CompletionClient | None = None,
         sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
     ) -> None:
@@ -113,6 +116,7 @@ class _OpenAICompatibleDeepSeekProvider(LLMProvider):
         self.max_network_retries = max_network_retries
         self.retry_base_delay_seconds = retry_base_delay_seconds
         self.chunk_target_tokens = chunk_target_tokens
+        self.debug_response_dir = debug_response_dir
         self._sleep = sleep
         self._client = client or cast(
             CompletionClient,
@@ -141,7 +145,13 @@ class _OpenAICompatibleDeepSeekProvider(LLMProvider):
 
         try:
             analysis = self._validate_analysis(first_completion, first_content)
-        except ValueError:
+        except ValueError as exc:
+            self._save_invalid_response(
+                attempt="initial",
+                reason=str(exc),
+                completion=first_completion,
+                content=first_content,
+            )
             repair_completion, repair_attempts = await self._request(
                 build_repair_messages(first_content)
             )
@@ -150,6 +160,12 @@ class _OpenAICompatibleDeepSeekProvider(LLMProvider):
             try:
                 analysis = self._validate_analysis(repair_completion, repair_content)
             except ValueError as exc:
+                self._save_invalid_response(
+                    attempt="repair",
+                    reason=str(exc),
+                    completion=repair_completion,
+                    content=repair_content,
+                )
                 raise LLMProviderError(
                     code="LLM_OUTPUT_INVALID",
                     message=(
@@ -167,6 +183,26 @@ class _OpenAICompatibleDeepSeekProvider(LLMProvider):
             analysis=analysis,
             usage=usage,
             request_attempts=request_attempts,
+        )
+
+    def _save_invalid_response(
+        self,
+        *,
+        attempt: InvalidAttempt,
+        reason: str,
+        completion: Any,
+        content: str,
+    ) -> None:
+        if self.debug_response_dir is None:
+            return
+        save_invalid_response_record(
+            self.debug_response_dir,
+            provider=self.provider_name,
+            model=self.model,
+            attempt=attempt,
+            reason=reason,
+            completion=completion,
+            content=content,
         )
 
     def _build_analysis_messages(self, untrusted_context: str) -> list[PromptMessage]:
@@ -367,6 +403,9 @@ class DirectDeepSeekProvider(_OpenAICompatibleDeepSeekProvider):
             timeout_seconds=settings.deepseek_timeout_seconds,
             max_network_retries=settings.deepseek_max_network_retries,
             retry_base_delay_seconds=settings.deepseek_retry_base_delay_seconds,
+            debug_response_dir=(
+                settings.debug_response_dir if settings.save_invalid_response_debug else None
+            ),
         )
 
 
@@ -398,6 +437,9 @@ class ParitokDeepSeekProvider(_OpenAICompatibleDeepSeekProvider):
             max_network_retries=settings.deepseek_max_network_retries,
             retry_base_delay_seconds=settings.deepseek_retry_base_delay_seconds,
             chunk_target_tokens=settings.paritok_chunk_target_tokens,
+            debug_response_dir=(
+                settings.debug_response_dir if settings.save_invalid_response_debug else None
+            ),
         )
 
 

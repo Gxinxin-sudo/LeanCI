@@ -30,6 +30,9 @@ RUN groupadd --gid 10001 leanci \
 COPY backend/requirements-container.txt /tmp/requirements.txt
 RUN --mount=type=cache,target=/root/.cache/pip \
     python -m pip install --upgrade "pip==26.1.2" \
+    && python -m pip install \
+        --index-url https://download.pytorch.org/whl/cpu \
+        "torch==2.13.0+cpu" \
     && python -m pip install --requirement /tmp/requirements.txt
 
 COPY --chown=10001:10001 backend/app /app/backend/app

@@ -296,12 +296,13 @@ git push -u origin main
 [`DEPLOY_RAILWAY.md`](DEPLOY_RAILWAY.md)；Railway 不可用时只使用
 [`DEPLOY_RENDER_FALLBACK.md`](DEPLOY_RENDER_FALLBACK.md)，不要同时公开两个实例。
 
-- [ ] 先完成本地 phase7 镜像：2026-07-27 自动化已启动 Docker Desktop PID `37156`，
-  Engine/Compose/Compose config 均正常，但 phase7 build 无法在 120 秒 Agent 上限内完成，
-  最终没有 `leanci:phase7` 镜像。受控日志显示 `[proxy]` extra 在下载 526.6 MB 的
-  `torch-2.13.0` Linux wheel，此前 35.3 MB `scipy` 已用约 88 秒。三个构建客户端 PID
-  `47448`、`40624`、`28152` 已逐一确认并停止；当前没有运行容器。不要改回精简
-  `paritok`、伪造 extra 依赖或把 phase6 镜像当作 phase7。
+- [ ] 先完成本地 phase7 镜像：2026-07-27 再验证时 Engine 29.6.2 `linux/amd64` 正常、
+  无运行容器，`docker build --check .` 无警告，但 phase7 build 仍无法在 120 秒 Agent
+  上限内完成。Dockerfile 已从 PyTorch 官方 CPU 索引固定
+  `torch==2.13.0+cpu`，把原 526.6 MB accelerator wheel 降为 191.8 MB CPU wheel；
+  终态 BuildKit 日志仍在该 wheel 下载阶段被取消，最终没有 `leanci:phase7`。所有确认属于
+  本项目的 Docker/buildx 客户端均已逐个停止。不要改回精简 `paritok`、伪造 extra 依赖或
+  把 phase6 镜像当作 phase7。
 - [ ] 在 Docker Desktop 明确显示 Engine healthy 后，从新的 PowerShell 设置 CLI 路径并
   重新执行一次构建；开始前确认没有其他 build，命令不得携带 `.env` 或 build arg：
 
@@ -314,8 +315,9 @@ docker image inspect leanci:phase7 --format "{{.Id}} {{.Created}} {{.Size}}"
 ```
 
 - [ ] 构建期间只保留一个 build，并在 Docker Desktop → Builds 查看实时步骤；如果命令被
-  中断，先用 `Get-Process docker` 和 `docker buildx history ls` 确认没有遗留活动客户端，
-  不要并行重跑。只有完整命令返回 0 且 inspect 成功才算构建完成。
+  中断，同时检查 `docker.exe` 和 `docker-buildx.exe` 的 PID、父 PID、可执行路径与完整
+  命令行，再逐个处理确认属于本项目的进程，并用 `docker buildx history ls` 复核。不要按
+  名称批量停止或并行重跑。只有完整命令返回 0 且 inspect 成功才算构建完成。
 - [ ] 只有 inspect 成功后运行无费用 smoke，并保留顶层 `"status":"passed"`：
 
 ```powershell
@@ -358,6 +360,12 @@ $env:LEANCI_DOCKER_CLI = (Get-Command docker).Source
 
 ### 11. 准备并提交 Devpost 材料
 
+- [x] 2026-07-27 自动化发布复核检查 63 个 Markdown 相对链接，缺失数为 0；DeepSeek
+  官方价格仍为 `deepseek-v4-flash` cache hit `$0.0028/M`、cache miss `$0.14/M`、
+  output `$0.28/M`，因此冻结 Benchmark 的 2026-07-26 快照无需改写。
+- [ ] 手动打开 `https://build-with-paritok.devpost.com/`，确认页面显示的截止日期与时区、
+  资格、评审标准、必填字段、视频时长、公开仓库和 Demo 要求。自动化只读访问未能打开该
+  Devpost 页面；Paritok 公开公告所述 2026-08-05 截止日期不能替代最终页面确认。
 - [ ] 创建清晰的项目一句话说明和完整描述。
 - [ ] 录制日志输入、结构化诊断、Diff、Token 面板和 benchmark 的演示。
 - [ ] 准备架构图、结果截图、公开仓库和在线 Demo 链接。

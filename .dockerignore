@@ -28,9 +28,9 @@ backend/.venv.*
 **/__pycache__
 **/*.pyc
 **/*.pyo
-.pytest_cache
-.ruff_cache
-.mypy_cache
+**/.pytest_cache
+**/.ruff_cache
+**/.mypy_cache
 .coverage*
 htmlcov
 

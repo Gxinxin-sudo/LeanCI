@@ -162,6 +162,8 @@ def test_docker_assets_exclude_secrets_and_do_not_publish_proxy_port() -> None:
     assert "/api/health" in dockerfile
     assert "paritok_connected" in dockerfile
     assert "os.environ.get('PORT','8000')" in dockerfile
+    assert "--index-url https://download.pytorch.org/whl/cpu" in dockerfile
+    assert '"torch==2.13.0+cpu"' in dockerfile
 
     for required_pattern in (
         ".git",
@@ -170,6 +172,9 @@ def test_docker_assets_exclude_secrets_and_do_not_publish_proxy_port() -> None:
         "backend/.venv",
         "frontend/node_modules",
         "artifacts/runtime",
+        "**/.pytest_cache",
+        "**/.ruff_cache",
+        "**/.mypy_cache",
     ):
         assert required_pattern in dockerignore
 

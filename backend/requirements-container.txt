@@ -1,6 +1,8 @@
 # Keep the container dependency set identical to the fixed application runtime.
 # The proxy extra is explicit so the image remains valid if Paritok changes which
 # dependencies its supported `paritok proxy` command declares.
+# Docker installs the fixed CPU-only Torch wheel first; this avoids pulling the
+# much larger accelerator wheel into a CPU-only Proxy container.
 fastapi==0.140.0
 httpx==0.28.1
 openai==2.46.0

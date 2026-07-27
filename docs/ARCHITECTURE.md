@@ -200,6 +200,11 @@ DeepSeek 连接、429 和 5xx 采用有界重试；401/402 不重试。空内容
 失败只允许一次修复请求。修复请求仍经过同一个 Paritok Proxy，并计入本次
 `proxy_requests`。前端分析请求上限为 115 秒；客户端超时会明确提示未接受结果并允许重试。
 
+开发环境可显式启用 `SAVE_INVALID_RESPONSE_DEBUG`。调试记录只包含 provider、固定模型、
+initial/repair 阶段、稳定错误分类、finish reason、长度和模型正文 SHA-256；不包含模型正文、
+CI 日志、上传文件、请求消息、usage 或密钥。目录经配置校验后必须位于 `runtime/`，使用独占
+文件创建；写入失败不改变公开错误且不会触发额外模型请求。生产环境禁止启用。
+
 ## 8. 当前 API
 
 ### `GET /api/health`

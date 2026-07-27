@@ -19,6 +19,8 @@ def test_llm_defaults_are_paritok_and_v4_flash() -> None:
     assert settings.paritok_health_timeout_seconds == 3
     assert settings.paritok_stats_timeout_seconds == 3
     assert settings.paritok_chunk_target_tokens == 12_000
+    assert settings.save_invalid_response_debug is False
+    assert settings.debug_response_dir.name == "debug_responses"
 
 
 @pytest.mark.parametrize("legacy_model", ["deepseek-chat", "deepseek-reasoner"])
@@ -49,3 +51,17 @@ def test_direct_provider_is_not_an_application_setting() -> None:
 def test_formal_urls_are_fixed(field: str, invalid_value: str) -> None:
     with pytest.raises(ValidationError):
         Settings(_env_file=None, **{field: invalid_value})
+
+
+def test_debug_response_directory_cannot_escape_runtime() -> None:
+    with pytest.raises(ValidationError, match="must stay inside runtime"):
+        Settings(_env_file=None, debug_response_dir="../outside")
+
+
+def test_production_rejects_invalid_response_debug_persistence() -> None:
+    with pytest.raises(ValidationError, match="production cannot save"):
+        Settings(
+            _env_file=None,
+            environment="production",
+            save_invalid_response_debug=True,
+        )

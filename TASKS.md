@@ -83,7 +83,8 @@
 - [x] 使用保守 UTF-8 字节上限分块，且不把预分块计数冒充 Token 指标
 - [x] 实现 JSON Object、`max_tokens=4096` 和禁用 thinking
 - [x] 定义并验证问题摘要、根因、可信度、证据、文件、建议、Diff、命令、风险和缺失信息
-- [ ] 实现空内容/无效 JSON 的脱敏调试保存
+- [x] 实现空内容/无效 JSON 的脱敏调试保存（仅开发期开关；只存分类、长度、finish reason
+  与正文 SHA-256，不保存模型正文或用户证据；生产强制禁用）
 - [x] 实现且只实现一次 JSON 修复重试，并让修复仍经过 Paritok
 - [x] 实现安全错误分类，不泄露请求头、环境变量或内部路径
 - [x] 测试有效 JSON、空内容、截断、无效 Schema 和第二次失败
@@ -196,11 +197,11 @@
 - [x] 创建 Railway 逐步部署手册和 Render fallback 手册
 - [ ] 构建 `leanci:phase7` 并完成无费用 Docker smoke
 - [ ] 在明确费用授权下通过容器依次运行三个固定示例、检查 stats 和退出状态
-- [ ] 创建 `CONTRIBUTING.md`
+- [x] 创建 `CONTRIBUTING.md`
 - [x] 完成阶段六全量 pytest、ruff、前端测试、类型检查和构建
 - [x] 完成 Docker 端到端功能检查；修复响应头大小写、slim 镜像信号和端口复用测试缺陷
 - [x] 完成密钥、依赖和错误响应安全检查
-- [ ] 完善 README 快速开始、部署、Benchmark 和截图
+- [x] 完善 README 快速开始、部署、Benchmark 和截图
 - [ ] `[MANUAL]` 注册/加入 Devpost 项目并确认官方规则
 - [ ] `[MANUAL]` 创建 DeepSeek API Key 并确保余额可用
 - [ ] `[MANUAL]` 创建 Paritok API Key
@@ -209,4 +210,5 @@
 - [ ] `[MANUAL]` 验证公开 Demo URL
 - [ ] `[MANUAL]` 录制和上传演示视频
 - [ ] `[MANUAL]` 填写并提交 Devpost 材料
-- [ ] 发布前复核所有链接、声明、价格快照和提交要求
+- [x] 发布前复核 63 个本地相对链接、公开声明和 DeepSeek 官方价格；冻结工件价格未变化，
+  Devpost 页面规则/提交字段仍由上方 `[MANUAL]` 项在提交前确认
