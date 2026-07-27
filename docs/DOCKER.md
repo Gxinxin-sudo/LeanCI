@@ -124,22 +124,33 @@ TLS 网关、身份/滥用控制、分布式限流和费用配额、精确 CORS 
   释放竞态三个测试工具问题，均已修复并有单元回归。达到两次外部预检重试上限后没有再跑
   第四次完整脚本；最后缺失的 FastAPI 退出断言改用独立端口 18087 定向执行并通过。
 
-### 阶段七镜像的当前状态
+### 阶段七镜像验收结果
 
-2026-07-27 再验证时，Docker Engine 29.6.2 `linux/amd64` 正常、无运行容器，
-`docker build --check .` 在 2.9 秒内完成且无警告。嵌套 pytest/ruff/mypy 缓存已改为递归
-排除，显式 124 项、1.18 MB 的无凭据 tar 上下文也得到相同行为，因此仓库内容不是最终
-阻塞点。
+2026-07-27 在用户明确允许长构建后，单一 BuildKit 请求首次完成；没有并行 build 或构建
+重试。官方 191.8 MB CPU wheel 下载与完整依赖层共用约 266 秒，镜像导出约 32 秒，总耗时
+约 5 分钟。最终：
 
-Docker CLI 父进程到达工具时限后，`docker-buildx.exe` 子进程会继续后台下载并让历史暂时
-显示 `Running/0 steps`；本轮已逐个核对并终止明确 PID，未按名称批量停止。终态 BuildKit
-日志证明前端层已完成，依赖层在下载官方 `torch-2.13.0+cpu` 的 191.8 MB Linux wheel 时被
-120 秒边界取消。相比此前 526.6 MB accelerator wheel，Dockerfile 已采用更小的固定 CPU
-wheel，但当前网络仍不足以在自动化时限内完成。最终仍只有 `leanci:phase6`，
-`docker image inspect leanci:phase7` 不存在。
+- image digest：`sha256:6825cf7af8bd6c347725fa4cbe793c72996e44c24cf4a40b44b711af8b10f763`；
+- image size：432,331,158 bytes；
+- 用户/入口：`10001:10001`、`python /app/scripts/container_entrypoint.py`；
+- 镜像内版本：Paritok 1.2.7、Torch 2.13.0+cpu、sentence-transformers 5.6.1；
+- 镜像内 `pip check`、Compose config 与 `docker build --check` 通过。
 
-因此没有运行 phase7 `docker_smoke.py` 或三个真实容器样例，也没有 phase7 容器 PID、端口、
-stats 或退出状态；本轮没有调用 DeepSeek。阶段六历史成功不能替代当前镜像证据。后续人工
-继续时应在 Docker Desktop Builds 页面让单一构建自然完成，不要从受 120 秒限制的自动化
-会话并行重跑。只有命令返回 0 且 image inspect 成功后，才能依次运行无费用 smoke 和三个
-单例脚本。不得省略 `[proxy]` extra、使用假 wheel 或把阶段六结果改写为阶段七成功。
+无费用 `docker_smoke.py` 顶层 `status=passed`：无密钥退出 78、前端/API/固定工件、
+内部 stats、假凭据 fail closed 和 Proxy/API 退出联动全部通过，`deepseek_called=false`。
+
+真实容器结果：
+
+| Sample | Outcome | requests | original | compressed | saved | model | exit |
+| --- | --- | ---: | ---: | ---: | ---: | --- | ---: |
+| `python-pytest` | `compressed` | 1 | 10,469 | 254 | 10,215 | `deepseek-v4-flash` | 0 |
+| `typescript-build` | `skipped_low_yield` | 1 | 0 | 0 | 0 | `deepseek-v4-flash` | 0 |
+| `docker-build` | `compressed` | 1 | 543 | 144 | 399 | `deepseek-v4-flash` | 0 |
+
+TypeScript 的 `skipped_low_yield` 与阶段五官方 trace 确认的
+`below_refusal_threshold` 一致；正式 API 返回 503 `PARITOK_COMPRESSION_SKIPPED` 并丢弃
+模型结果。验证脚本只在 stats 精确为 `1/0/0/0` 时接受该固定低收益结果，不显示 Token
+节省。Python 首次调用出现一次 `ANALYSIS_TIMEOUT`；随后发现 Windows Docker Desktop
+成功 stop 时 stdout 可为空，脚本已改用 inspect 的 `Running=false/ExitCode=0` 并增加
+回归测试。Docker 首次出现一次 `PARITOK_ROUTE_NOT_VERIFIED`，第一次重试成功。最终无
+运行容器或验证脚本进程。

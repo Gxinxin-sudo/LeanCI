@@ -79,8 +79,9 @@ LeanCI（Token-Efficient AI Debugging for Massive CI Logs）帮助开发者诊�
 - 根目录 Railway 配置、Railway 逐步部署手册和 Render fallback 手册已创建；所有平台
   Key 仍只允许以运行时 Secret 注入，`.env` 不进入 build context；
 - 本地受控构建已把 `[proxy]` extra 的 526.6 MB accelerator wheel 替换为 PyTorch 官方
-  固定 191.8 MB CPU wheel；当前网络仍无法在 120 秒 Agent 上限内完成。Docker/buildx
-  客户端已逐个清理，phase7 镜像/smoke/三例仍需人工长构建后验证；
+  固定 191.8 MB CPU wheel；用户明确允许长构建后，约 5 分钟生成 432,331,158-byte
+  `leanci:phase7` 镜像。无费用 smoke 与三例真实容器验证均完成：Python、Docker 压缩，
+  TypeScript 为 trace 已知的低收益跳过且正式 API fail closed，三例均干净退出；
 - 一个直接公开的平台容器无法替代阶段六要求的 OIDC 可信网关和分布式限流/日预算；平台
   部署、公开域名、生产分析、回滚和三例远端验收保持 `[MANUAL]`，不得预先声称成功。
 

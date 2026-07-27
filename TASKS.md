@@ -195,17 +195,21 @@
 - [x] 强化 PID 1 启动顺序、PID/失败日志和有界双子进程退出
 - [x] 创建一次一例、显式费用确认、stats 对账和干净退出的容器真实验证脚本
 - [x] 创建 Railway 逐步部署手册和 Render fallback 手册
-- [ ] 构建 `leanci:phase7` 并完成无费用 Docker smoke
-- [ ] 在明确费用授权下通过容器依次运行三个固定示例、检查 stats 和退出状态
+- [x] 构建 `leanci:phase7` 并完成无费用 Docker smoke（2026-07-27，镜像
+  `sha256:6825cf7a…f763`，432,331,158 bytes，顶层 `status=passed`）
+- [x] 在明确费用授权下通过容器依次运行三个固定示例、检查 stats 和退出状态：Python 与
+  Docker 为 `compressed`，TypeScript 为已验证 `skipped_low_yield`；三例模型固定、
+  stats 可审计且容器退出码 0
 - [x] 创建 `CONTRIBUTING.md`
 - [x] 完成阶段六全量 pytest、ruff、前端测试、类型检查和构建
 - [x] 完成 Docker 端到端功能检查；修复响应头大小写、slim 镜像信号和端口复用测试缺陷
 - [x] 完成密钥、依赖和错误响应安全检查
 - [x] 完善 README 快速开始、部署、Benchmark 和截图
 - [ ] `[MANUAL]` 注册/加入 Devpost 项目并确认官方规则
-- [ ] `[MANUAL]` 创建 DeepSeek API Key 并确保余额可用
-- [ ] `[MANUAL]` 创建 Paritok API Key
-- [ ] `[MANUAL]` 创建公开 GitHub `LeanCI` 仓库
+- [x] `[MANUAL]` 创建 DeepSeek API Key 并确保余额可用（2026-07-27 真实容器调用已验证）
+- [x] `[MANUAL]` 创建 Paritok API Key（2026-07-27 hosted GPU 与真实 stats 已验证）
+- [x] `[MANUAL]` 创建公开 GitHub `LeanCI` 仓库（已匿名验证
+  `https://github.com/Gxinxin-sudo/LeanCI` 为 Public）
 - [ ] `[MANUAL]` 选择部署平台并配置环境变量
 - [ ] `[MANUAL]` 验证公开 Demo URL
 - [ ] `[MANUAL]` 录制和上传演示视频

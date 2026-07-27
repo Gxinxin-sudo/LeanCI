@@ -360,7 +360,22 @@ Compose 与故障排查步骤见
 ```
 
 每次成功都必须证明联合健康、本次 `/stats` 差值与 API Token 证明一致、固定模型和容器
-SIGTERM 后退出码 0；脚本不打印 `.env` 或 Key。
+SIGTERM 后退出码 0；脚本不打印 `.env` 或 Key。固定案例若被 Paritok 以
+`below_refusal_threshold` 低收益跳过，则只有在 HTTP 503
+`PARITOK_COMPRESSION_SKIPPED`、内部 stats 精确为 `1/0/0/0`、固定模型和退出码 0 同时
+成立时，脚本才以 `analysis_outcome=skipped_low_yield` 通过；不会伪造 Token 或冒充压缩。
+
+2026-07-27 本地 phase7 验收结果：
+
+| Sample | Outcome | Stats delta（requests/original/compressed/saved） | Exit |
+| --- | --- | --- | ---: |
+| Python pytest | `compressed` | `1 / 10,469 / 254 / 10,215` | 0 |
+| TypeScript build | `skipped_low_yield` | `1 / 0 / 0 / 0` | 0 |
+| Docker build | `compressed` | `1 / 543 / 144 / 399` | 0 |
+
+镜像 digest 为 `sha256:6825cf7a…f763`，大小 432,331,158 bytes；无费用 smoke 顶层
+`status=passed`，没有调用 DeepSeek。三例均通过联合健康检查并固定使用
+`deepseek-v4-flash`。
 
 ## Railway 部署
 

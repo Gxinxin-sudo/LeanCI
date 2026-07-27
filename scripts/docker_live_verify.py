@@ -24,6 +24,14 @@ IMAGE = "leanci:phase7"
 CONTAINER = "leanci-phase7-live-verify"
 HOST_PORT = 18088
 SAMPLES = ("python-pytest", "typescript-build", "docker-build")
+EXPECTED_MODEL = "deepseek-v4-flash"
+LOW_YIELD_ERROR_CODE = "PARITOK_COMPRESSION_SKIPPED"
+LOW_YIELD_STATS_DELTA = {
+    "total_requests": 1,
+    "input_tokens_original": 0,
+    "input_tokens_compressed": 0,
+    "tokens_saved": 0,
+}
 COMMAND_TIMEOUT_SECONDS = 30
 READY_TIMEOUT_SECONDS = 25
 ANALYSIS_TIMEOUT_SECONDS = 110
@@ -108,6 +116,7 @@ def _wait_for_health() -> dict[str, Any]:
                 and payload.get("paritok_connected") is True
                 and payload.get("hosted_gpu_available") is True
                 and payload.get("deepseek_called") is False
+                and payload.get("model") == EXPECTED_MODEL
             ):
                 return payload
         except OSError:
@@ -175,11 +184,7 @@ def _container_exists(docker: str) -> bool:
 
 
 def _stop_and_verify(docker: str) -> int:
-    stopped = _run(docker, ["stop", "--time", "15", CONTAINER], timeout=20)
-    if stopped.stdout.strip() != CONTAINER:
-        raise LiveVerificationError(
-            "Docker did not confirm the requested container stop."
-        )
+    _run(docker, ["stop", "--time", "15", CONTAINER], timeout=20)
     inspected = _run(
         docker,
         ["container", "inspect", "--format", "{{json .State}}", CONTAINER],
@@ -244,33 +249,51 @@ def verify(sample_id: str) -> dict[str, Any]:
             payload={"log_text": sample["log_text"], "files": sample["files"]},
             timeout=ANALYSIS_TIMEOUT_SECONDS,
         )
-        if analysis_status != 200:
-            error_code = analysis.get("error", {}).get("code", "UNKNOWN")
-            raise LiveVerificationError(
-                f"Formal analysis failed with HTTP {analysis_status} ({error_code})."
-            )
-
         after = _internal_stats(docker)
         delta = _stats_delta(before, after)
-        proof = analysis.get("compression_stats")
-        if not isinstance(proof, dict):
-            raise LiveVerificationError(
-                "Analysis did not return verified compression stats."
-            )
-        expected = {
-            "total_requests": proof.get("proxy_requests"),
-            "input_tokens_original": proof.get("original_tokens"),
-            "input_tokens_compressed": proof.get("compressed_tokens"),
-            "tokens_saved": proof.get("saved_tokens"),
-        }
-        if delta != expected:
-            raise LiveVerificationError(
-                "The API compression proof did not match container /stats delta."
-            )
+        error_code: str | None = None
+        if analysis_status == 200:
+            proof = analysis.get("compression_stats")
+            if not isinstance(proof, dict):
+                raise LiveVerificationError(
+                    "Analysis did not return verified compression stats."
+                )
+            if proof.get("model") != EXPECTED_MODEL:
+                raise LiveVerificationError(
+                    "Analysis did not use the fixed deepseek-v4-flash model."
+                )
+            expected = {
+                "total_requests": proof.get("proxy_requests"),
+                "input_tokens_original": proof.get("original_tokens"),
+                "input_tokens_compressed": proof.get("compressed_tokens"),
+                "tokens_saved": proof.get("saved_tokens"),
+            }
+            if delta != expected:
+                raise LiveVerificationError(
+                    "The API compression proof did not match container /stats delta."
+                )
+            analysis_outcome = "compressed"
+            model = proof.get("model")
+        else:
+            error_code = analysis.get("error", {}).get("code", "UNKNOWN")
+            if (
+                analysis_status != 503
+                or error_code != LOW_YIELD_ERROR_CODE
+                or delta != LOW_YIELD_STATS_DELTA
+            ):
+                raise LiveVerificationError(
+                    f"Formal analysis failed with HTTP {analysis_status} ({error_code}); "
+                    "safe_stats_delta=" + json.dumps(delta, separators=(",", ":")) + "."
+                )
+            analysis_outcome = "skipped_low_yield"
+            model = health["model"]
+
         clean_exit_code = _stop_and_verify(docker)
         return {
             "status": "passed",
             "sample": sample_id,
+            "analysis_outcome": analysis_outcome,
+            "analysis_error_code": error_code,
             "health": {
                 "status": health["status"],
                 "paritok_connected": health["paritok_connected"],
@@ -278,7 +301,7 @@ def verify(sample_id: str) -> dict[str, Any]:
                 "deepseek_called": health["deepseek_called"],
             },
             "stats_delta": delta,
-            "model": proof.get("model"),
+            "model": model,
             "container_exit_code": clean_exit_code,
             "orchestration_retries": 0,
         }

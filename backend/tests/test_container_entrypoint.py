@@ -1,3 +1,4 @@
+import subprocess
 from email.message import Message
 from pathlib import Path
 
@@ -11,8 +12,10 @@ from scripts.container_entrypoint import (
     supervise,
 )
 from scripts.docker_live_verify import (
+    LOW_YIELD_STATS_DELTA,
     LiveVerificationError,
     _stats_delta,
+    _stop_and_verify,
 )
 from scripts.docker_live_verify import (
     _docker_cli as _live_docker_cli,
@@ -301,3 +304,37 @@ def test_live_verifier_rejects_stats_counter_reset() -> None:
 
     with pytest.raises(LiveVerificationError):
         _stats_delta(before, after)
+
+
+def test_low_yield_stats_delta_is_explicit_and_does_not_fabricate_tokens() -> None:
+    assert LOW_YIELD_STATS_DELTA == {
+        "total_requests": 1,
+        "input_tokens_original": 0,
+        "input_tokens_compressed": 0,
+        "tokens_saved": 0,
+    }
+
+
+def test_live_verifier_uses_inspected_state_not_stop_stdout(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_run(
+        _docker: str,
+        arguments: list[str],
+        *,
+        check: bool = True,
+        timeout: int = 30,
+    ) -> subprocess.CompletedProcess[str]:
+        del check, timeout
+        if arguments[0] == "stop":
+            return subprocess.CompletedProcess(arguments, 0, stdout="", stderr="")
+        return subprocess.CompletedProcess(
+            arguments,
+            0,
+            stdout='{"Running":false,"ExitCode":0}',
+            stderr="",
+        )
+
+    monkeypatch.setattr("scripts.docker_live_verify._run", fake_run)
+
+    assert _stop_and_verify("docker.exe") == 0
