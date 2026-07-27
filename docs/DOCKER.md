@@ -126,11 +126,28 @@ TLS 网关、身份/滥用控制、分布式限流和费用配额、精确 CORS 
 
 2026-07-27 当前会话已重新启动 Docker Desktop PID `37156`，Engine 29.6.2
 `linux/amd64` 和 Compose 5.3.1 在 30 秒健康检查内可用，Compose 配置有效且固定测试容器名
-均未占用。`paritok[proxy]==1.2.7` 官方元数据会额外安装 `numpy` 与
-`sentence-transformers`；两次 `leanci:phase7` 构建客户端都达到 120 秒硬上限并被终止，
-最终 `docker image inspect leanci:phase7` 仍返回不存在。
+均未占用。`paritok[proxy]==1.2.7` 官方元数据会额外安装 `numpy`、
+`sentence-transformers` 及其完整 ML 依赖链。
+
+前两次 `leanci:phase7` 构建客户端达到 120 秒上限时，执行工具只终止了父会话，实际留下
+Docker CLI PID `47448`、`40624`。随后使用明确 PID 和 Git 忽略的
+`runtime/phase7-build-controlled.*.log` 做了一次受控诊断；PID `28152` 的日志证明 pip
+正在下载完整 extra：
+
+- `numpy` 16.7 MB 用时约 21 秒；
+- `transformers` 11.6 MB 用时约 22 秒；
+- `scipy` 35.3 MB 用时约 88 秒；
+- 随后开始下载 `torch-2.13.0` 的 526.6 MB Linux wheel。
+
+当前网络速度仅约 0.2–1.2 MB/s，因此完整 extra 不可能在本项目的 120 秒 Agent 构建上限内
+完成。三个明确 Docker build PID 已逐一核对命令行后终止；没有按名称批量停止进程，没有
+清理 BuildKit 缓存。Docker Desktop `buildx history` 仍显示三个 `Running` 记录，但删除时
+均返回 `lease ... not found`，且对应客户端 PID 已不存在；这些是无 lease 的历史幽灵记录，
+不是可接受的完成证据。最终 `docker image inspect leanci:phase7` 仍返回不存在。
 
 因此本轮没有运行 phase7 `docker_smoke.py` 或三个真实容器样例，也没有可报告的 phase7
 容器 PID、端口、stats 或退出状态。阶段六 `leanci:phase6` 的历史成功不能替代当前镜像
-证据。后续人工继续时必须从本节“构建”命令重新开始，成功 inspect 新镜像后依次运行无费用
-smoke 和三个单例脚本；不得把超时或阶段六结果改写为阶段七成功。
+证据。后续人工继续时必须从本节“构建”命令重新开始，并在 Docker Desktop 的 Builds 页面
+观察完整日志。不要同时启动第二个 build；成功 inspect 新镜像后依次运行无费用 smoke 和
+三个单例脚本。不得省略 `[proxy]` extra、使用假 wheel、把超时或阶段六结果改写为阶段七
+成功。

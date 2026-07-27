@@ -297,19 +297,25 @@ git push -u origin main
 [`DEPLOY_RENDER_FALLBACK.md`](DEPLOY_RENDER_FALLBACK.md)，不要同时公开两个实例。
 
 - [ ] 先完成本地 phase7 镜像：2026-07-27 自动化已启动 Docker Desktop PID `37156`，
-  Engine/Compose/Compose config 均正常，但两次 build 都达到 120 秒上限，最终没有
-  `leanci:phase7` 镜像。官方 `[proxy]` extra 会拉取 `numpy` 和
-  `sentence-transformers`；不要继续无依据重试，也不要改回精简 `paritok`。
+  Engine/Compose/Compose config 均正常，但 phase7 build 无法在 120 秒 Agent 上限内完成，
+  最终没有 `leanci:phase7` 镜像。受控日志显示 `[proxy]` extra 在下载 526.6 MB 的
+  `torch-2.13.0` Linux wheel，此前 35.3 MB `scipy` 已用约 88 秒。三个构建客户端 PID
+  `47448`、`40624`、`28152` 已逐一确认并停止；当前没有运行容器。不要改回精简
+  `paritok`、伪造 extra 依赖或把 phase6 镜像当作 phase7。
 - [ ] 在 Docker Desktop 明确显示 Engine healthy 后，从新的 PowerShell 设置 CLI 路径并
   重新执行一次构建；开始前确认没有其他 build，命令不得携带 `.env` 或 build arg：
 
 ```powershell
 $dockerBin = "$env:LOCALAPPDATA\Programs\DockerDesktop\resources\bin"
 $env:Path = "$dockerBin;$env:Path"
+docker ps
 docker build --progress=plain --tag leanci:phase7 .
 docker image inspect leanci:phase7 --format "{{.Id}} {{.Created}} {{.Size}}"
 ```
 
+- [ ] 构建期间只保留一个 build，并在 Docker Desktop → Builds 查看实时步骤；如果命令被
+  中断，先用 `Get-Process docker` 和 `docker buildx history ls` 确认没有遗留活动客户端，
+  不要并行重跑。只有完整命令返回 0 且 inspect 成功才算构建完成。
 - [ ] 只有 inspect 成功后运行无费用 smoke，并保留顶层 `"status":"passed"`：
 
 ```powershell
