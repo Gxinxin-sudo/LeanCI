@@ -88,6 +88,21 @@ class FakeAnalysisService:
         return build_result()
 
 
+class DisconnectedParitokService(FakeAnalysisService):
+    async def health(self) -> HealthResponse:
+        return HealthResponse(
+            status="degraded",
+            service="leanci-api",
+            mode="paritok",
+            paritok_connected=False,
+            hosted_gpu_available=False,
+            proxy_version=None,
+            model="deepseek-v4-flash",
+            deepseek_called=False,
+            message="The local Paritok Proxy is unavailable.",
+        )
+
+
 def make_client(
     settings: Settings | None = None,
     *,
@@ -118,6 +133,15 @@ def test_health_reports_paritok_and_hosted_gpu() -> None:
         "message": "Local Paritok Proxy and hosted GPU are available.",
     }
     assert len(response.headers["X-Request-ID"]) == 32
+
+
+def test_health_returns_503_when_local_paritok_is_disconnected() -> None:
+    response = make_client(service=DisconnectedParitokService()).get("/api/health")
+
+    assert response.status_code == 503
+    assert response.json()["status"] == "degraded"
+    assert response.json()["paritok_connected"] is False
+    assert response.json()["hosted_gpu_available"] is False
 
 
 def test_config_status_only_exposes_secret_presence_and_safe_metadata() -> None:

@@ -72,6 +72,15 @@ LeanCI（Token-Efficient AI Debugging for Massive CI Logs）帮助开发者诊�
   运行依次暴露并修复响应头大小写、slim 镜像无 `kill` 二进制和同端口释放竞态；达到
   外部预检重试上限后，缺失的 API 退出路径改为无外部请求的定向容器检查并通过。
 
+阶段七 Railway 发布准备（2026-07-27）：
+
+- 在阶段六单容器基础上显式安装 `paritok[proxy]`，联合 `/api/health`、Docker 运行时
+  `PORT` healthcheck、entrypoint 启动/退出日志和三例容器 stats 对账脚本已实现；
+- 根目录 Railway 配置、Railway 逐步部署手册和 Render fallback 手册已创建；所有平台
+  Key 仍只允许以运行时 Secret 注入，`.env` 不进入 build context；
+- 一个直接公开的平台容器无法替代阶段六要求的 OIDC 可信网关和分布式限流/日预算；平台
+  部署、公开域名、生产分析、回滚和三例远端验收保持 `[MANUAL]`，不得预先声称成功。
+
 ## 3. MVP 范围
 
 必须完成：

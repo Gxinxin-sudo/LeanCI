@@ -47,7 +47,7 @@ USER 10001:10001
 EXPOSE 8000
 STOPSIGNAL SIGTERM
 
-HEALTHCHECK --interval=10s --timeout=3s --start-period=20s --retries=3 \
-    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/config-status', timeout=2).read(1)"]
+HEALTHCHECK --interval=30s --timeout=15s --start-period=30s --retries=3 \
+    CMD ["python", "-c", "import json,os,urllib.request; port=os.environ.get('PORT','8000'); data=json.load(urllib.request.urlopen(f'http://127.0.0.1:{port}/api/health',timeout=12)); assert data['service']=='leanci-api' and data['paritok_connected'] is True"]
 
 ENTRYPOINT ["python", "/app/scripts/container_entrypoint.py"]

@@ -330,15 +330,43 @@ Docker 单容器使用编译后的前端、FastAPI 和仅监听容器回环地�
 非 root 用户运行，由固定 Python PID 1 监管两个子进程，只公开 FastAPI 的平台 `PORT`。
 
 ```powershell
-docker build --progress=plain --tag leanci:phase6 .
+docker build --progress=plain --tag leanci:phase7 .
 $env:LEANCI_DOCKER_CLI = (Get-Command docker).Source
 .\backend\.venv\Scripts\python.exe scripts\docker_smoke.py
 ```
 
 首次构建需要下载基础镜像和 Python 依赖，慢速网络下可能超过两分钟。冒烟脚本使用测试专用
-假凭据，不读取 `.env`、不调用 DeepSeek；它验证无密钥失败、静态站点/API、镜像密钥边界和
-任一子进程退出时的容器联动失败。完整构建、Compose 与故障排查步骤见
+假凭据，不读取 `.env`、不调用 DeepSeek；它验证无密钥失败、静态站点/API、联合
+`/api/health`、内部 `/stats`、镜像密钥边界和任一子进程退出时的容器联动失败。完整构建、
+Compose 与故障排查步骤见
 [Docker 构建与验证](docs/DOCKER.md)。
+
+三个固定样例的真实容器链路验证会产生费用；一次只运行一例且必须显式确认：
+
+```powershell
+.\backend\.venv\Scripts\python.exe scripts\docker_live_verify.py --confirm-cost --sample python-pytest
+.\backend\.venv\Scripts\python.exe scripts\docker_live_verify.py --confirm-cost --sample typescript-build
+.\backend\.venv\Scripts\python.exe scripts\docker_live_verify.py --confirm-cost --sample docker-build
+```
+
+每次成功都必须证明联合健康、本次 `/stats` 差值与 API Token 证明一致、固定模型和容器
+SIGTERM 后退出码 0；脚本不打印 `.env` 或 Key。
+
+## Railway 部署
+
+根目录 `railway.json` 固定使用多阶段 `Dockerfile` 和 `/api/health`。Railway 只部署一个
+服务：React 由 FastAPI 同域托管，FastAPI 监听 `0.0.0.0:$PORT`，Paritok 只监听容器内部
+`127.0.0.1:8080`。Key 只作为 Railway 运行时 Secret/Sealed Variables 注入，不能作为
+build arg，也不能上传 `.env`。
+
+具体的 GitHub 连接、仓库/服务/Dockerfile 选择、变量分类、公开域名、日志、健康诊断、三例
+验收和回滚步骤见 [Railway 单容器部署手册](docs/DEPLOY_RAILWAY.md)；平台不可用时见
+[Render 备选部署手册](docs/DEPLOY_RENDER_FALLBACK.md)。
+
+安全限制：一个直接公开的 Railway/Render 服务本身不等于项目要求的 OIDC 认证网关和
+Redis/网关分布式预算。生产模式会拒绝没有可信网关注入身份的 `/api/analyze`。不得通过
+公开 development 模式、全网可信 CIDR 或浏览器携带共享 Secret 绕过；完整边界见
+[生产安全部署手册](docs/PRODUCTION_DEPLOYMENT.md)。
 
 ## 质量检查
 
@@ -378,6 +406,8 @@ npm run build
 - [安全政策](SECURITY.md)
 - [威胁模型](docs/THREAT_MODEL.md)
 - [Docker 构建与验证](docs/DOCKER.md)
+- [Railway 单容器部署](docs/DEPLOY_RAILWAY.md)
+- [Render 备选部署](docs/DEPLOY_RENDER_FALLBACK.md)
 - [生产安全部署手册](docs/PRODUCTION_DEPLOYMENT.md)
 - [Windows Paritok 设置](docs/PARITOK_SETUP_WINDOWS.md)
 - [Paritok 验证](docs/PARITOK_VERIFICATION.md)

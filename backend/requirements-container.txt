@@ -1,10 +1,10 @@
-# Same fixed runtime as requirements.txt, but the container omits Paritok's
-# embedding-only "proxy" extra. LeanCI fixes tool discovery to passthrough;
-# FastAPI already supplies Starlette and uvicorn is a direct dependency.
+# Keep the container dependency set identical to the fixed application runtime.
+# The proxy extra is explicit so the image remains valid if Paritok changes which
+# dependencies its supported `paritok proxy` command declares.
 fastapi==0.140.0
 httpx==0.28.1
 openai==2.46.0
-paritok==1.2.7
+paritok[proxy]==1.2.7
 pydantic==2.13.4
 pydantic-settings==2.14.2
 uvicorn[standard]==0.51.0

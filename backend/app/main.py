@@ -5,7 +5,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
@@ -115,8 +115,11 @@ def create_app(
     register_error_handlers(application)
 
     @application.get("/api/health", response_model=HealthResponse)
-    async def health() -> HealthResponse:
-        return await analysis_service.health()
+    async def health(response: Response) -> HealthResponse:
+        result = await analysis_service.health()
+        if not result.paritok_connected:
+            response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        return result
 
     @application.get("/api/config-status", response_model=ConfigStatusResponse)
     async def config_status() -> ConfigStatusResponse:

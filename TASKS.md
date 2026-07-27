@@ -189,6 +189,13 @@
 ## 阶段 7：开源发布与 Devpost
 
 - [x] 创建 `SECURITY.md`
+- [x] 创建 Railway `railway.json`，固定根 Dockerfile、联合健康路径和有界重启策略
+- [x] 镜像显式安装 `paritok[proxy]`，Docker healthcheck 使用运行时 `PORT` 与 `/api/health`
+- [x] 强化 PID 1 启动顺序、PID/失败日志和有界双子进程退出
+- [x] 创建一次一例、显式费用确认、stats 对账和干净退出的容器真实验证脚本
+- [x] 创建 Railway 逐步部署手册和 Render fallback 手册
+- [ ] 构建 `leanci:phase7` 并完成无费用 Docker smoke
+- [ ] 在明确费用授权下通过容器依次运行三个固定示例、检查 stats 和退出状态
 - [ ] 创建 `CONTRIBUTING.md`
 - [x] 完成阶段六全量 pytest、ruff、前端测试、类型检查和构建
 - [x] 完成 Docker 端到端功能检查；修复响应头大小写、slim 镜像信号和端口复用测试缺陷

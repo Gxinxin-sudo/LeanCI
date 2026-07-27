@@ -19,12 +19,12 @@ except ModuleNotFoundError:
     from scan_secrets import detector_names
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-IMAGE = "leanci:phase6"
+IMAGE = "leanci:phase7"
 APPLICATION_HOST_PORT = 18086
 API_EXIT_HOST_PORT = 18087
-NO_KEYS_CONTAINER = "leanci-phase6-no-keys"
-PROXY_EXIT_CONTAINER = "leanci-phase6-proxy-exit"
-API_EXIT_CONTAINER = "leanci-phase6-api-exit"
+NO_KEYS_CONTAINER = "leanci-phase7-no-keys"
+PROXY_EXIT_CONTAINER = "leanci-phase7-proxy-exit"
+API_EXIT_CONTAINER = "leanci-phase7-api-exit"
 CONTAINER_NAMES = (NO_KEYS_CONTAINER, PROXY_EXIT_CONTAINER, API_EXIT_CONTAINER)
 COMMAND_TIMEOUT_SECONDS = 30
 CONTAINER_READY_TIMEOUT_SECONDS = 25
@@ -153,6 +153,8 @@ def _start_container(docker: str, name: str, host_port: int) -> str:
             "--env",
             "LLM_PROVIDER=paritok",
             "--env",
+            "ENVIRONMENT=development",
+            "--env",
             "PORT=8000",
             "--cap-drop",
             "ALL",
@@ -162,6 +164,19 @@ def _start_container(docker: str, name: str, host_port: int) -> str:
         ],
     )
     return completed.stdout.strip()
+
+
+def _read_internal_json(docker: str, name: str, url: str) -> dict[str, Any]:
+    code = (
+        "import json,urllib.request;"
+        f"data=json.load(urllib.request.urlopen({url!r},timeout=5));"
+        "print(json.dumps(data,separators=(',',':')))"
+    )
+    completed = _run(docker, ["exec", name, "python", "-c", code])
+    payload = json.loads(completed.stdout)
+    if not isinstance(payload, dict):
+        raise DockerSmokeError("Internal container endpoint returned a non-object.")
+    return payload
 
 
 def _read_child_pid(docker: str, name: str, child: str) -> int:
@@ -243,8 +258,9 @@ def _inspect_image(docker: str) -> dict[str, Any]:
     }
 
 
-def _application_smoke() -> dict[str, Any]:
+def _application_smoke(docker: str, name: str) -> dict[str, Any]:
     home_status, home_headers, home = _request("/")
+    health_status, _health_headers, health_body = _request("/api/health", timeout=15)
     config_status, config_headers, config_body = _request("/api/config-status")
     samples_status, _sample_headers, samples_body = _request("/api/samples")
     benchmark_status, _benchmark_headers, benchmark_body = _request(
@@ -258,11 +274,21 @@ def _application_smoke() -> dict[str, Any]:
     )
 
     config = json.loads(config_body)
+    health = json.loads(health_body)
     samples = json.loads(samples_body)
     benchmark = json.loads(benchmark_body)
     analysis = json.loads(analysis_body)
     if home_status != 200 or b"LeanCI" not in home:
         raise DockerSmokeError("The built frontend was not served.")
+    if (
+        health_status != 200
+        or health.get("service") != "leanci-api"
+        or health.get("paritok_connected") is not True
+        or health.get("deepseek_called") is not False
+    ):
+        raise DockerSmokeError(
+            "The combined API and local Paritok health contract failed."
+        )
     if "default-src 'self'" not in home_headers.get("content-security-policy", ""):
         raise DockerSmokeError("The built frontend is missing its document CSP.")
     if config_status != 200 or config_headers.get("cache-control") != "no-store":
@@ -294,11 +320,22 @@ def _application_smoke() -> dict[str, Any]:
         )
     if "compression_stats" in analysis or "tokens" in json.dumps(analysis).casefold():
         raise DockerSmokeError("The failed analysis returned unverified Token data.")
+    stats = _read_internal_json(
+        docker,
+        name,
+        "http://127.0.0.1:8080/stats",
+    )
+    if not isinstance(stats.get("total_requests"), int):
+        raise DockerSmokeError("The internal Paritok stats endpoint was invalid.")
     return {
         "frontend_status": home_status,
+        "health_status": health_status,
+        "paritok_connected": health["paritok_connected"],
+        "hosted_gpu_available": health["hosted_gpu_available"],
         "config_status": config_status,
         "sample_count": len(samples),
         "benchmark_rows": len(benchmark["rows"]),
+        "stats_total_requests": stats["total_requests"],
         "analysis_status": analysis_status,
         "analysis_error_code": analysis["error"]["code"],
         "deepseek_called": False,
@@ -344,7 +381,7 @@ def main() -> int:
         created.append(PROXY_EXIT_CONTAINER)
         _wait_for_ready()
         _wait_for_healthy(docker, PROXY_EXIT_CONTAINER)
-        result["application"] = _application_smoke()
+        result["application"] = _application_smoke(docker, PROXY_EXIT_CONTAINER)
         result["proxy_exit_code"] = _kill_child_and_wait(
             docker, PROXY_EXIT_CONTAINER, "proxy"
         )

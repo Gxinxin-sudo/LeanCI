@@ -8,6 +8,14 @@ from scripts.container_entrypoint import (
     api_command,
     load_runtime_config,
     proxy_command,
+    supervise,
+)
+from scripts.docker_live_verify import (
+    LiveVerificationError,
+    _stats_delta,
+)
+from scripts.docker_live_verify import (
+    _docker_cli as _live_docker_cli,
 )
 from scripts.docker_smoke import (
     API_EXIT_HOST_PORT,
@@ -87,6 +95,54 @@ def test_container_commands_fix_proxy_loopback_and_single_api_worker() -> None:
     assert "--no-access-log" in api
 
 
+def test_supervisor_waits_for_proxy_health_before_starting_api(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    events: list[str] = []
+
+    class FakeProcess:
+        def __init__(self, name: str, pid: int) -> None:
+            self.name = name
+            self.pid = pid
+
+        def poll(self) -> int | None:
+            return 9 if self.name == "api" else None
+
+    processes = [FakeProcess("proxy", 21), FakeProcess("api", 22)]
+
+    def fake_popen(command: list[str], **_kwargs: object) -> FakeProcess:
+        name = "proxy" if "proxy" in command else "api"
+        events.append(f"start:{name}")
+        return processes.pop(0)
+
+    def fake_wait(_process: FakeProcess, url: str) -> bool:
+        events.append(f"wait:{url}")
+        return True
+
+    monkeypatch.setattr("scripts.container_entrypoint.subprocess.Popen", fake_popen)
+    monkeypatch.setattr("scripts.container_entrypoint._wait_for_http", fake_wait)
+    monkeypatch.setattr("scripts.container_entrypoint._write_pid", lambda *_args: None)
+    monkeypatch.setattr("scripts.container_entrypoint._stop_processes", lambda *_args: None)
+
+    result = supervise(
+        RuntimeConfig(
+            port=8000,
+            paritok_executable=Path("/usr/local/bin/paritok"),
+            project_root=Path("/app"),
+        )
+    )
+
+    assert result == 1
+    assert events == [
+        "start:proxy",
+        "wait:http://127.0.0.1:8080/health",
+        "start:api",
+        "wait:http://127.0.0.1:8000/api/config-status",
+    ]
+    assert "FastAPI exited unexpectedly with status 9" in capsys.readouterr().err
+
+
 def test_docker_assets_exclude_secrets_and_do_not_publish_proxy_port() -> None:
     dockerfile = (PROJECT_ROOT / "Dockerfile").read_text(encoding="utf-8")
     dockerignore = (PROJECT_ROOT / ".dockerignore").read_text(encoding="utf-8")
@@ -103,6 +159,9 @@ def test_docker_assets_exclude_secrets_and_do_not_publish_proxy_port() -> None:
     assert "ARG PARITOK_API_KEY" not in dockerfile
     assert "ENV DEEPSEEK_API_KEY" not in dockerfile
     assert "ENV PARITOK_API_KEY" not in dockerfile
+    assert "/api/health" in dockerfile
+    assert "paritok_connected" in dockerfile
+    assert "os.environ.get('PORT','8000')" in dockerfile
 
     for required_pattern in (
         ".git",
@@ -121,9 +180,9 @@ def test_docker_assets_exclude_secrets_and_do_not_publish_proxy_port() -> None:
     assert "cap_drop:" in compose
 
 
-def test_container_dependency_versions_match_runtime_with_passthrough_only() -> None:
+def test_container_dependency_versions_match_runtime_with_proxy_extra() -> None:
     runtime_lines = {
-        line.strip().replace("paritok[proxy]", "paritok")
+        line.strip()
         for line in (PROJECT_ROOT / "backend" / "requirements.txt")
         .read_text(encoding="utf-8")
         .splitlines()
@@ -139,9 +198,8 @@ def test_container_dependency_versions_match_runtime_with_passthrough_only() -> 
     paritok_config = (PROJECT_ROOT / "paritok.yaml").read_text(encoding="utf-8")
 
     assert container_lines == runtime_lines
+    assert "paritok[proxy]==1.2.7" in container_lines
     assert "strategy: passthrough" in paritok_config
-    assert "sentence-transformers" not in "\n".join(container_lines)
-    assert "numpy" not in "\n".join(container_lines)
 
 
 def test_docker_smoke_normalizes_response_header_names(
@@ -207,3 +265,34 @@ def test_docker_smoke_uses_distinct_fixed_host_ports() -> None:
     assert APPLICATION_HOST_PORT == 18086
     assert API_EXIT_HOST_PORT == 18087
     assert APPLICATION_HOST_PORT != API_EXIT_HOST_PORT
+
+
+def test_live_verifier_accepts_only_an_explicit_docker_cli(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    docker = tmp_path / "docker.exe"
+    docker.write_bytes(b"test-only")
+    monkeypatch.setenv("LEANCI_DOCKER_CLI", str(docker))
+
+    assert _live_docker_cli() == str(docker.resolve())
+
+    invalid = tmp_path / "not-docker.exe"
+    invalid.write_bytes(b"test-only")
+    monkeypatch.setenv("LEANCI_DOCKER_CLI", str(invalid))
+    with pytest.raises(LiveVerificationError):
+        _live_docker_cli()
+
+
+def test_live_verifier_rejects_stats_counter_reset() -> None:
+    before = {
+        "total_requests": 2,
+        "input_tokens_original": 10,
+        "input_tokens_compressed": 4,
+        "tokens_saved": 6,
+    }
+    after = dict(before)
+    after["total_requests"] = 1
+
+    with pytest.raises(LiveVerificationError):
+        _stats_delta(before, after)

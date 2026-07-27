@@ -122,15 +122,25 @@ def _wait_for_http(process: subprocess.Popen[bytes], url: str) -> bool:
     return False
 
 
-def _stop_process(process: subprocess.Popen[bytes]) -> None:
-    if process.poll() is not None:
-        return
-    process.terminate()
-    try:
-        process.wait(timeout=CHILD_STOP_TIMEOUT_SECONDS)
-    except subprocess.TimeoutExpired:
-        process.kill()
-        process.wait(timeout=2)
+def _stop_processes(processes: tuple[subprocess.Popen[bytes], ...]) -> None:
+    """Stop children together so the total grace period remains bounded."""
+
+    running = [process for process in processes if process.poll() is None]
+    for process in running:
+        process.terminate()
+
+    deadline = time.monotonic() + CHILD_STOP_TIMEOUT_SECONDS
+    for process in running:
+        remaining = max(0.0, deadline - time.monotonic())
+        try:
+            process.wait(timeout=remaining)
+        except subprocess.TimeoutExpired:
+            continue
+
+    for process in running:
+        if process.poll() is None:
+            process.kill()
+            process.wait(timeout=2)
 
 
 def _write_pid(name: str, process: subprocess.Popen[bytes]) -> None:
@@ -153,28 +163,57 @@ def supervise(config: RuntimeConfig) -> int:
         f"and FastAPI on 0.0.0.0:{config.port}.",
         flush=True,
     )
-    proxy = subprocess.Popen(proxy_command(config), cwd=config.project_root)
-    _write_pid("proxy", proxy)
-    processes: dict[str, subprocess.Popen[bytes]] = {"Paritok": proxy}
+    processes: dict[str, subprocess.Popen[bytes]] = {}
 
     try:
-        if not _wait_for_http(proxy, f"http://127.0.0.1:{PARITOK_PORT}/health"):
+        try:
+            proxy = subprocess.Popen(proxy_command(config), cwd=config.project_root)
+        except OSError:
             print(
-                "Paritok did not become healthy within 20 seconds.",
+                "Paritok process could not be started.",
                 file=sys.stderr,
                 flush=True,
             )
             return 1
+        processes["Paritok"] = proxy
+        _write_pid("proxy", proxy)
+        print(f"Paritok process started with PID {proxy.pid}.", flush=True)
 
-        api = subprocess.Popen(api_command(config), cwd=config.project_root)
-        _write_pid("api", api)
-        processes["FastAPI"] = api
-        if not _wait_for_http(api, f"http://127.0.0.1:{config.port}/api/config-status"):
+        if not _wait_for_http(proxy, f"http://127.0.0.1:{PARITOK_PORT}/health"):
+            return_code = proxy.poll()
+            if return_code is None:
+                message = "Paritok did not become healthy within 20 seconds."
+            else:
+                message = (
+                    "Paritok exited during startup with status "
+                    f"{return_code} before /health became ready."
+                )
+            print(message, file=sys.stderr, flush=True)
+            return 1
+
+        print("Paritok /health is ready; starting FastAPI.", flush=True)
+        try:
+            api = subprocess.Popen(api_command(config), cwd=config.project_root)
+        except OSError:
             print(
-                "FastAPI did not become healthy within 20 seconds.",
+                "FastAPI process could not be started.",
                 file=sys.stderr,
                 flush=True,
             )
+            return 1
+        processes["FastAPI"] = api
+        _write_pid("api", api)
+        print(f"FastAPI process started with PID {api.pid}.", flush=True)
+        if not _wait_for_http(api, f"http://127.0.0.1:{config.port}/api/config-status"):
+            return_code = api.poll()
+            if return_code is None:
+                message = "FastAPI did not become ready within 20 seconds."
+            else:
+                message = (
+                    "FastAPI exited during startup with status "
+                    f"{return_code} before its readiness probe succeeded."
+                )
+            print(message, file=sys.stderr, flush=True)
             return 1
 
         print("LeanCI container services are ready.", flush=True)
@@ -189,10 +228,10 @@ def supervise(config: RuntimeConfig) -> int:
                         flush=True,
                     )
                     return 1
+        print("Shutdown signal received; stopping both services.", flush=True)
         return 0
     finally:
-        for process in reversed(tuple(processes.values())):
-            _stop_process(process)
+        _stop_processes(tuple(reversed(processes.values())))
 
 
 def main() -> int:
@@ -203,7 +242,15 @@ def main() -> int:
             f"LeanCI container configuration error: {exc}", file=sys.stderr, flush=True
         )
         return 78
-    return supervise(config)
+    try:
+        return supervise(config)
+    except (OSError, subprocess.SubprocessError):
+        print(
+            "LeanCI container encountered a local process supervision error.",
+            file=sys.stderr,
+            flush=True,
+        )
+        return 1
 
 
 if __name__ == "__main__":

@@ -31,6 +31,7 @@ async function requestJson<T>(
   path: string,
   init?: RequestInit,
   timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
+  acceptedErrorStatuses: readonly number[] = [],
 ): Promise<T> {
   let response: Response
   const controller = new AbortController()
@@ -55,7 +56,7 @@ async function requestJson<T>(
     window.clearTimeout(timeoutId)
   }
 
-  if (!response.ok) {
+  if (!response.ok && !acceptedErrorStatuses.includes(response.status)) {
     let message = `LeanCI API returned HTTP ${response.status}.`
 
     try {
@@ -74,7 +75,9 @@ async function requestJson<T>(
 }
 
 export function getHealth(): Promise<HealthResponse> {
-  return requestJson<HealthResponse>('/health')
+  // A disconnected local Proxy makes /api/health return 503 while preserving
+  // its structured body, so the UI can show the exact degraded component.
+  return requestJson<HealthResponse>('/health', undefined, DEFAULT_REQUEST_TIMEOUT_MS, [503])
 }
 
 export function getSample(sampleId: string): Promise<SamplePayload> {

@@ -290,16 +290,65 @@ git push -u origin main
 
 - [ ] 刷新 GitHub 页面，确认 `README.md`、`LICENSE` 和源代码可公开访问，且没有 `.env` 或密钥。
 
-### 10. 选择并配置 Docker 托管平台
+### 10. 在 Railway 创建单容器服务
 
-- [ ] 在 Docker MVP 通过后选择支持单容器、平台 `PORT` 和环境变量的托管平台。
-- [ ] 在平台网页中添加 `DEEPSEEK_API_KEY`、`PARITOK_API_KEY` 和 README 列出的非敏感配置。
-- [ ] 不把密钥写入 Dockerfile、镜像构建参数、仓库变量文件或公开日志。
-- [ ] 确认只暴露 FastAPI 的平台端口；不得公开映射 `8080`。
-- [ ] 部署后访问 `/api/health`，确认 FastAPI、本地代理和 hosted GPU 均健康。
-- [ ] 使用内置示例完成一次正式分析和一次显式 benchmark。
+完整逐屏步骤、变量表、日志判据、Paritok 诊断和回滚见
+[`DEPLOY_RAILWAY.md`](DEPLOY_RAILWAY.md)；Railway 不可用时只使用
+[`DEPLOY_RENDER_FALLBACK.md`](DEPLOY_RENDER_FALLBACK.md)，不要同时公开两个实例。
 
-具体平台与点击步骤将在选择平台后补充，本阶段不假定某一家服务。
+- [ ] 先完成本地 phase7 镜像：2026-07-27 自动化已启动 Docker Desktop PID `37156`，
+  Engine/Compose/Compose config 均正常，但两次 build 都达到 120 秒上限，最终没有
+  `leanci:phase7` 镜像。官方 `[proxy]` extra 会拉取 `numpy` 和
+  `sentence-transformers`；不要继续无依据重试，也不要改回精简 `paritok`。
+- [ ] 在 Docker Desktop 明确显示 Engine healthy 后，从新的 PowerShell 设置 CLI 路径并
+  重新执行一次构建；开始前确认没有其他 build，命令不得携带 `.env` 或 build arg：
+
+```powershell
+$dockerBin = "$env:LOCALAPPDATA\Programs\DockerDesktop\resources\bin"
+$env:Path = "$dockerBin;$env:Path"
+docker build --progress=plain --tag leanci:phase7 .
+docker image inspect leanci:phase7 --format "{{.Id}} {{.Created}} {{.Size}}"
+```
+
+- [ ] 只有 inspect 成功后运行无费用 smoke，并保留顶层 `"status":"passed"`：
+
+```powershell
+$env:LEANCI_DOCKER_CLI = (Get-Command docker).Source
+.\backend\.venv\Scripts\python.exe scripts\docker_smoke.py
+```
+
+- [ ] 确认真实费用和余额后，逐条运行 `docs/DOCKER.md` 的三个
+  `docker_live_verify.py --confirm-cost --sample ...` 命令；每条必须核对健康、stats 差值、
+  固定模型、编排重试 0 和容器退出码 0。当前自动化没有运行这三条，不能勾选。
+- [ ] 将本次已验证 commit 推送到 GitHub，确认仓库没有 `.env` 或 Key。
+- [ ] Railway → New Project → Deploy from GitHub repo；连接 GitHub App 时只授权 LeanCI
+  所需仓库，选择 `LeanCI`/`main`，只创建一个服务。
+- [ ] 保持 Root Directory 为仓库根，确认 `railway.json` 选择根 `Dockerfile`，不设置自定义
+  Start Command。
+- [ ] 在 Variables 逐项添加并 Seal `DEEPSEEK_API_KEY`、`PARITOK_API_KEY` 和
+  `PROXY_AUTH_SHARED_SECRET`；不要上传 `.env` 或把 Secret 变成 build arg。
+- [ ] 配置固定 provider/model、production、精确 HTTPS CORS、真实网关私网 CIDR、分布式
+  限流声明、经审批 UTC 日预算和保留期。不要自己覆盖 Railway `PORT`，也不要使用 8080。
+- [ ] 首次部署只在 Build/Deploy Logs 依次证明 Dockerfile build、Paritok PID、
+  Paritok `/health`、FastAPI PID 和 services ready 后才继续；缺 Secret 状态 78、Proxy
+  启动退出/20 秒超时或 FastAPI 变量校验失败都算部署失败。
+- [ ] Service → Settings → Networking → Public Networking → Generate Domain，只生成一个
+  HTTPS 域名，不创建 TCP Proxy；将 CORS 占位 origin 更新为生成的精确域名并重新部署。
+- [ ] 在 30 秒超时内访问 `/api/health`，保存无密钥 JSON 证据；必须为 `status=ok`、
+  `paritok_connected=true`、`hosted_gpu_available=true`、固定模型和
+  `deepseek_called=false`。
+- [ ] 确认首页和 `/api/samples` 使用同一域名，公网不能访问 Paritok `8080`。
+- [ ] 配置符合 `PRODUCTION_DEPLOYMENT.md` 的 TLS/OIDC 网关、Header 清洗/注入、Redis
+  分布式限流与 UTC 日预算，并完成故障拒绝测试。一个直接公开 Railway 容器没有这些能力，
+  `/api/analyze` 返回 401 是预期安全行为，不能改用 public development 模式绕过。
+- [ ] 生产网关实际通过后，逐一运行 Python/TypeScript/Docker 固定样例并核对本次 stats；
+  没有网关或只完成健康检查时不得声称公开 Demo 分析成功。
+- [ ] 在 Deployments 选择此前已验证版本演练 Rollback；回滚后重新核对 Key 版本、日志、
+  `/api/health`、首页和至少一个获授权样例。
+- [ ] 记录 project/service/deployment ID、Git commit、域名、无密钥日志和 request ID；
+  不记录变量值、请求正文、模型正文或内部 Header。
+
+以上全部是外部账号/网页操作，本地 commit 无法代做或证明，完成前必须保持 `[MANUAL]`。
 
 ### 11. 准备并提交 Devpost 材料
 
