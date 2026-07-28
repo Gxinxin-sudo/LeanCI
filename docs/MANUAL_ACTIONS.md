@@ -327,17 +327,25 @@ $env:LEANCI_DOCKER_CLI = (Get-Command docker).Source
   `skipped_low_yield` 且 stats `1/0/0/0`、Docker `543→144`，三例退出码均为 0。
 - [x] 将本次已验证 commit 推送到公开 GitHub `main`；推送前后均运行当前文件与完整历史
   密钥扫描，确认仓库没有 `.env` 或 Key。
-- [ ] Railway → New Project → Deploy from GitHub repo；连接 GitHub App 时只授权 LeanCI
+- [x] Railway → New Project → Deploy from GitHub repo；连接 GitHub App 时只授权 LeanCI
   所需仓库，选择 `LeanCI`/`main`，只创建一个服务。
-- [ ] 保持 Root Directory 为仓库根，确认 `railway.json` 选择根 `Dockerfile`，不设置自定义
+- [x] 保持 Root Directory 为仓库根，确认 `railway.json` 选择根 `Dockerfile`，不设置自定义
   Start Command。
-- [ ] 在 Variables 逐项添加并 Seal `DEEPSEEK_API_KEY`、`PARITOK_API_KEY` 和
-  `PROXY_AUTH_SHARED_SECRET`；不要上传 `.env` 或把 Secret 变成 build arg。
+- [x] 通过 Railway CLI 的标准输入安全同步 `DEEPSEEK_API_KEY` 和 `PARITOK_API_KEY`；
+  `.env` 未上传、未提交，Secret 值未写入部署证据或聊天总结。
+- [x] 为无公网域名验证设置 Railway `PORT=8000` 和 `ENVIRONMENT=development`，解决平台
+  默认端口与容器内 Paritok `8080` 的冲突。此状态只用于内部部署/健康验证，不是生产配置。
 - [ ] 配置固定 provider/model、production、精确 HTTPS CORS、真实网关私网 CIDR、分布式
-  限流声明、经审批 UTC 日预算和保留期。不要自己覆盖 Railway `PORT`，也不要使用 8080。
-- [ ] 首次部署只在 Build/Deploy Logs 依次证明 Dockerfile build、Paritok PID、
+  限流声明、经审批 UTC 日预算和保留期；若继续不使用 OIDC，必须先设计并评审等效的可信
+  认证边界，不能直接公开 development 实例。
+- [x] Build/Deploy Logs 已依次证明 Dockerfile build、Paritok PID、
   Paritok `/health`、FastAPI PID 和 services ready 后才继续；缺 Secret 状态 78、Proxy
   启动退出/20 秒超时或 FastAPI 变量校验失败都算部署失败。
+- [x] Railway 对 `/api/health` 的平台探针已通过，部署 `SUCCESS`、实例 `RUNNING`；
+  因尚无域名，未进行公网 JSON 响应抓取。
+- [ ] 在生成域名前轮换 DeepSeek 与 Paritok Key 并重新安全同步。一次失败部署的 Pydantic
+  错误曾把环境输入的截断片段写入 Railway 日志；`main@76e265e` 已启用
+  `hide_input_in_errors` 防止再次发生，但旧日志无法由本地代码删除。
 - [ ] Service → Settings → Networking → Public Networking → Generate Domain，只生成一个
   HTTPS 域名，不创建 TCP Proxy；将 CORS 占位 origin 更新为生成的精确域名并重新部署。
 - [ ] 在 30 秒超时内访问 `/api/health`，保存无密钥 JSON 证据；必须为 `status=ok`、
@@ -351,10 +359,11 @@ $env:LEANCI_DOCKER_CLI = (Get-Command docker).Source
   没有网关或只完成健康检查时不得声称公开 Demo 分析成功。
 - [ ] 在 Deployments 选择此前已验证版本演练 Rollback；回滚后重新核对 Key 版本、日志、
   `/api/health`、首页和至少一个获授权样例。
-- [ ] 记录 project/service/deployment ID、Git commit、域名、无密钥日志和 request ID；
+- [x] 已在 [`RAILWAY_DEPLOYMENT_EVIDENCE.md`](RAILWAY_DEPLOYMENT_EVIDENCE.md) 记录
+  project/service/deployment ID、Git commit、无密钥日志判据和“无域名”状态；
   不记录变量值、请求正文、模型正文或内部 Header。
 
-以上全部是外部账号/网页操作，本地 commit 无法代做或证明，完成前必须保持 `[MANUAL]`。
+以上未勾选项仍是外部账号/网页或生产安全操作；实际完成并验证前必须保持 `[MANUAL]`。
 
 ### 11. 准备并提交 Devpost 材料
 

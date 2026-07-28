@@ -210,7 +210,12 @@
 - [x] `[MANUAL]` 创建 Paritok API Key（2026-07-27 hosted GPU 与真实 stats 已验证）
 - [x] `[MANUAL]` 创建公开 GitHub `LeanCI` 仓库（已匿名验证
   `https://github.com/Gxinxin-sudo/LeanCI` 为 Public）
-- [ ] `[MANUAL]` 选择部署平台并配置环境变量
+- [x] `[MANUAL]` 选择 Railway 并配置无公网域名验证所需变量（2026-07-28；仅同步两个
+  必要 Secret，另由 Railway 注入 `PORT=8000`，应用暂以 `ENVIRONMENT=development`
+  运行，不把该状态称为生产）
+- [x] Railway 从 GitHub `main@76e265e` 使用根 Dockerfile 部署成功；平台
+  `/api/health` 探针通过、实例 `RUNNING`，且尚未创建公网域名（证据见
+  `docs/RAILWAY_DEPLOYMENT_EVIDENCE.md`）
 - [ ] `[MANUAL]` 验证公开 Demo URL
 - [ ] `[MANUAL]` 录制和上传演示视频
 - [ ] `[MANUAL]` 填写并提交 Devpost 材料
