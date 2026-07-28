@@ -28,8 +28,7 @@ RUN groupadd --gid 10001 leanci \
     && useradd --uid 10001 --gid 10001 --create-home --no-log-init leanci
 
 COPY backend/requirements-container.txt /tmp/requirements.txt
-RUN --mount=type=cache,id=leanci-pip-cache,target=/root/.cache/pip \
-    python -m pip install --upgrade "pip==26.1.2" \
+RUN python -m pip install --upgrade "pip==26.1.2" \
     && python -m pip install \
         --index-url https://download.pytorch.org/whl/cpu \
         "torch==2.13.0+cpu" \
