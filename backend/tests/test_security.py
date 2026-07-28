@@ -173,6 +173,22 @@ def test_production_configuration_requires_a_complete_gateway_boundary() -> None
     assert str(settings.trusted_proxy_networks[0]) == "10.0.0.0/8"
 
 
+def test_configuration_errors_hide_secret_inputs() -> None:
+    secret_marker = "must-not-appear-in-validation-errors"
+
+    with pytest.raises(ValidationError) as exc_info:
+        Settings(
+            _env_file=None,
+            environment="production",
+            deepseek_api_key=secret_marker,
+            paritok_api_key=secret_marker,
+            cors_allowed_origins="http://localhost:5173",
+        )
+
+    assert secret_marker not in str(exc_info.value)
+    assert "input_value=" not in str(exc_info.value)
+
+
 @pytest.mark.anyio
 async def test_trusted_proxy_authentication_rejects_direct_or_spoofed_analysis() -> None:
     sent: list[dict[str, Any]] = []

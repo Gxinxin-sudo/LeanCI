@@ -38,6 +38,7 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
         frozen=True,
+        hide_input_in_errors=True,
     )
 
     app_name: str = "LeanCI API"
