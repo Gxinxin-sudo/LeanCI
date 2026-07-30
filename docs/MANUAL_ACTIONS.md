@@ -103,7 +103,7 @@ git status --short --ignored
 
 ### 5. 创建 Paritok API Key
 
-- [ ] 打开 [Paritok](https://paritok.com/) 并登录/注册。
+- [ ] 打开 [Paritok](https://www.paritok.com/) 并登录/注册。
 - [ ] 进入 Dashboard → API keys。
 - [ ] 创建一个 LeanCI 专用 Key，保存到密码管理器。
 - [ ] 只在本机 `.env` 中填写：
@@ -370,14 +370,23 @@ $env:LEANCI_DOCKER_CLI = (Get-Command docker).Source
 - [x] 2026-07-27 自动化发布复核检查 63 个 Markdown 相对链接，缺失数为 0；DeepSeek
   官方价格仍为 `deepseek-v4-flash` cache hit `$0.0028/M`、cache miss `$0.14/M`、
   output `$0.28/M`，因此冻结 Benchmark 的 2026-07-26 快照无需改写。
-- [ ] 手动打开 `https://build-with-paritok.devpost.com/`，确认页面显示的截止日期与时区、
-  资格、评审标准、必填字段、视频时长、公开仓库和 Demo 要求。自动化只读访问未能打开该
-  Devpost 页面；Paritok 公开公告所述 2026-08-05 截止日期不能替代最终页面确认。
-- [ ] 创建清晰的项目一句话说明和完整描述。
-- [ ] 录制日志输入、结构化诊断、Diff、Token 面板和 benchmark 的演示。
-- [ ] 准备架构图、结果截图、公开仓库和在线 Demo 链接。
+- [x] 2026-07-30 只读打开官方 Devpost 页面并确认：截止时间为 Aug 5, 2026
+  12:00am PDT；Project URL 可使用 public live Demo 或“公开仓库 + 清晰安装说明”；
+  代码仓库必须公开、包含 Apache 2.0、README 署名 Paritok；演示视频必须少于 3 分钟并
+  公开托管在 YouTube/Vimeo。提交时仍需由用户登录后复核表单字段与资格。
+- [x] 已在 `docs/submission/` 创建项目完整描述、2:50 视频脚本、逐镜头录屏表、社交文案、
+  截图清单、最终提交清单和 Paritok 反馈模板。
+- [ ] 按 `docs/submission/RECORDING_SHOT_LIST.md` 录制日志输入、一键 Sample、结构化诊断、
+  Evidence、Patch、Token 面板、Benchmark、架构图和 GitHub 仓库。
+- [ ] 按 `docs/submission/SCREENSHOT_CHECKLIST.md` 补拍并复核提交图片。
+- [ ] 当前没有公开 live Demo 域名。Project URL 先填
+  `https://github.com/Gxinxin-sudo/LeanCI`；只有完成第 8/10 节的网关、共享限流/预算、
+  Key 轮换和匿名验收后，才可改填 live Demo。
 - [ ] 在视频或说明中明确 Token 来源、价格估算口径和 baseline 未压缩标签。
-- [ ] 按 Devpost 当时显示的要求上传材料并逐项预览。
+- [ ] 把 `docs/submission/DEVPOST_DESCRIPTION.md` 对应栏目粘贴到 Devpost；填写公开仓库、
+  视频、可选社交链接和 Paritok 账户邮箱。账户邮箱只填在 Devpost，不提交到 Git。
+- [ ] 按 `docs/submission/FINAL_SUBMISSION_CHECKLIST.md` 上传材料并逐项预览；在无痕窗口
+  检查仓库、视频、社交链接和可选 Demo。
 - [ ] 提交前再次确认没有截图或控制台画面暴露 API Key。
 
 ## 密钥泄露应急

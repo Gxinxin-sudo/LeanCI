@@ -2,6 +2,13 @@
 
 **Token-Efficient AI Debugging for Massive CI Logs**
 
+[![Built with Paritok](https://img.shields.io/badge/Built%20with-Paritok-1f2d3d)](https://github.com/Paritok-official/paritok-4b-v1)
+[![Built with DeepSeek](https://img.shields.io/badge/Built%20with-DeepSeek-4d6bfe)](https://api-docs.deepseek.com/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+
+Built with [Paritok](https://github.com/Paritok-official/paritok-4b-v1) and
+[DeepSeek](https://api-docs.deepseek.com/).
+
 LeanCI 是一个可录制演示的真实 CI 故障诊断 MVP：把长日志和少量相关文本文件作为不可信
 证据，经本地 Paritok Proxy 与 hosted GPU 压缩，再由 DeepSeek
 `deepseek-v4-flash` 返回严格结构化诊断。正式分析不可绕过 Paritok；链路或 `/stats`
@@ -11,22 +18,30 @@ LeanCI 是一个可录制演示的真实 CI 故障诊断 MVP：把长日志和�
 正式分析会把内容发送给 Paritok 和 DeepSeek，因此仍受两家服务及托管平台的保留政策约束。
 请勿提交密钥、个人数据或未经授权的私有源码。模型给出的命令和 Patch 永远只作为文本展示。
 
+## 功能截图
+
+| 首页与长日志工作台 | Python pytest 根因与 Token 证明 |
+| --- | --- |
+| [![LeanCI 首页](artifacts/screenshots/home.png)](artifacts/screenshots/home.png) | [![Python pytest 分析结果](artifacts/screenshots/python-pytest-result.png)](artifacts/screenshots/python-pytest-result.png) |
+| [TypeScript build 结果](artifacts/screenshots/typescript-build-result.png) | [Docker build 结果](artifacts/screenshots/docker-build-result.png) |
+
+移动端验收截图见
+[500 px 布局](artifacts/screenshots/mobile-layout-500.png)。提交前需要录制或补拍的画面位置见
+[截图清单](docs/submission/SCREENSHOT_CHECKLIST.md)。
+
 ## 评委最快使用方式
 
-准备三个 PowerShell 终端，全部从仓库根目录
-`C:\Users\xin'xin\Desktop\LeanCI` 开始。
+完成下方“从全新环境安装”后，准备三个 PowerShell 终端，全部从仓库根目录开始。
 
 终端 1 — 启动 Paritok Proxy，并保持打开：
 
 ```powershell
-cd "C:\Users\xin'xin\Desktop\LeanCI"
 .\scripts\start_paritok.ps1
 ```
 
 终端 2 — 启动单 worker FastAPI，并保持打开：
 
 ```powershell
-cd "C:\Users\xin'xin\Desktop\LeanCI"
 .\backend\.venv\Scripts\python.exe -m uvicorn app.main:app `
   --app-dir backend `
   --host 127.0.0.1 `
@@ -37,7 +52,7 @@ cd "C:\Users\xin'xin\Desktop\LeanCI"
 终端 3 — 启动前端，并保持打开：
 
 ```powershell
-cd "C:\Users\xin'xin\Desktop\LeanCI\frontend"
+cd frontend
 npm run dev
 ```
 
@@ -73,17 +88,17 @@ npm run dev
 
 ## 固定正式链路
 
-```text
-React
-  → FastAPI POST /api/analyze
-    → local /health + hosted /test + /stats before
-    → http://127.0.0.1:8080/v1
-      → Paritok Proxy
-        → Paritok hosted GPU compression
-        → https://api.deepseek.com/chat/completions
-          → deepseek-v4-flash
-    → /stats after + hosted /test
-    → strict stats delta and request-count proof
+```mermaid
+flowchart LR
+    U["Developer<br/>long CI log + text files"] --> R["React UI"]
+    R -->|POST /api/analyze| A["FastAPI<br/>strict input + one active analysis"]
+    A -->|health + /stats before| P["Local Paritok Proxy<br/>127.0.0.1:8080"]
+    P --> G["Paritok hosted GPU<br/>context compression"]
+    G --> D["DeepSeek API<br/>deepseek-v4-flash"]
+    D --> G --> P --> A
+    A -->|/stats after| V["Request-count proof<br/>verified Token delta"]
+    V --> S["Strict Pydantic diagnosis<br/>root cause · evidence · patch"]
+    S --> R
 ```
 
 - 正式 `/api/analyze` 不接受 Provider、模型、URL 或执行模式参数；
@@ -123,18 +138,23 @@ React
 - 只在内存中处理内容，不接受本机路径或用户 URL；
 - 用固定 Sample ID 读取仓库资产，不提供任意文件读取接口。
 
-## 安装与本机配置
+## 从全新环境安装
 
-前置条件：Python 3.11+、Node.js 20.19+/22.12+ 或兼容新版本、Windows PowerShell。
+前置条件：Git、Python 3.11+、Node.js 20.19+/22.12+ 或兼容新版本、Windows PowerShell。
+Docker 运行只需要 Docker Desktop，不需要本机 Python/Node。以下命令从一个没有
+`backend/.venv`、没有 `frontend/node_modules` 的新 clone 开始：
 
 ```powershell
-cd "C:\Users\xin'xin\Desktop\LeanCI"
-.\backend\.venv\Scripts\python.exe -m pip install "paritok[proxy]==1.2.7"
+git clone https://github.com/Gxinxin-sudo/LeanCI.git
+cd LeanCI
+
+python -m venv backend\.venv
+.\backend\.venv\Scripts\python.exe -m pip install --upgrade pip
 .\backend\.venv\Scripts\python.exe -m pip install --requirement backend\requirements-dev.txt
 
-cd frontend
+Push-Location frontend
 npm ci
-cd ..
+Pop-Location
 ```
 
 已有 `.env` 时不要覆盖：
@@ -161,6 +181,25 @@ PRICING_SNAPSHOT_DATE=2026-07-26
 开发期如需关联 DeepSeek 空内容/无效 JSON，可显式设置
 `SAVE_INVALID_RESPONSE_DEBUG=true`。该功能只在 `runtime/` 内保存错误分类、finish reason、
 长度和正文 SHA-256，不保存模型正文、日志或上传内容；生产配置会拒绝启用。
+
+### 环境变量说明
+
+| 变量 | 必需 | 作用与安全边界 |
+| --- | --- | --- |
+| `PARITOK_API_KEY` | 正式分析必需 | 仅放在本机 `.env` 或托管平台运行时 Secret |
+| `DEEPSEEK_API_KEY` | 正式分析必需 | 只传给本地 Paritok Proxy 的固定 DeepSeek 上游 |
+| `LLM_PROVIDER` | 是 | 必须为 `paritok`；正式端点拒绝 `mock` 与 `direct` |
+| `DEEPSEEK_MODEL` | 是 | 固定为 `deepseek-v4-flash` |
+| `CORS_ALLOWED_ORIGINS` | 是 | 逗号分隔的精确浏览器 Origin；生产不允许 `*` |
+| `ENVIRONMENT` | 是 | 本地为 `development`；公网必须通过生产配置校验 |
+| `TRUSTED_PROXY_CIDRS` | 生产必需 | 仅信任 TLS/OIDC 网关网络，不接受全网 CIDR |
+| `PROXY_AUTH_SHARED_SECRET` | 生产必需 | 仅供网关到 FastAPI，绝不能进入浏览器 |
+| `DISTRIBUTED_RATE_LIMIT_REQUIRED` | 生产必需 | 公网多实例必须使用共享限流/预算层 |
+| `DAILY_ANALYSIS_REQUEST_BUDGET` | 生产必需 | 限制每日付费分析数，`0` 表示未配置 |
+| `PRICING_SNAPSHOT_DATE` | 是 | 标识费用估算价格快照；不是账单日期 |
+
+所有固定 URL、超时、输入限制、价格和网关变量见 [.env.example](.env.example)。正式
+`POST /api/analyze` 不允许请求方覆盖 Provider、模型、上游 URL 或执行模式。
 
 ## 健康检查
 
@@ -393,6 +432,66 @@ Redis/网关分布式预算。生产模式会拒绝没有可信网关注入身�
 公开 development 模式、全网可信 CIDR 或浏览器携带共享 Secret 绕过；完整边界见
 [生产安全部署手册](docs/PRODUCTION_DEPLOYMENT.md)。
 
+## 安全说明
+
+- 正式分析固定经过 FastAPI → 本地 Paritok Proxy → Paritok hosted GPU → DeepSeek；
+  Paritok、hosted 健康或 stats 证明缺失时 fail closed。
+- Token 只取同一分析锁内的 `/stats` before/after 差值，并校验请求数；不使用字符估算、
+  DeepSeek usage 或模型生成的数字。
+- Mock 只存在于隔离测试和浏览器验收中；正式 Provider 工厂会拒绝 Mock 与 Direct。
+- 上传只接受受限 UTF-8 文本，服务端执行路径、大小、扩展名和控制字符校验；应用不会运行
+  日志、Patch 或模型建议的命令。
+- `.env`、Key、请求头、模型正文和上传内容不写入仓库或访问日志；错误响应不暴露堆栈和
+  内部绝对路径。
+- 公网生产必须位于 TLS/OIDC 网关后，并有共享限流、UTC 日预算和密钥轮换。单个直接公开的
+  Railway/Render 容器不满足这一边界。
+
+完整政策见 [SECURITY.md](SECURITY.md) 与 [威胁模型](docs/THREAT_MODEL.md)。
+
+## 已知限制
+
+- 当前没有可公开访问的 live Demo 域名；已验证的 Railway 实例是无公网域名的内部部署，
+  不能描述为生产或公开 Demo。Devpost Project URL 可先使用公开仓库与本 README。
+- Paritok 会跳过它判断为低收益的块；冻结 Benchmark 中 5 个案例有 3 个
+  `skipped_low_yield`，这些行没有 Token 节省率。
+- 冻结 Benchmark 只在 2 个实际压缩行上得到 `85.53%` 平均 Token 节省，但 5 个有效质量
+  配对的确定性评分变化为 `-19.00` 分；结果不支持普遍质量保持声明。
+- `/stats` 是单进程累计计数，因此当前固定一个 Uvicorn worker、一个活跃分析；横向扩容
+  前必须把归因锁和限流迁移到共享基础设施。
+- LeanCI 不克隆仓库、不抓取用户 URL、不执行代码，也不自动应用 Patch；诊断必须由人复核。
+- Token 与美元值是一次受控运行和配置价格的证据，不代表未来输入、生产可靠性或实际账单。
+
+## 演示案例
+
+推荐三分钟视频使用 `python-pytest`：它有 69.5 KiB 长日志、清晰的退避公式根因、日志证据、
+相关文件与 Patch，同时保存了真实 `23,906 → 332` Token capture。另两个一键 Sample
+展示 TypeScript `undefined` 类型错误与 Docker `.dockerignore` 构建上下文错误。三份
+capture 均来自 2026-07-26 正式链路，不是 Mock；重新点击 Analyze 会产生新的真实请求和费用。
+
+完整五例输入、ground truth 和可评审输出见 [examples/](examples/README.md)，录屏顺序见
+[RECORDING_SHOT_LIST.md](docs/submission/RECORDING_SHOT_LIST.md)。
+
+## 技术决策
+
+- 用 Paritok 本地 OpenAI-compatible Proxy 保持应用集成简单，同时强制 hosted GPU 预检和
+  stats 证明，避免静默未压缩透传。
+- 用严格 Pydantic Schema 接收 DeepSeek JSON；空内容或无效 JSON 只允许一次修复请求。
+- Baseline 放在独立 benchmark 服务，正式端点不提供 mode 开关，避免绕过 Paritok。
+- 用固定案例、首轮消息 SHA-256 和确定性 ground-truth rubric 做可复现比较，不使用
+  LLM-as-a-judge。
+- Docker 单容器托管编译前端、FastAPI 与 loopback Paritok Proxy；非 root 运行，并由
+  Python PID 1 联动监管子进程。
+
+更完整的权衡与数据流见 [架构设计](docs/ARCHITECTURE.md)。
+
+## 未来计划
+
+1. 在公网入口前加入可审计的 TLS/OIDC 网关、Redis 原子限流与 UTC 日预算，再发布 live Demo。
+2. 扩大经过人工复核的 CI 故障集，并针对低收益跳过与质量下降迭代分块和提示策略。
+3. 将单进程 `/stats` 归因迁移为请求级遥测，使多实例扩容仍能证明每次 Token 差值。
+4. 增加 GitHub App 的只读日志导入，但继续禁止自动执行代码、命令或 Patch。
+5. 提交结构化 Paritok 反馈与可复现 issue，跟踪 skip 原因、请求级 stats 和生产可观测性。
+
 ## 质量检查
 
 ```powershell
@@ -438,6 +537,7 @@ npm run build
 - [Windows Paritok 设置](docs/PARITOK_SETUP_WINDOWS.md)
 - [Paritok 验证](docs/PARITOK_VERIFICATION.md)
 - [人工操作清单](docs/MANUAL_ACTIONS.md)
+- [Devpost 发布材料](docs/submission/FINAL_SUBMISSION_CHECKLIST.md)
 - [Agent 工作规范](AGENTS.md)
 
 ## License

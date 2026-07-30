@@ -221,3 +221,16 @@
 - [ ] `[MANUAL]` 填写并提交 Devpost 材料
 - [x] 发布前复核 63 个本地相对链接、公开声明和 DeepSeek 官方价格；冻结工件价格未变化，
   Devpost 页面规则/提交字段仍由上方 `[MANUAL]` 项在提交前确认
+- [x] 创建 `docs/submission/` 的 Devpost 描述、三分钟视频脚本、录屏镜头、社交文案、
+  截图清单、最终提交清单和 Paritok 反馈模板
+- [x] README 顶部添加 Paritok/DeepSeek 署名与徽章，并补齐功能截图、Mermaid 架构图、
+  全新环境安装、环境变量、安全、已知限制、演示案例、技术决策和未来计划
+- [x] 2026-07-30 匿名确认公开 GitHub 仓库可访问且 GitHub 识别 Apache-2.0；官方 DeepSeek
+  页面仍列出 `deepseek-v4-flash` 和 cache-miss 输入 `$0.14/M`、输出 `$0.28/M`
+- [x] 2026-07-30 从官方 Devpost 页面确认 Project URL 可使用“公开仓库 + 清晰安装说明”，
+  视频必须少于 3 分钟，且 README 必须署名 Paritok
+- [ ] `[MANUAL]` 完成安全公网边界、轮换 Key 并验证 live Demo；当前 Railway 无域名实例
+  不能作为公开 Demo
+- [x] 2026-07-30 完成 v1.0.0 最终质量门：后端 Ruff/格式、`164 passed, 2 skipped`、
+  `pip check`、当前树与 22 个 Commit 密钥扫描，前端 lint/strict typecheck/`26 passed`/
+  生产构建，Python/Node 依赖审计、全新 venv 安装、Docker build 与无费用 smoke 均通过

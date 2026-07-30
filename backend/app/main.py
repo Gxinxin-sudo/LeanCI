@@ -65,7 +65,7 @@ def create_app(
 
     application = FastAPI(
         title=active_settings.app_name,
-        version="0.1.0",
+        version="1.0.0",
         debug=False,
         docs_url=None if active_settings.environment == "production" else "/docs",
         redoc_url=None if active_settings.environment == "production" else "/redoc",

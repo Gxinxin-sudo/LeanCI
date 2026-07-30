@@ -1,6 +1,6 @@
 [project]
 name = "leanci-backend"
-version = "0.1.0"
+version = "1.0.0"
 description = "LeanCI API and isolated LLM provider boundary"
 requires-python = ">=3.11"
 dependencies = [
