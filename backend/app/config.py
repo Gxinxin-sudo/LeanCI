@@ -95,7 +95,7 @@ class Settings(BaseSettings):
         ge=0,
     )
     deepseek_output_usd_per_m: Decimal = Field(default=Decimal("0.28"), ge=0)
-    pricing_snapshot_date: date = date(2026, 7, 26)
+    pricing_snapshot_date: date = date(2026, 7, 31)
 
     @staticmethod
     def _secret_is_present(secret: SecretStr | None) -> bool:

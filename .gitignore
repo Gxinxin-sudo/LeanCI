@@ -77,3 +77,12 @@ tmp/
 temp/
 *.tmp
 *.bak
+
+# Local project governance and hackathon submission preparation
+AGENTS.md
+PROJECT_PLAN.md
+TASKS.md
+/docs/MANUAL_ACTIONS.md
+/docs/RAILWAY_DEPLOYMENT_EVIDENCE.md
+/docs/DEPLOY_RENDER_FALLBACK.md
+/docs/submission/

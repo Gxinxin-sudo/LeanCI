@@ -1,42 +1,55 @@
 # Benchmarks
 
-本目录保存五个固定案例的可审计 Benchmark 工件：
+This directory contains the frozen, auditable results for five deterministic CI
+failure cases:
 
-- `results.json`：严格结构化行、原始模型分析、确定性评分和人工复核字段；
-- `results.csv`：适合表格审阅的平面字段；
-- `report.md`：汇总、完整失败表、费用口径和可复现命令。
+- `results.json`: structured runs, model output, deterministic scores, and human
+  review fields.
+- `results.csv`: the same required fields in a flat format.
+- `report.md`: methodology, every result row, limitations, cost assumptions, and
+  reproduction commands.
 
-## 公平性约束
+## Fairness controls
 
-每例固定顺序为 `baseline_uncompressed` → `paritok`。两路首轮请求使用相同
-`deepseek-v4-flash`、系统提示、用户提示、`max_tokens=4096`、thinking disabled、
-JSON object 配置和案例内容，`initial_messages_sha256` 必须一致。唯一对比变量是请求是否
-经过 Paritok。
+Each case runs in this fixed order:
 
-Baseline 不经过 Paritok，因此 `original_tokens`、`compressed_tokens`、`tokens_saved`
-和 `compression_ratio` 必须为 `null`，不能用 DeepSeek usage 或字符数冒充。Paritok
-这些字段只在本例请求前后 `/stats` 差值证明实际发生压缩时保存。官方 trace 已确认的
-`below_refusal_threshold` 低收益透传标为 `skipped_low_yield`，Token 节省和压缩率字段
-为 `null`（不适用）。若透传后得到有效结构化分析，质量仍按 ground truth 评分；只有
-没有有效分析时质量才为 `null`。`prompt_tokens` 和 `completion_tokens` 单独保存上游
-usage，不作为压缩证明。
+1. `baseline_uncompressed`
+2. `paritok`
 
-质量分不由模型产生：
+Both routes use the same `deepseek-v4-flash` model, initial messages, sample
+content, system and user prompts, `max_tokens=4096`, disabled thinking mode, and
+JSON Object configuration. `initial_messages_sha256` must match for each pair.
+The only intended variable is whether the request passes through Paritok.
 
-- 根因正确 40；
-- 证据正确 20；
-- 相关文件正确 15；
-- 修复方向正确 15；
-- 严格 JSON 完整 10。
+Baseline rows do not pass through Paritok, so their `original_tokens`,
+`compressed_tokens`, `tokens_saved`, and `compression_ratio` values are `null`.
+LeanCI never substitutes DeepSeek usage or character counts for Paritok metrics.
+Paritok token fields are populated only when the request-scoped `/stats` delta
+proves compression occurred.
 
-确定性规则与 `ground_truth.json` 比对；所有行另保留 `human_review` 字段。没有有效分析
-的 unavailable/upstream_failed 行显示质量不适用而不是 0 分；报告不会过滤任何行。
+Paritok may intentionally pass through low-yield input. A request confirmed by the
+official trace as `below_refusal_threshold` is recorded as
+`skipped_low_yield`; its compression fields remain `null`, not zero. If that
+request still returns valid structured output, its quality is scored normally.
 
-## 运行
+Quality is scored against each case's `ground_truth.json`, without an LLM judge:
 
-先启动 Paritok Proxy，并完成无费用 hosted GPU 预检。每条命令预期发出 2 次模型请求；
-两路各允许一次 JSON 修复，因此每条硬上限 4 次；网络重试为 0。为满足 120 秒命令上限，
-一次只运行一个案例：
+- root cause: 40 points
+- evidence: 20 points
+- relevant files: 15 points
+- fix direction: 15 points
+- valid strict JSON: 10 points
+
+No result row is filtered out. Unavailable and upstream-failed rows keep a `null`
+quality score when no valid diagnosis exists. Every row also contains a
+`human_review` field.
+
+## Run the benchmark
+
+Start the Paritok proxy and confirm the hosted GPU preflight first. Every command
+below is a paid, opt-in operation. It normally makes two model requests; each route
+allows at most one JSON repair, for a hard limit of four requests per command.
+Network retries are disabled.
 
 ```powershell
 .\backend\.venv\Scripts\python.exe scripts\run_benchmark.py --confirm-cost --case python-pytest
@@ -46,20 +59,29 @@ usage，不作为压缩证明。
 .\backend\.venv\Scripts\python.exe scripts\run_benchmark.py --confirm-cost --case github-actions-environment
 ```
 
-不带 `--confirm-cost` 时模型请求数为 0。一次五例完整成功运行预期 10 次模型请求，所有
-JSON 都需修复时最多 20 次。
+Without `--confirm-cost`, the command makes zero model requests. A complete
+five-case run normally makes ten requests and has a hard limit of twenty if every
+route needs its one allowed JSON repair.
 
-## 当前固定工件
+## Frozen result
 
-2026-07-26 最终真实运行发出 10 次模型请求，0 次 JSON 修复、0 次网络重试和 0 次超时。
-工件保留全部 10 行：5 个 Baseline 完成，Python 与 Docker 为 `compressed`，另外三例因
-官方 `below_refusal_threshold` 为 `skipped_low_yield`，无 unavailable/upstream_failed。
+The controlled run on 2026-07-26 made ten model requests, with no JSON repair,
+network retry, or timeout. All ten rows are preserved:
 
-只在 2 个 compressed 行上计算出的平均 Token 节省率为 `85.53%`。质量比较的 5 个有效
-配对从 Baseline `73.00/100` 变为 Paritok `54.00/100`（`-19.00` 分）。该结果不能外推为
-五例整体 Token 平均、普遍质量保持、生产稳定性或实际账单节省。
+- five completed baseline rows
+- two `compressed` Paritok rows (Python and Docker)
+- three `skipped_low_yield` Paritok rows
+- no unavailable or upstream-failed rows
 
-阶段五发布工件另有冻结验收测试，直接校验 10 行双路完整性、必需平面字段、逐例首轮消息
-与 JSON Schema 哈希、公平配置、固定输入超过 5,000 Token、状态/Token null 语义、平均值
-分母、质量配对以及费用免责声明。发布工件的价格快照日是 `2026-07-25`；这不会被后续文档
-中的价格核验日期静默改写。
+Across the two rows where compression actually occurred, mean token savings were
+`85.53%`. Across the five valid baseline/Paritok quality pairs, the deterministic
+score changed from `73.00/100` to `54.00/100` (`-19.00` points).
+
+These results do **not** support claims that all five cases were compressed, that
+quality was preserved, that the service is production-ready, or that the estimated
+USD value is an actual bill reduction.
+
+The artifact verification test locks the ten-row shape, required fields, matching
+message and schema hashes, fixed inputs, status/token null semantics, averaging
+denominator, quality pairing, and cost disclaimer. Frozen artifacts retain their
+run-time pricing snapshot date of 2026-07-25.

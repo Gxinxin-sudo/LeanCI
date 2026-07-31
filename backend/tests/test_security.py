@@ -104,7 +104,7 @@ def test_analysis_rejects_content_type_and_encoding_spoofing(
 def test_utf8_json_content_type_is_accepted() -> None:
     response = make_client().post(
         "/api/analyze",
-        content='{"log_text":"编译失败"}'.encode(),
+        content=b'{"log_text":"build failed"}',
         headers={"Content-Type": "application/json; charset=UTF-8"},
     )
 

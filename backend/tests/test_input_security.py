@@ -114,4 +114,4 @@ def test_rejects_oversized_combined_files() -> None:
 
 def test_rejects_log_over_utf8_byte_limit() -> None:
     with pytest.raises(ValidationError):
-        AnalyzeRequest(log_text="界" * (MAX_LOG_BYTES // 3 + 1))
+        AnalyzeRequest(log_text="€" * (MAX_LOG_BYTES // 3 + 1))

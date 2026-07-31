@@ -43,7 +43,7 @@ export const mockAnalysis: AnalysisResult = {
     cost_estimate: {
       estimated_input_cost_saved_usd: 0.00084,
       input_cache_miss_usd_per_m_tokens: 0.14,
-      pricing_snapshot_date: '2026-07-26',
+      pricing_snapshot_date: '2026-07-31',
       disclaimer: "Estimate from LeanCI's configured DeepSeek price; not an actual bill.",
     },
     message:
