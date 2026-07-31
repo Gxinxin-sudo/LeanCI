@@ -57,7 +57,7 @@ def build_result() -> AnalysisResult:
             cost_estimate=DeepSeekCostEstimate(
                 estimated_input_cost_saved_usd=0.00084,
                 input_cache_miss_usd_per_m_tokens=0.14,
-                pricing_snapshot_date="2026-07-26",
+                pricing_snapshot_date="2026-07-31",
             ),
         ),
     )
@@ -183,7 +183,7 @@ def test_formal_analysis_returns_verified_request_and_cumulative_stats() -> None
     assert result["compression_stats"]["saved_tokens"] == 6000
     assert result["compression_stats"]["cumulative"]["total_requests"] == 12
     assert "estimated_cost_saved_usd" not in result["compression_stats"]["cumulative"]
-    assert result["compression_stats"]["cost_estimate"]["pricing_snapshot_date"] == "2026-07-26"
+    assert result["compression_stats"]["cost_estimate"]["pricing_snapshot_date"] == "2026-07-31"
     assert result["analysis_time_ms"] == 1324
 
 

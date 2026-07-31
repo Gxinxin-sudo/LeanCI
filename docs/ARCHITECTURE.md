@@ -1,135 +1,141 @@
-# LeanCI 架构设计
+# LeanCI architecture
 
-状态：阶段三正式 Paritok hosted GPU → DeepSeek 链路已实现
-快照日期：2026-07-26
-
-## 1. 正式请求路径
+LeanCI is a single-user, single-worker reference implementation for token-efficient
+CI failure diagnosis. Its formal analysis route is fixed:
 
 ```mermaid
 flowchart LR
     UI["React UI"] --> API["FastAPI /api/analyze"]
-    API --> PRE["本地 /health<br/>hosted /test<br/>/stats before"]
+    API --> PRE["Proxy health<br/>hosted GPU preflight<br/>/stats before"]
     PRE --> PX["Paritok Proxy<br/>127.0.0.1:8080/v1"]
-    PX --> GPU["Paritok hosted GPU<br/>compression"]
-    GPU --> DS["DeepSeek<br/>deepseek-v4-flash"]
-    DS --> PX
-    PX --> POST["/stats after<br/>hosted /test"]
-    POST --> PROOF["stats delta + 请求数证明<br/>LeanCI 费用估算"]
-    PROOF --> UI
+    PX --> GPU["Paritok hosted GPU<br/>context compression"]
+    GPU --> DS["DeepSeek API<br/>deepseek-v4-flash"]
+    DS --> PX --> API
+    API --> POST["/stats after<br/>request-count proof"]
+    POST --> OUT["Strict diagnosis<br/>verified token delta"]
+    OUT --> UI
 ```
 
-固定端点：
+The public `POST /api/analyze` contract cannot select a provider, model, upstream
+URL, or execution mode. If the proxy, hosted GPU, or `/stats` proof is unavailable,
+LeanCI fails closed and discards the model result.
 
-| 用途 | 地址 |
+## Fixed endpoints
+
+| Purpose | Endpoint |
 | --- | --- |
-| FastAPI 的 OpenAI-compatible base URL | `http://127.0.0.1:8080/v1` |
-| 本地 Proxy health | `http://127.0.0.1:8080/health` |
-| 本地 Proxy stats | `http://127.0.0.1:8080/stats` |
-| hosted GPU preflight | `https://www.paritok.com/api/test` |
-| Paritok 的 DeepSeek 上游 | `https://api.deepseek.com/chat/completions` |
+| OpenAI-compatible base URL used by FastAPI | `http://127.0.0.1:8080/v1` |
+| Local Paritok health | `http://127.0.0.1:8080/health` |
+| Local Paritok cumulative statistics | `http://127.0.0.1:8080/stats` |
+| Hosted GPU preflight | `https://www.paritok.com/api/test` |
+| DeepSeek upstream used by Paritok | `https://api.deepseek.com/chat/completions` |
 
-正式 `/api/analyze` 没有 Direct、Mock、模型或 URL 参数。`LLM_PROVIDER` 不是请求参数，且
-正式服务只接受 `paritok`。Paritok 不可用时返回 503，不回退到 DeepSeek Direct。
-
-## 2. 组件与职责
+## Components
 
 ### React
 
-- 本地预检 2 MiB 日志和最多 5 个 UTF-8 文本文件；
-- 通过固定 ID 一次载入五个仓库内 Sample，不接受文件路径；
-- 提交 JSON `log_text` 与内存中的 `files[{name, content}]`；
-- 展示结构化诊断、本次 Token 指标、累计统计、模型、耗时与路由健康状态；
-- 展示由 LeanCI 配置价格计算的估算值和免责声明；
-- 复制 Evidence/Patch/命令并下载脱敏 Markdown 报告；
-- 不执行建议命令、Diff 或模型文本。
+- Performs user-facing prechecks for a 2 MiB log and up to five UTF-8 text files.
+- Loads five repository samples by fixed ID.
+- Sends `log_text` and in-memory `files[{name, content}]` as JSON.
+- Shows the diagnosis, request-scoped token proof, model, latency, and route health.
+- Copies text and downloads a sanitized Markdown report.
+- Never executes a patch, command, path, URL, log line, or model response.
 
-客户端校验只用于体验，安全限制由 FastAPI 重复执行。
+Browser validation improves feedback only. FastAPI is the security boundary.
 
 ### FastAPI
 
-- 在 JSON 解析前实施 4 MiB 请求体限制，包括无 `Content-Length` 的分块请求；
-- 重复验证 2 MiB 日志、5 文件、单文件 256 KiB、文件合计 1 MiB；
-- 清理文件名，并拒绝路径、压缩包、可执行文件、非白名单扩展名、无效文本与控制字符；
-- 使用严格 Pydantic 请求、结果和上游 stats schema；
-- 将 CI 证据视为不可信数据；
-- 管理本地 health、hosted GPU、stats 前后快照、单实例锁和链路证明；
-- 通过唯一正式 Provider 调用本地 Proxy；
-- 严格验证 DeepSeek JSON，失败时最多修复一次；
-- 只返回稳定公开错误，不暴露密钥、请求头、上游正文、堆栈或内部路径。
+- Enforces a 4 MiB request-body limit before JSON parsing, including chunked input.
+- Revalidates log, file-count, per-file, and aggregate-file limits.
+- Rejects paths, archives, executable formats, unsupported extensions, invalid
+  UTF-8, NUL, and disallowed control characters.
+- Uses strict Pydantic models for requests, results, and upstream statistics.
+- Marks all CI evidence as untrusted data.
+- Runs local health, hosted-GPU, and `/stats` checks inside the analysis lock.
+- Calls the local Paritok proxy through the only formal provider.
+- Validates DeepSeek JSON and permits at most one repair request.
+- Returns stable public errors without secrets, upstream bodies, stack traces, or
+  internal absolute paths.
 
-### Paritok Proxy 1.2.7
+### Paritok proxy
 
-- 由 `paritok[proxy]==1.2.7` 提供；
-- 只监听 `127.0.0.1:8080`；
-- 从进程环境读取 `PARITOK_API_KEY`；
-- 使用 `use_gpu_server: true` 和固定 hosted GPU 配置；
-- 把 DeepSeek OpenAI-compatible 请求转发到完整 `/chat/completions` 端点；
-- 提供 `/health` 与累计 `/stats`。
+LeanCI pins `paritok[proxy]==1.2.7`. The proxy:
 
-Paritok 的 hosted GPU 策略在网络、认证或 GPU 失败时可能 passthrough 原文，因此本地
-`/health=ok` 不能单独证明压缩。Windows 启动脚本在监听 8080 前先执行带认证 hosted
-`/test`，失败时拒绝启动；LeanCI 分析服务还会执行请求前后 hosted `/test`、stats 与
-请求数校验，把 silent passthrough 变成正式接口的 fail-closed 失败。
+- listens only on `127.0.0.1:8080`;
+- reads `PARITOK_API_KEY` from the process environment;
+- uses `use_gpu_server: true`;
+- forwards the compressed OpenAI-compatible request to DeepSeek;
+- exposes local cumulative `/health` and `/stats` endpoints.
+
+Paritok 1.2.7 may pass the original context through if the hosted compression
+strategy fails. A local `health=ok` response therefore does not prove compression.
+LeanCI also performs an authenticated hosted-GPU preflight before and after the
+model request and verifies the `/stats` delta.
 
 ### DeepSeek
 
-- 模型固定 `deepseek-v4-flash`；
-- JSON Object 模式；
-- `max_tokens=4096`；
-- `thinking={"type":"disabled"}`；
-- `DEEPSEEK_API_KEY` 只来自 FastAPI 进程环境，并随本地代理请求转发。
+The model contract is fixed to:
 
-## 3. 正式链路状态机
+- `deepseek-v4-flash`
+- JSON Object output
+- `max_tokens=4096`
+- thinking mode disabled
+
+`DEEPSEEK_API_KEY` is loaded from the runtime environment and is sent only through
+the local proxy to the fixed upstream.
+
+## Request sequence
 
 ```mermaid
 sequenceDiagram
     participant C as Client
     participant A as FastAPI
     participant P as Paritok Proxy
-    participant G as hosted GPU
+    participant G as Hosted GPU
     participant D as DeepSeek
 
     C->>A: POST /api/analyze
     A->>P: GET /health
-    A->>G: GET /test + PARITOK_API_KEY
+    A->>G: authenticated GET /test
     A->>P: GET /stats (before)
     A->>P: POST /v1/chat/completions
-    P->>G: compress role=tool evidence
+    P->>G: compress tool-result evidence
     G-->>P: compressed context
     P->>D: POST /chat/completions
-    D-->>P: strict JSON
+    D-->>P: JSON diagnosis
     P-->>A: completion
     A->>P: GET /stats (after)
-    A->>G: GET /test + PARITOK_API_KEY
-    A->>A: validate delta and request count
-    A-->>C: diagnosis + verified metrics
+    A->>G: authenticated GET /test
+    A->>A: validate deltas and request count
+    A-->>C: diagnosis and verified metrics
 ```
 
-所有步骤位于一个 `asyncio.Lock` 内。Uvicorn 必须运行单 worker，从而避免另一个本进程
-分析覆盖 before/after 窗口。若其他客户端共用同一 Proxy，`total_requests` 差值会与本次
-Provider 尝试数不一致，LeanCI 返回 `PARITOK_ROUTE_NOT_VERIFIED` 并丢弃模型结果。
+Every step runs inside one `asyncio.Lock`. Uvicorn must use one worker. If another
+client changes the same proxy's cumulative counters during the window,
+`total_requests` no longer matches the provider attempt count; LeanCI then returns
+`PARITOK_ROUTE_NOT_VERIFIED` and discards the result.
 
-## 4. Paritok 可压缩消息结构
+## Compressible message structure
 
-Paritok 1.2.7 的 OpenAI Chat Completions 路径压缩历史 `role=tool` 结果，而不是普通当前
-user 文本。LeanCI 因此构造协议有效但无副作用的历史记录：
+Paritok 1.2.7 compresses historical `role=tool` results in the Chat Completions
+route. LeanCI builds a protocol-valid, side-effect-free message history:
 
-1. 固定 system 安全提示；
-2. user 声明后续内容是不可信 CI 证据；
-3. assistant 记录固定 `load_ci_evidence` tool call（仅消息结构，不会执行）；
-4. 一个或多个匹配 `tool_call_id` 的 `role=tool` 文本块；
-5. 最终 user 要求返回严格 JSON。
+1. A fixed security system prompt.
+2. A user message declaring the following content untrusted.
+3. An assistant `load_ci_evidence` tool call represented only as message data.
+4. One or more matching `role=tool` evidence blocks.
+5. A final user request for strict JSON.
 
-每个 tool 块带 `UNTRUSTED DATA` 边界。服务器没有对应的函数执行器，也不会运行日志、
-命令、路径、URL、Diff 或验证命令。
+There is no server-side function registered for this tool call. Every evidence
+block is wrapped in an `UNTRUSTED DATA` boundary. LeanCI cannot execute content
+from the log or model.
 
-预分块使用保守 UTF-8 字节上限，目标为 12,000 字节。2026-07-26 的真实 hosted
-验证显示约 40,000 字符分块可能被 `/compress` 回显，而 12,000 字节分块可以进入压缩。
-这个字节计数只用于传输保护，不作为 UI 或 API Token 指标。
+Blocks target a conservative 12,000 UTF-8 bytes. This byte count is transport
+protection only and never appears as a token metric.
 
-## 5. stats 数据模型与链路证明
+## Token proof
 
-Paritok 1.2.7 `/stats` 必须通过严格 schema：
+Paritok `/stats` is validated against this strict cumulative schema:
 
 - `total_requests`
 - `input_tokens_original`
@@ -137,9 +143,9 @@ Paritok 1.2.7 `/stats` 必须通过严格 schema：
 - `compression_ratio`
 - `tokens_saved`
 - `tools_filtered`
-- `estimated_cost_saved_usd`（接收后排除，不对外展示）
+- `estimated_cost_saved_usd` (accepted internally, excluded publicly)
 
-单次指标只按前后快照差值计算：
+Request-scoped values are calculated only from before/after deltas:
 
 ```text
 original_tokens   = after.input_tokens_original - before.input_tokens_original
@@ -149,189 +155,136 @@ compression_ratio = compressed_tokens / original_tokens
 proxy_requests    = after.total_requests - before.total_requests
 ```
 
-必须满足：
+The proof must satisfy:
 
-- 全部累计字段不倒退；
-- 本次原始、压缩和节省 Token 非负；
-- `compressed_tokens <= original_tokens`；
-- `saved_tokens = original_tokens - compressed_tokens`；
-- Provider 为 `paritok_deepseek`；
-- Provider 的正式 `usage` 为 `null`；
-- `proxy_requests` 等于 Provider 实际网络尝试数；
-- 请求前后 hosted GPU 均通过检查。
+- cumulative counters never decrease;
+- all request deltas are non-negative;
+- `compressed_tokens <= original_tokens`;
+- `saved_tokens = original_tokens - compressed_tokens`;
+- the provider is `paritok_deepseek`;
+- formal provider usage is `null`;
+- `proxy_requests` equals the provider's actual network attempts;
+- the hosted GPU preflight succeeds before and after the request.
 
-任何 stats 超时、缺字段、无效 JSON、不一致或串扰都返回 503。LeanCI 不用字符数、
-DeepSeek usage 或模型生成内容补造 Token 指标。
+LeanCI never reconstructs missing Paritok metrics from character counts, DeepSeek
+usage, or model output.
 
-## 6. 费用口径
+## Low-yield passthrough
 
-Paritok 的 `estimated_cost_saved_usd` 可能对未知模型采用默认价格，不能作为 LeanCI 的
-DeepSeek 费用结果。该字段在内部 schema 中标记为排除，API、UI 和连接脚本不会返回它。
+Paritok may intentionally skip blocks below its benefit threshold. The benchmark
+represents an officially traced `below_refusal_threshold` request as
+`skipped_low_yield`, with `null` compression fields. It is not treated as a cache
+hit, zero-percent saving, or hosted-GPU outage.
 
-LeanCI 只计算：
+For arbitrary formal API input, LeanCI still fails closed when it cannot prove
+compression. This conservative behavior prevents a passthrough result from being
+presented as compressed.
+
+## Cost estimate
+
+Paritok's `estimated_cost_saved_usd` may use a price that does not match DeepSeek,
+so it is excluded from LeanCI's public API and UI.
+
+LeanCI calculates only:
 
 ```text
 estimated_input_cost_saved_usd =
-  saved_tokens × configured_cache_miss_input_price / 1,000,000
+  saved_tokens * configured_cache_miss_input_price / 1,000,000
 ```
 
-当前 DeepSeek 价格配置快照：
+The current project configuration uses the DeepSeek price verified on 2026-07-31:
 
-| 项目 | USD / 1M Token |
+| Price item | USD per 1M tokens |
 | --- | ---: |
-| 输入 cache hit | 0.0028 |
-| 输入 cache miss | 0.14 |
-| 输出 | 0.28 |
+| Cache-hit input | 0.0028 |
+| Cache-miss input | 0.14 |
+| Output | 0.28 |
 
-快照日期 `2026-07-26`。正式压缩节省估算采用 cache-miss 输入价格，并明确标注为估算值、
-不是实际账单。
+This value is a configuration-based estimate, not an invoice or guaranteed saving.
+Frozen benchmark and saved-sample artifacts retain their original run-time snapshot
+dates.
 
-## 7. 错误与超时
+## Timeouts and retries
 
-| 边界 | 默认超时 | 公开结果 |
+| Boundary | Default timeout | Public result |
 | --- | ---: | --- |
-| 本地 `/health` | 3 秒 | 503 |
-| 本地 `/stats` | 3 秒 | 503，且不返回 Token 指标 |
-| hosted GPU `/test` | 10 秒 | 503 |
-| DeepSeek completion | 60 秒 | 504 |
-| 完整正式分析 | 110 秒 | 504，且不接受迟到结果 |
+| Local proxy health | 3 seconds | 503 |
+| Local proxy stats | 3 seconds | 503; no token metrics |
+| Hosted GPU preflight | 10 seconds | 503 |
+| DeepSeek completion | 60 seconds | 504 |
+| Whole formal analysis | 110 seconds | 504; late output rejected |
 
-DeepSeek 连接、429 和 5xx 采用有界重试；401/402 不重试。空内容、无效 JSON 或严格 schema
-失败只允许一次修复请求。修复请求仍经过同一个 Paritok Proxy，并计入本次
-`proxy_requests`。前端分析请求上限为 115 秒；客户端超时会明确提示未接受结果并允许重试。
+Authentication and insufficient-balance errors are not retried. Connection, 429,
+and 5xx handling is bounded by configuration. Empty, invalid, or schema-breaking
+JSON permits exactly one repair request, through the same Paritok route.
 
-开发环境可显式启用 `SAVE_INVALID_RESPONSE_DEBUG`。调试记录只包含 provider、固定模型、
-initial/repair 阶段、稳定错误分类、finish reason、长度和模型正文 SHA-256；不包含模型正文、
-CI 日志、上传文件、请求消息、usage 或密钥。目录经配置校验后必须位于 `runtime/`，使用独占
-文件创建；写入失败不改变公开错误且不会触发额外模型请求。生产环境禁止启用。
+Development can opt into invalid-response metadata. Those records contain only a
+stable category, finish reason, length, and SHA-256 of the model body. They never
+contain the body, user evidence, messages, usage, or credentials, and production
+configuration rejects the feature.
 
-## 8. 当前 API
+## API surface
 
-### `GET /api/health`
+| Method | Path | Behavior |
+| --- | --- | --- |
+| `GET` | `/api/health` | Checks local proxy and hosted GPU; never calls DeepSeek |
+| `GET` | `/api/config-status` | Returns booleans and fixed names, never secret values |
+| `GET` | `/api/samples` | Lists fixed sample metadata |
+| `GET` | `/api/samples/{id}` | Loads a fixed sample by ID |
+| `GET` | `/api/captures/{id}` | Reads a saved sanitized result |
+| `GET` | `/api/benchmark/results` | Reads the frozen benchmark; makes no model call |
+| `POST` | `/api/analyze` | The only formal analysis route |
 
-检查 Proxy 和 hosted GPU，不调用 DeepSeek。公开字段：
+Sample IDs map to fixed repository directories after a resolved-root check.
+Callers cannot submit filesystem paths. `ground_truth.json` is never returned to
+the model.
 
-- `status: ok | degraded`
-- `mode: paritok`
-- `paritok_connected`
-- `hosted_gpu_available`
-- `proxy_version`
-- `model: deepseek-v4-flash`
-- `deepseek_called: false`
-- 安全公开消息
+## Benchmark isolation
 
-### `GET /api/config-status`
+`DirectDeepSeekProvider` is restricted to connection testing, troubleshooting, and
+the uncompressed benchmark baseline. The formal provider factory cannot return it.
 
-只返回两个 Key 是否配置、Provider 和固定模型；不返回 Key 值、长度、前后缀或 `.env`
-路径。
+The benchmark:
 
-### `POST /api/analyze`
+- accepts only the five fixed sample IDs;
+- requires `--confirm-cost`;
+- runs baseline before Paritok;
+- hashes identical initial messages;
+- fixes the model and generation settings;
+- disables network retry;
+- checks that baseline leaves Paritok stats unchanged;
+- records DeepSeek usage separately from Paritok proof;
+- scores against deterministic ground truth;
+- preserves every failed or skipped row.
 
-当前请求只接受日志和内存文本文件：
+See [the benchmark documentation](../benchmarks/README.md) for the frozen result and
+its limitations.
 
-```json
-{
-  "log_text": "CI failure text",
-  "files": [
-    {
-      "name": "config.ts",
-      "content": "export const region = process.env.DEPLOY_REGION"
-    }
-  ]
-}
-```
+## Security and deployment boundary
 
-响应为严格诊断字段、`analysis_time_ms` 和 `compression_stats`。
-
-### 固定 Sample 与录屏状态
-
-- `GET /api/samples`：只返回五个固定 Sample 的元数据；
-- `GET /api/samples/{id}`：从映射好的仓库目录读取日志和相关文件；
-- `GET /api/captures/{id}`：读取真实三跑成功后保存的 `demo_result.json`；
-- 未知 ID 返回统一 404，调用者不能提供文件系统路径。
-
-`ground_truth.json` 只供测试和显式演示采集脚本验证，不通过 Sample API 返回，也不会进入
-模型上下文。
-
-### `GET /api/benchmark/results`
-
-只读并严格验证仓库内 `benchmarks/results.json`，不运行模型、不接受案例、路径、Provider
-或 URL 参数。前端 Benchmark 页只消费这个固定工件。
-
-## 9. 隔离的 Direct 与 Benchmark
-
-`DirectDeepSeekProvider` 只能显式用于：
-
-- `connection_test`
-- `troubleshooting`
-- `benchmark_baseline`
-
-Provider 工厂不提供 Direct 正式模式。已实现 Benchmark：
-
-- 只接受五个内置案例，CLI 不接受日志、路径、模型或 URL；
-- 要求 `--confirm-cost`，否则模型请求数为 0；
-- 固定顺序为 `baseline_uncompressed` → Paritok；
-- 两路用同一个已构建消息列表，保存 `initial_messages_sha256` 证明首轮输入一致；
-- 固定 `deepseek-v4-flash`、`max_tokens=4096`、thinking disabled、JSON object；
-- Benchmark 网络重试为 0，每路只允许现有的一次 JSON 修复；
-- baseline 前后 `/stats` 必须完全不变，否则丢弃结果；
-- Paritok 的 Token 字段只取隔离的 `/stats` 差值并验证请求数；
-- baseline 的 original/compressed/saved/ratio 保持 `null`，不以 DeepSeek usage 代替；
-- DeepSeek usage 只记录为独立的 prompt/completion/cache 字段；
-- 质量通过 ground truth 规则确定性评分，不让模型自评，并保留人工复核字段；
-- Paritok 结果状态严格区分 `compressed`、`skipped_low_yield`、`unavailable` 和
-  `upstream_failed`；低收益跳过不是 hosted 故障；
-- Token 平均值只基于 `compressed` 行；`skipped_low_yield` 不计为 0%；
-- 质量变化只基于两路都有有效结构化分析的配对；无有效分析显示不适用而不是 0 分；
-- 任何 API、Schema、stats 或外部预检失败都保留，不删除案例；
-- 不复用 `/api/analyze` 的正式服务入口。
-
-单案例预期 2 次模型调用；两路均触发 JSON 修复时最多 4 次；五例完整运行预期 10 次、
-硬上限 20 次。为遵守命令时限，CLI 一次只运行一个案例。
-
-## 10. 安全边界
-
-| 威胁 | 控制 |
+| Threat | Primary control |
 | --- | --- |
-| API Key 泄露 | SecretStr、仅环境变量、`.env` 忽略、安全脚本输出、提交前扫描 |
-| SSRF/上游覆盖 | URL 为代码常量和严格 Literal，不接受请求覆盖 |
-| 绕过 Paritok | 正式 Provider 工厂只返回 Paritok；失败不回退 |
-| 提示注入 | 不可信 tool 结果、固定系统提示、严格结果 schema |
-| 恶意上传 | 双端预检；服务端整体/单项限制、JSON MIME/编码、白名单、UTF-8、控制字符和文件名/路径校验 |
-| 任意文件读取 | Sample ID 到固定目录的常量映射和 resolved-root 校验；API 不接受路径 |
-| 模型建议被执行 | API 没有执行端点；Patch/命令只以 React 文本和转义后的 Markdown 展示 |
-| stats 伪造/串扰 | 单 worker、异步锁、严格快照 delta、请求数匹配 |
-| 错误/日志信息泄漏 | 稳定错误码；日志只用固定字段；不返回或记录上游正文、请求头、正文、堆栈或内部路径 |
-| 未知模型费用误导 | 丢弃 Paritok 美元字段；使用带日期的项目价格估算 |
-| 请求滥用和付费队列 | 单活动分析、超限立即 429、内存滑动窗口、桶上限和完整分析超时 |
-| 跨站和浏览器缓存 | 显式 CORS 白名单、无 credentials、no-store、CSP/防嵌入/nosniff 等 API 响应头 |
-| Request ID 伪造 | 服务端生成 128-bit 随机 ID，忽略客户端同名 Header |
+| Credential disclosure | Environment-only secrets, ignored `.env`, redacted output, secret scanning |
+| SSRF or upstream override | Code constants and strict literals; no request override |
+| Paritok bypass | Formal provider factory returns Paritok only |
+| Prompt injection | Untrusted tool-result boundaries and strict output schema |
+| Malicious upload | Server-side size, name, extension, UTF-8, and control-character validation |
+| Arbitrary file access | Fixed sample mapping; no path or URL input |
+| Command execution | No execution endpoint; patches and commands are text |
+| Counter contamination | One worker, one lock, strict deltas, request-count match |
+| Error leakage | Stable errors and fixed-field access logs |
+| Browser abuse | Exact CORS origins, no credentials, rate limits, one active analysis |
 
-访问日志只记录 `request_id`、HTTP 方法、固定路由标签、状态码和耗时；不记录原始路径、
-查询串、Header、正文、上传内容或模型内容。更完整的攻击面、验证和残余风险见
-[`THREAT_MODEL.md`](THREAT_MODEL.md)。
+Access logs contain a generated request ID, method, fixed route label, status, and
+duration only. They omit raw paths, query strings, headers, request bodies, uploads,
+and model content.
 
-隐私口径是“LeanCI 不把内容永久写入应用存储”，不是“内容只留在本机”。正式请求会经过
-Paritok 和 DeepSeek；运营方还需复核服务商、反向代理和托管平台的日志/保留政策。
+The application does not persist submitted evidence, but formal content is sent to
+Paritok, DeepSeek, and the hosting path. Operators must review those services'
+retention policies.
 
-## 11. 部署约束
-
-Windows 源码模式使用三个终端。单容器实现见 [`Dockerfile`](../Dockerfile)、
-[`container_entrypoint.py`](../scripts/container_entrypoint.py) 和
-[`DOCKER.md`](DOCKER.md)，其边界为：
-
-- FastAPI 监听平台 `PORT`；
-- Paritok 只监听容器 localhost `127.0.0.1:8080`；
-- FastAPI 保持单 worker；
-- 生产 `CORS_ALLOWED_ORIGINS` 使用精确前端 Origin，不允许 `*`；
-- 公网入口用可信 TLS 网关实施一致的请求体/超时限制、客户端身份、分布式速率和费用配额；
-- 用固定进程管理器监管两个进程；
-- 任一进程退出时终止另一个并让容器失败；
-- 只公开 FastAPI 端口，不公开 8080；
-- Key 只由托管平台运行时环境注入；
-- 镜像以固定非 root 用户运行，生产环境关闭交互式 OpenAPI 文档；
-- 同容器静态前端响应获得 CSP、防嵌入、`nosniff`、no-referrer 和 no-store 响应头。
-
-2026-07-27 已生成 `leanci:phase6` 镜像，并完成 Compose 展开、单元/静态检查、镜像和
-上下文密钥检查、无密钥状态 78、静态/API、假凭据 fail-closed 分析，以及 Proxy 和
-FastAPI 退出时的容器联动失败检查。测试只使用假凭据；DeepSeek 未被调用。
+The Docker image serves the compiled React app and FastAPI on the platform `PORT`.
+Paritok remains loopback-only. A public deployment must sit behind an authenticated
+TLS/OIDC gateway with shared distributed rate limiting and a UTC daily request
+budget. See [production deployment](PRODUCTION_DEPLOYMENT.md),
+[Docker](DOCKER.md), and [the threat model](THREAT_MODEL.md).

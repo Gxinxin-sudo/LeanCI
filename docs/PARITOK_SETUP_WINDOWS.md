@@ -1,28 +1,27 @@
-# Paritok hosted GPU：Windows PowerShell 配置
+# Paritok hosted GPU setup on Windows
 
-本文针对 LeanCI 当前固定依赖 `paritok[proxy]==1.2.7`。配置字段已经对照
-[Paritok 官方仓库](https://github.com/Paritok-official/paritok-4b-v1)的 1.2.7
-安装包源码与本机安装包验证，不使用旧教程中的参数。
+LeanCI pins `paritok[proxy]==1.2.7`. The configuration below matches that package
+version and the current repository implementation.
 
-## 1. 安装
+## Install
 
-从仓库根目录运行：
+From the repository root:
 
 ```powershell
 .\backend\.venv\Scripts\python.exe -m pip install "paritok[proxy]==1.2.7"
 .\backend\.venv\Scripts\python.exe -m pip install --requirement backend\requirements-dev.txt
 ```
 
-验证版本和代理命令：
+Confirm the CLI:
 
 ```powershell
 .\backend\.venv\Scripts\paritok.exe --version
 .\backend\.venv\Scripts\paritok.exe proxy --help
 ```
 
-## 2. 本机密钥与环境变量
+## Local secrets
 
-只在被 Git 忽略的仓库根目录 `.env` 中填写真实密钥。不要覆盖已有 `.env`：
+Create `.env` only if it does not already exist:
 
 ```powershell
 if (-not (Test-Path -LiteralPath ".env")) {
@@ -30,11 +29,11 @@ if (-not (Test-Path -LiteralPath ".env")) {
 }
 ```
 
-必需配置：
+Fill the two secret values locally:
 
 ```dotenv
-PARITOK_API_KEY=<仅在本机填写>
-DEEPSEEK_API_KEY=<仅在本机填写>
+PARITOK_API_KEY=
+DEEPSEEK_API_KEY=
 LLM_PROVIDER=paritok
 DEEPSEEK_MODEL=deepseek-v4-flash
 PARITOK_PROXY_BASE_URL=http://127.0.0.1:8080/v1
@@ -42,35 +41,38 @@ PARITOK_HEALTH_URL=http://127.0.0.1:8080/health
 PARITOK_STATS_URL=http://127.0.0.1:8080/stats
 ```
 
-`paritok.yaml` 不包含真实 Key。Paritok 1.2.7 会在加载 YAML 后，用进程环境中的
-`PARITOK_API_KEY` 覆盖 `gpu_server.api_key`。FastAPI 把 `DEEPSEEK_API_KEY` 作为本地
-OpenAI-compatible 请求的 Authorization，Paritok 再将请求转发到固定完整端点。
+Do not put credentials in `paritok.yaml`, source code, tests, screenshots, command
+output, or Git. Paritok reads `PARITOK_API_KEY` from the process environment.
+FastAPI sends `DEEPSEEK_API_KEY` to the loopback proxy, which forwards it only to
+the fixed DeepSeek endpoint.
 
-## 3. 当前 YAML schema
+## Configuration
 
-仓库根目录 [paritok.yaml](../paritok.yaml) 使用 1.2.7 的实际字段：
+The root [paritok.yaml](../paritok.yaml) uses:
 
 - `use_gpu_server: true`
-- `gpu_server.base_url/model/api_key/timeout`
-- `compression.min_tokens/max_tokens/refusal_threshold`
-- `history.enabled/keep_recent_turns/context_threshold/context_window`
-- `tool_discovery.strategy/top_k/k_max/adaptive/mcp_signal_threshold`
-- `trace.enabled/path`
-- `codex.enabled/model/api_key`
-- `shadow_storage`
+- hosted server URL, model, timeout, and empty YAML API-key field
+- compression thresholds
+- history controls
+- passthrough tool discovery
+- disabled trace by default
 
-`tool_discovery.strategy` 固定为 `passthrough`，因为 LeanCI 不接收用户工具目录；这避免下载
-可选的 embedding selector，同时不改变 hosted GPU 压缩链。
+Tool discovery is `passthrough` because LeanCI does not accept a user-provided tool
+catalog. This avoids the optional local embedding selector without changing hosted
+context compression.
 
-## 4. 启动顺序
+## Start locally
 
-终端 1（必须一直保持打开）：
+Use three PowerShell terminals, all opened at the repository root.
+
+Terminal 1:
 
 ```powershell
 .\scripts\start_paritok.ps1
 ```
 
-该脚本只从 `.env` 读取 `PARITOK_API_KEY`，不会打印密钥；实际代理命令固定等价于：
+The script reads the ignored `.env`, performs an authenticated hosted-GPU
+preflight, and then starts an equivalent fixed command:
 
 ```powershell
 .\backend\.venv\Scripts\paritok.exe proxy `
@@ -81,9 +83,7 @@ OpenAI-compatible 请求的 Authorization，Paritok 再将请求转发到固定�
   --log-level info
 ```
 
-不要关闭终端 1。Paritok Proxy 是前台进程，关闭它后正式分析会返回 503。
-
-终端 2：
+Terminal 2:
 
 ```powershell
 .\backend\.venv\Scripts\python.exe -m uvicorn app.main:app `
@@ -93,31 +93,19 @@ OpenAI-compatible 请求的 Authorization，Paritok 再将请求转发到固定�
   --workers 1
 ```
 
-必须保持 `--workers 1`。本次 Token 归因依赖一个进程内锁和 `/stats` 前后快照；多 worker
-会破坏单次请求的归属证明。
+Keep one worker. Request attribution depends on one process-local lock around the
+before/after `/stats` window.
 
-终端 3：
+Terminal 3:
 
 ```powershell
-cd frontend
+Set-Location frontend
 npm run dev
 ```
 
-浏览器访问 `http://127.0.0.1:5173`。
+Open `http://127.0.0.1:5173`.
 
-## 5. Linux / Docker
-
-运行环境必须注入 `PARITOK_API_KEY`，然后启动：
-
-```sh
-./scripts/start_paritok.sh
-```
-
-脚本固定监听 `127.0.0.1:8080`，并固定使用
-`https://api.deepseek.com/chat/completions`。Docker 中应由进程管理器同时监管 Proxy 和
-单 worker FastAPI；不得把 8080 映射到公网。
-
-## 6. 快速检查
+## Health checks
 
 ```powershell
 Invoke-RestMethod "http://127.0.0.1:8080/health"
@@ -126,19 +114,34 @@ Invoke-RestMethod "http://127.0.0.1:8080/stats"
 Invoke-RestMethod "http://127.0.0.1:8000/api/health"
 ```
 
-`/health` 只证明本地代理进程存活。只有连接脚本和 LeanCI `/api/health` 同时确认 hosted
-GPU 可用，才允许正式分析。
+Local proxy health proves only that the process is alive. Formal analysis is
+enabled only when the authenticated hosted-GPU check succeeds too.
 
-## 7. 常见错误
+## Linux and Docker
 
-| 错误 | 含义与处理 |
+Inject `PARITOK_API_KEY` at runtime, then run:
+
+```sh
+./scripts/start_paritok.sh
+```
+
+The script binds only `127.0.0.1:8080` and uses the fixed DeepSeek Chat Completions
+endpoint. A container process manager must supervise both the proxy and one-worker
+FastAPI process. Never publish port 8080.
+
+## Common errors
+
+| Error | Meaning |
 | --- | --- |
-| `FORMAL_ANALYSIS_REQUIRES_PARITOK` | 将本机 `.env` 的 `LLM_PROVIDER` 改为 `paritok` 并重启 FastAPI |
-| `PARITOK_PROXY_UNAVAILABLE` | Proxy 未启动、8080 被占用或本机防火墙拦截 |
-| `PARITOK_GPU_UNAVAILABLE` | hosted GPU 不可达或 `PARITOK_API_KEY` 无效；不要继续正式分析 |
-| `PARITOK_STATS_UNAVAILABLE` | `/stats` 超时或 schema 不匹配；LeanCI 会丢弃结果，不生成 Token 数字 |
-| `PARITOK_ROUTE_NOT_VERIFIED` | stats 请求数与本次 DeepSeek 尝试次数不一致；检查是否有其他客户端共用此 Proxy |
-| `DEEPSEEK_AUTHENTICATION_FAILED` | `DEEPSEEK_API_KEY` 无效或已撤销 |
-| `DEEPSEEK_INSUFFICIENT_BALANCE` | DeepSeek 余额不足 |
-| `DEEPSEEK_TIMEOUT` | DeepSeek 请求超时；API 返回 504 |
-| `DEEPSEEK_SERVER_ERROR` | DeepSeek 暂时不可用；API 返回清楚的 502 错误 |
+| `FORMAL_ANALYSIS_REQUIRES_PARITOK` | Set `LLM_PROVIDER=paritok` and restart FastAPI |
+| `PARITOK_PROXY_UNAVAILABLE` | The proxy is down, port 8080 is occupied, or a local firewall blocked it |
+| `PARITOK_GPU_UNAVAILABLE` | The hosted GPU is unreachable or the Paritok key is invalid |
+| `PARITOK_STATS_UNAVAILABLE` | `/stats` timed out or failed strict validation |
+| `PARITOK_ROUTE_NOT_VERIFIED` | Another client contaminated the shared stats window |
+| `DEEPSEEK_AUTHENTICATION_FAILED` | The DeepSeek key is invalid or revoked |
+| `DEEPSEEK_INSUFFICIENT_BALANCE` | The DeepSeek account has insufficient balance |
+| `DEEPSEEK_TIMEOUT` | The upstream request exceeded its timeout |
+| `DEEPSEEK_SERVER_ERROR` | DeepSeek returned a temporary server failure |
+
+LeanCI discards the diagnosis when route proof fails and never creates replacement
+token numbers.

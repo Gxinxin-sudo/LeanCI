@@ -1,13 +1,12 @@
 # Contributing to LeanCI
 
-Thanks for helping improve LeanCI. This repository is a security-sensitive
-hackathon MVP: changes must preserve the formal analysis chain
+Thanks for helping improve LeanCI. This is a security-sensitive reference
+implementation: changes must preserve the formal analysis chain
 `FastAPI → local Paritok Proxy → Paritok hosted GPU → DeepSeek`.
 
 ## Before opening a change
 
-- Read `AGENTS.md`, `PROJECT_PLAN.md`, `TASKS.md`, `SECURITY.md`, and the
-  relevant architecture or deployment document.
+- Read `SECURITY.md` and the relevant architecture or deployment document.
 - Create a focused branch and keep unrelated local changes out of the commit.
 - Never commit `.env`, API keys, access tokens, private CI logs, provider
   responses, traces, or credentials. Use repository samples or synthetic data.
@@ -37,8 +36,8 @@ Run the checks that cover the changed area. Before a pull request, run the full
 no-cost gate:
 
 ```powershell
-.\backend\.venv\Scripts\python.exe -m ruff format --check backend
-.\backend\.venv\Scripts\python.exe -m ruff check backend
+.\backend\.venv\Scripts\python.exe -m ruff format --check backend scripts
+.\backend\.venv\Scripts\python.exe -m ruff check backend scripts
 .\backend\.venv\Scripts\python.exe -m pytest backend\tests
 .\backend\.venv\Scripts\python.exe scripts\scan_secrets.py
 
@@ -63,8 +62,8 @@ the script's explicit confirmation flag and the operator's authorization.
   security boundaries.
 - Keep Python data boundaries strict with Pydantic and TypeScript in strict mode.
 - Do not hide, delete, or weaken a failing test to make a change pass.
-- Update `README.md`, relevant `docs/` pages, `.env.example`, and `TASKS.md`
-  whenever behavior, configuration, pricing snapshots, or manual steps change.
+- Update `README.md`, relevant `docs/` pages, and `.env.example` whenever
+  behavior, configuration, pricing snapshots, or setup steps change.
 - Token values must come from the current request's verified Paritok `/stats`
   delta. Never estimate or synthesize Token metrics.
 
